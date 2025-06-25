@@ -11,6 +11,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@google-analytics/data": "^5.1.0",
     "@tanstack/react-query": "^5.80.7",
     "next": "15.3.3",
     "react": "^19.0.0",
