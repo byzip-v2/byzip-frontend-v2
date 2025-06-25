@@ -1,0 +1,27 @@
+.summaryWrapper {
+  padding: 2rem;
+
+  .summaryGrid {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .summarySection {
+    flex: 1 1 0;
+    min-width: 300px;
+
+    h2 {
+      margin-bottom: 0.5rem;
+    }
+
+    pre {
+      background-color: #f4f4f4;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+}
