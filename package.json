@@ -27,6 +27,7 @@
     "@storybook/addon-onboarding": "^9.0.10",
     "@storybook/addon-vitest": "^9.0.10",
     "@storybook/nextjs-vite": "^9.0.10",
+    "@types/navermaps": "^3.9.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
