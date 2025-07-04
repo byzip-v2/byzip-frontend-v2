@@ -141,7 +141,7 @@ export default function MapPage() {
         onReady={initializeMap}
       />
       <div className={styles.wrapper}>
-        <h1 className={styles.title}>📍 주소 → 좌표 변환 서비스</h1>
+        <h1 className={styles.title}>주소 → 좌표 변환 서비스</h1>
 
         <div className={styles.searchBox}>
           <input
@@ -149,6 +149,11 @@ export default function MapPage() {
             value={address}
             placeholder="주소를 입력하세요"
             onChange={(e) => setAddress(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                searchAddressToCoordinate();
+              }
+            }}
           />
           <button onClick={searchAddressToCoordinate}>좌표 검색</button>
         </div>
