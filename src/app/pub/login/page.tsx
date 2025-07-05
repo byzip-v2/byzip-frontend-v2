@@ -4,6 +4,7 @@ import styles from '@/styles/pages/login/login.module.scss';
 import {Eye, EyeOff, Lock, LucideMail} from "lucide-react";
 import {useState} from "react";
 import AlertModal from "@/app/libs/global-components/AlertModal";
+import Image from "next/image";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -21,7 +22,7 @@ export default function LoginPage() {
     return (
         <div className={styles.wrapper}>
             <header className={styles.header}>
-                <img src="/images/byzip_logo.png" alt="분양모음집 로고"/>
+                <Image src="/images/byzip_logo.png" alt="분양모음집 로고" loading="eager" priority/>
                 <span>분양모음집-관리자</span>
             </header>
 
