@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import styles from '@/styles/pages/pubList.module.scss';
+import styles from '@/styles/pub/pubList.module.scss';
 
 const pubSections = [
     {

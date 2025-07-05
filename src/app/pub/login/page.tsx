@@ -1,9 +1,9 @@
 'use client';
 
-import styles from '@/styles/pages/login.module.scss';
+import styles from '@/styles/pages/login/login.module.scss';
 import {Eye, EyeOff, Lock, LucideMail} from "lucide-react";
 import {useState} from "react";
-import AlertModal from "@/components/common/AlertModal";
+import AlertModal from "@/app/libs/global-components/AlertModal";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -12,11 +12,6 @@ export default function LoginPage() {
     const [pwFocused, setPwFocused] = useState<boolean>(false);
     const [showModal, setShowModal] = useState(false);
 
-    const handleLogin = () => {
-        if (loginFailCondition) {
-            setShowModal(true);
-        }
-    };
 
     const isPwEnabled = email.trim().length > 0;
 

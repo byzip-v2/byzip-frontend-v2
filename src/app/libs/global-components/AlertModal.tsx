@@ -1,6 +1,6 @@
 'use client';
 
-import styles from '@/styles/components/common/alertModal.module.scss';
+import styles from '@/styles/common/alertModal.module.scss';
 
 interface AlertModalProps {
     message: string;
