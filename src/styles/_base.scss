@@ -1,0 +1,20 @@
+// _base.scss
+body {
+  font-family: 'Pretendard', sans-serif;
+  color: $color-text;
+  background: #fff;
+  font-size: $font-base;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
