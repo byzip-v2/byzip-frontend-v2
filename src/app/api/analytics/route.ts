@@ -2,7 +2,7 @@ import {
   getDailyVisitors,
   getOSVisitors,
   getTopPages,
-} from "../../lib/analytics";
+} from "../../libs/utils/analytics";
 
 export async function GET() {
   try {

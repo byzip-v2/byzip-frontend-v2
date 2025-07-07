@@ -1,4 +1,4 @@
-import styles from "@/app/styles/Analytics.module.scss";
+import styles from '@/styles/pages/analytics/Analytics.module.scss';
 
 interface DailyVisitor {
   date: string; // 예: "2025-06-23"

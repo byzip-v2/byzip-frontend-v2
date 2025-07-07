@@ -1,30 +1,30 @@
-"use client";
+'use client';
 
-import { useRef, useState } from "react";
-import Script from "next/script";
-import styles from "@/app/styles/Map.module.scss";
+import { useRef, useState } from 'react';
+import Script from 'next/script';
+import styles from '@/styles/pages/map/Map.module.scss';
 
 export default function MapPage() {
   const mapRef = useRef<naver.maps.Map | null>(null);
   const infoRef = useRef<naver.maps.InfoWindow | null>(null); // infoWindow
 
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
-    null
+    null,
   );
 
   // 지도 초기화
   const initializeMap = () => {
-    const map = new naver.maps.Map("map", {
+    const map = new naver.maps.Map('map', {
       center: new naver.maps.LatLng(37.3595316, 127.1052133),
       zoom: 15,
     });
 
     mapRef.current = map;
-    infoRef.current = new naver.maps.InfoWindow({ content: "" });
+    infoRef.current = new naver.maps.InfoWindow({ content: '' });
 
     // 지도 클릭 시 마커 이동 및 좌표 표시
-    map.addListener("click", (e: any) => {
+    map.addListener('click', (e: { coord: naver.maps.LatLng }) => {
       const latlng = e.coord;
       setCoords({ lat: latlng.y, lng: latlng.x });
       searchCoordinateToAddress(latlng);
@@ -37,19 +37,19 @@ export default function MapPage() {
 
     naver.maps.Service.geocode({ query: address }, (status, response) => {
       if (status === naver.maps.Service.Status.ERROR) {
-        alert("주소를 찾을 수 없습니다.");
+        alert('주소를 찾을 수 없습니다.');
         return;
       }
 
       if (response.v2.meta.totalCount === 0) {
-        alert("주소를 찾을 수 없습니다.");
+        alert('주소를 찾을 수 없습니다.');
         return;
       }
 
       const item = response.v2.addresses[0];
       const point = new naver.maps.LatLng(
         parseFloat(item.y),
-        parseFloat(item.x)
+        parseFloat(item.x),
       );
 
       mapRef.current?.setCenter(point);
@@ -69,7 +69,7 @@ export default function MapPage() {
       const htmlContent = `
         <div style="padding:10px;min-width:200px;line-height:150%;">
           <h4 style="margin-top:5px;">검색 주소 : ${address}</h4>
-          ${htmlAddresses.join("<br />")}
+          ${htmlAddresses.join('<br />')}
         </div>
       `;
 
@@ -86,14 +86,14 @@ export default function MapPage() {
         orders: [
           naver.maps.Service.OrderType.ADDR, // 행정동
           naver.maps.Service.OrderType.ROAD_ADDR, // 지번 주소
-        ].join(","),
+        ].join(','),
       },
       (
         status: naver.maps.Service.Status,
-        response: naver.maps.Service.ReverseGeocodeResponse
+        response: naver.maps.Service.ReverseGeocodeResponse,
       ) => {
         if (status === naver.maps.Service.Status.ERROR) {
-          alert("좌표를 찾을 수 없습니다.");
+          alert('좌표를 찾을 수 없습니다.');
           return;
         }
 
@@ -104,19 +104,19 @@ export default function MapPage() {
 
         items.forEach((item) => {
           const addrType =
-            item.name === "roadaddr" ? "[도로명 주소]" : "[지번 주소]";
+            item.name === 'roadaddr' ? '[도로명 주소]' : '[지번 주소]';
           const address =
             item.region.area1.name +
-            " " +
+            ' ' +
             item.region.area2.name +
-            " " +
+            ' ' +
             item.region.area3.name +
-            " " +
+            ' ' +
             item.region.area4.name +
-            " " +
-            (item.land.number1 ? " " + item.land.number1 : "") +
-            (item.land.number2 ? "-" + item.land.number2 : "") +
-            (item.land.addition0?.value ? " " + item.land.addition0.value : "");
+            ' ' +
+            (item.land.number1 ? ' ' + item.land.number1 : '') +
+            (item.land.number2 ? '-' + item.land.number2 : '') +
+            (item.land.addition0?.value ? ' ' + item.land.addition0.value : '');
 
           htmlAddresses.push(`${addrType} ${address}`);
         });
@@ -125,11 +125,11 @@ export default function MapPage() {
         infoRef.current?.setContent(`
           <div style="padding:10px;min-width:200px;line-height:150%;">
             <h4 style="margin-top:5px;">검색 좌표</h4>
-            ${htmlAddresses.join("<br />")}
+            ${htmlAddresses.join('<br />')}
           </div>
         `);
         infoRef.current?.open(mapRef.current!, latlng);
-      }
+      },
     );
   };
 
@@ -150,7 +150,7 @@ export default function MapPage() {
             placeholder="주소를 입력하세요"
             onChange={(e) => setAddress(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === 'Enter') {
                 searchAddressToCoordinate();
               }
             }}
@@ -160,7 +160,7 @@ export default function MapPage() {
 
         {coords && (
           <p className={styles.coords}>
-            위도: <strong>{coords.lat}</strong> / 경도:{" "}
+            위도: <strong>{coords.lat}</strong> / 경도:{' '}
             <strong>{coords.lng}</strong>
           </p>
         )}
