@@ -1,4 +1,5 @@
 import styles from '@/styles/pages/analytics/Analytics.module.scss';
+import axios from 'axios';
 
 interface DailyVisitor {
   date: string; // 예: "2025-06-23"
@@ -22,8 +23,10 @@ interface AnalyticsData {
 }
 
 export default async function Page() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/analytics`);
-  const data: AnalyticsData = await res.json();
+  const res = await axios.get<AnalyticsData>(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/analytics`,
+  );
+  const data = res.data;
 
   return (
     <div className={styles.summaryWrapper}>
