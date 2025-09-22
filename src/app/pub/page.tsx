@@ -6,7 +6,7 @@ const pubSections = [
         category: '관리자',
         items: [
             {name: '로그인', path: '/pub/login', note: 'v.1.0_250705', status: '완료'},
-            {name: '메인', path: '/pub/main', note: 'v.1.0_', status: '진행중'},
+            {name: '좌표관리', path: '/pub/admin/geo', note: 'v.1.0_', status: '진행중'},
         ],
     },
     {

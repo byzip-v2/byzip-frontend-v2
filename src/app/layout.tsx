@@ -1,16 +1,5 @@
 import type {Metadata} from "next";
-import {Geist, Geist_Mono} from "next/font/google";
 import "../styles/main.scss";
-
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
     title: "분양모음집 V2",
@@ -23,8 +12,15 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <html lang="ko">
+        <head>
+            <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+            <link 
+                href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" 
+                rel="stylesheet" 
+            />
+        </head>
+        <body>
         {children}
         </body>
         </html>

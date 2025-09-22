@@ -1,0 +1,250 @@
+/* 좌표 관리 페이지 스타일 */
+.coordinates-page {
+  padding: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.search-section {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 300px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.search-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.search-btn:hover {
+  background-color: #2563eb;
+}
+
+.page-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  height: calc(100vh - 200px);
+}
+
+/* 지도 영역 */
+.map-section {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+}
+
+.map-container {
+  position: relative;
+  height: 100%;
+  background-color: #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 24px;
+  color: #64748b;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+.map-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.overlay-content {
+  text-align: center;
+}
+
+.overlay-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.overlay-address,
+.overlay-coordinates {
+  font-size: 14px;
+  color: $color-text-secondary;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.add-coordinate-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.add-coordinate-btn:hover {
+  background-color: #2563eb;
+}
+
+/* 테이블 영역 */
+.table-section {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th {
+  background-color: #f8fafc;
+  color: #374151;
+  font-weight: 600;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.data-table tr:hover {
+  background-color: #f9fafb;
+}
+
+.highlighted-row {
+  background-color: #eff6ff !important;
+}
+
+.highlighted-row:hover {
+  background-color: #dbeafe !important;
+}
+
+.link-btn,
+.coordinate-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.link-btn {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.link-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.coordinate-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.coordinate-btn:hover {
+  background-color: #2563eb;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+  .page-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .map-section {
+    height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .search-section {
+    flex-direction: column;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .page-content {
+    height: auto;
+  }
+  
+  .map-section {
+    height: 300px;
+  }
+}
