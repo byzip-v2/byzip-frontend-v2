@@ -1,4 +1,6 @@
 // _base.scss
+@use './_variables.scss' as *;
+
 body {
   font-family: 'Pretendard', sans-serif;
   color: $color-text;
