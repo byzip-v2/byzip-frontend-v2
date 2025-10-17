@@ -9,7 +9,6 @@ import axios from 'axios';
 import type { GetMeResponseDto } from 'byzip-v2-sdk';
 import { serverApi } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
-import { getAccessToken } from '@/app/libs/utils/auth';
 
 /**
  * 사용자 정보 조회 Server Action
@@ -23,22 +22,8 @@ import { getAccessToken } from '@/app/libs/utils/auth';
  */
 export async function getUserInfo(): Promise<ActionResult<GetMeResponseDto>> {
   try {
-    const accessToken = await getAccessToken();
-
-    // 토큰이 없는 경우
-    if (!accessToken) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
-    // API 요청 (serverApi 사용, Authorization 헤더 포함)
-    const response = await serverApi.get<GetMeResponseDto>('/users/me', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    // API 요청 
+    const response = await serverApi.get<GetMeResponseDto>('/users/me');
 
     // SDK 응답 구조 검증
     if (response.status != 200 || !response.data) {

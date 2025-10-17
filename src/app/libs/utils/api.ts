@@ -9,6 +9,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios';
 import type { ApiError } from '@/app/libs/types/api';
+import { getAccessToken } from '@/app/libs/utils/auth';
 
 /**
  * API 기본 URL 가져오기
@@ -143,6 +144,8 @@ const createApiClient = (): AxiosInstance => {
 /**
  * Server Actions용 API 클라이언트 생성
  *
+ * @param options - API 클라이언트 설정 옵션
+ * @param options.autoToken - 자동으로 토큰을 추가할지 여부 (기본값: true)
  * @returns {AxiosInstance} 서버 사이드용 Axios 인스턴스
  *
  * @description
@@ -152,12 +155,11 @@ const createApiClient = (): AxiosInstance => {
  * **기본 설정:**
  * - baseURL: 환경변수에서 가져온 API URL
  * - timeout: 10초
- * - headers: Content-Type: application/json, User-Agent
- * - withCredentials: false (서버 사이드에서는 불필요)
+ * - headers: Content-Type: application/json
  *
  * **요청 인터셉터:**
  * - 요청 로깅
- * - 공통 헤더 추가
+ * - autoToken이 true인 경우 자동으로 토큰 추가
  *
  * **응답 인터셉터:**
  * - 응답 로깅
@@ -166,12 +168,21 @@ const createApiClient = (): AxiosInstance => {
  *
  * @example
  * ```typescript
- * // Server Action에서 사용
- * const response = await serverApiClient.post('/auth/login', data);
- * const response = await serverApiClient.get('/users/me');
+ * // 토큰 자동 추가 (기본값)
+ * const apiWithToken = createServerApi();
+ * await apiWithToken.get('/users/me');
+ *
+ * // 토큰 없이 사용 (로그인 API 등)
+ * const apiWithoutToken = createServerApi({ autoToken: false });
+ * await apiWithoutToken.post('/auth/login', data);
  * ```
  */
-export const createServerApi = (): AxiosInstance => {
+export const createServerApi = (
+  options: { autoToken?: boolean } = {},
+): AxiosInstance => {
+  // 기본적으로 토큰을 자동으로 추가
+  const { autoToken = true } = options;
+
   const instance = axios.create({
     baseURL: getApiBaseUrl(),
     timeout: 10000,
@@ -182,11 +193,28 @@ export const createServerApi = (): AxiosInstance => {
 
   // 요청 인터셉터
   instance.interceptors.request.use(
-    (config) => {
+    async (config) => {
       // 요청 로깅
       console.log(
         `🔍 [Server API] ${config.method?.toUpperCase()} ${config.url}`,
       );
+
+      // autoToken이 true인 경우에만 토큰 추가
+      if (autoToken) {
+        try {
+          const accessToken = await getAccessToken();
+
+          if (!accessToken) {
+            throw new Error('로그인이 필요합니다.');
+          }
+
+          config.headers.Authorization = `Bearer ${accessToken}`;
+        } catch (error) {
+          // 토큰이 없거나 가져오기 실패 시 에러 반환
+          console.warn('🔍 [Server API] 토큰을 가져올 수 없습니다:', error);
+          throw error;
+        }
+      }
 
       return config;
     },
@@ -248,9 +276,13 @@ export const createServerApi = (): AxiosInstance => {
 /**
  * 클라이언트 사이드 API 클라이언트 인스턴스
  */
-export const apiClient = createApiClient();
+export const clientApi = createApiClient();
 
 /**
- * 서버 사이드 API 클라이언트 인스턴스
+ * 서버 사이드 API 클라이언트 인스턴스 (토큰 자동 추가)
+ *  * @example
+ * ```typescript
+ * // 토큰 없이 사용 시
+ * await createServerApi({ autoToken: false }).post('/auth/login', data);
  */
 export const serverApi = createServerApi();

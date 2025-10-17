@@ -12,17 +12,8 @@ import type {
   LoginRequestDto,
   TokenDataDto,
 } from 'byzip-v2-sdk';
-import { serverApi } from '@/app/libs/utils/api';
-
-/**
- * 로그인 액션 결과 타입
- */
-export interface LoginActionResult {
-  success: boolean;
-  message: string;
-}
-
-// getApiBaseUrl은 api-client.ts에서 import하여 사용
+import { createServerApi } from '@/app/libs/utils/api';
+import { ActionResult } from 'next/dist/server/app-render/types';
 
 /**
  * 로그인 Server Action
@@ -40,20 +31,17 @@ export interface LoginActionResult {
 export async function loginAction(
   userId: string,
   password: string,
-): Promise<LoginActionResult> {
+): Promise<ActionResult> {
   try {
     const requestBody: LoginRequestDto = {
       userId: userId.trim(),
       password: password,
     };
 
-    console.log('🔍 Request Body:', requestBody);
-
     // API 요청 (serverApi 사용)
-    const response = await serverApi.post<BaseResponseDto<TokenDataDto>>(
-      '/auth/login',
-      requestBody,
-    );
+    const response = await createServerApi({ autoToken: false }).post<
+      BaseResponseDto<TokenDataDto>
+    >('/auth/login', requestBody);
 
     // 응답 성공 시 응답 데이터 확인
     const responseData = response.data;
