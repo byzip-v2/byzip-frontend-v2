@@ -8,15 +8,25 @@ import { redirect } from 'next/navigation';
  */
 
 /**
+ * 현재 사용자의 accessToken을 반환합니다.
+ *
+ * @returns accessToken 값 (string | undefined)
+ */
+export async function getAccessToken(): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('accessToken');
+
+  return accessToken?.value;
+}
+
+/**
  * 현재 사용자의 로그인 상태를 확인합니다.
  *
  * @returns 로그인 여부 (boolean)
  */
 export async function isAuthenticated(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('accessToken');
-
-  return !!accessToken?.value;
+  const accessToken = await getAccessToken();
+  return !!accessToken;
 }
 
 /**
