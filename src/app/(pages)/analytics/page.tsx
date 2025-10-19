@@ -1,32 +1,23 @@
 import styles from '@/styles/pages/analytics/Analytics.module.scss';
-import axios from 'axios';
-
-interface DailyVisitor {
-  date: string; // 예: "2025-06-23"
-  activeUsers: number;
-}
-
-interface OSVisitor {
-  os: string; // 예: "iOS", "Windows"
-  activeUsers: number;
-}
-
-interface TopPage {
-  path: string; // 예: "/home", "/detail/abc"
-  pageViews: number;
-}
-
-interface AnalyticsData {
-  dailyVisitors: DailyVisitor[];
-  osVisitors: OSVisitor[];
-  topPages: TopPage[];
-}
+import { getAnalyticsData } from './actions';
 
 export default async function Page() {
-  const res = await axios.get<AnalyticsData>(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/analytics`,
-  );
-  const data = res.data;
+  const result = await getAnalyticsData();
+
+  if (!result.success || !result.data) {
+    return (
+      <div className={styles.summaryWrapper}>
+        <div className={styles.summaryGrid}>
+          <section className={styles.summarySection}>
+            <h2>❌ 오류</h2>
+            <p>{result.message}</p>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  const data = result.data;
 
   return (
     <div className={styles.summaryWrapper}>
