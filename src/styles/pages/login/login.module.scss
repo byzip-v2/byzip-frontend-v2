@@ -1,12 +1,14 @@
+@import '../../_variables.scss';
+
 
 .wrapper {
   position: relative;
   min-height: 100vh;
-  background-color: #ffffff;
+  background-color: $color-white;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Pretendard', sans-serif;
+  font-family: $font-family-base;
 }
 
 .header {
@@ -24,15 +26,15 @@
   span {
     font-size: 18px;
     font-weight: 600;
-    color: #333;
+    color: $color-text-primary;
   }
 }
 
 .card {
-  background-color: #fff;
+  background-color: $color-white;
   padding: 48px;
   border-radius: 16px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);  
   width: 400px;
 }
 
@@ -57,10 +59,10 @@
 .inputWithIcon {
   display: flex;
   align-items: center;
-  border: 1px solid #ccc;
+  border: 1px solid $color-text-secondary;
   border-radius: 8px;
   padding: 0 12px;
-  background-color: #fff;
+  background-color: $color-white;
 
   input {
     flex: 1;
@@ -75,7 +77,7 @@
   }
 
   &.fakeDisabled {
-    background-color: #f0f0f0;
+    background-color: $color-white;
 
     input {
       color: #999;
@@ -83,7 +85,7 @@
   }
 
   &.focused {
-    background-color: #fff;
+    background-color: $color-white;
   }
 }
 
@@ -91,13 +93,13 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #666;
+  color: $color-text-secondary;
   margin-left: 8px;
   display: flex;
   align-items: center;
 
   &:hover {
-    color: #000;
+    color: $color-text-primary;
   }
 }
 
@@ -115,7 +117,7 @@
 .signInBtn {
   width: 100%;
   padding: 12px;
-  background-color: #377dff;
+  background-color: $color-primary;
   color: white;
   font-weight: bold;
   border: none;
@@ -123,12 +125,12 @@
   cursor: pointer;
 
   &:hover {
-    background-color: #2563eb;
+    background-color: $color-primary;
   }
 
   &:disabled {
-    background-color: #ccc;
+    background-color: $color-gray;
     cursor: not-allowed;
-    color: #eee;
+    color: $color-white;
   }
 }

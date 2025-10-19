@@ -1,15 +1,25 @@
+import localFont from "next/font/local";
 import type {Metadata} from "next";
-import {Geist, Geist_Mono} from "next/font/google";
 import "../styles/main.scss";
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
+// Pretendard 폰트 로드
+const pretendard = localFont({
+  src: [
+    { path: "../fonts/Pretendard-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/Pretendard-Bold.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-pretendard", // SCSS에서 쓸 CSS 변수명
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
+// PyeongChang 폰트 로드
+const pyeongchang = localFont({
+  src: [
+    { path: "../fonts/PyeongChang-Regular.otf", weight: "400", style: "normal" },
+    { path: "../fonts/PyeongChang-Bold.otf", weight: "700", style: "normal" },
+  ],
+  variable: "--font-pyeongchang",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -23,8 +33,11 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <html lang="ko">
+        <head>
+            <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        </head>
+        <body className={`${pretendard.variable} ${pyeongchang.variable}`}>
         {children}
         </body>
         </html>

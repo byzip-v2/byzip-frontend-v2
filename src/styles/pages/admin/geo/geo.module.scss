@@ -1,0 +1,237 @@
+@import '../../../_variables.scss';
+
+// 좌표 관리 페이지 스타일
+.geoPage {
+  padding: 24px;
+  font-family: $font-family-base;
+  height: 100vh;
+  background-color: $color-white;
+}
+
+.pageHeader {
+  padding: 24px 24px 0 24px;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  padding-left: 24px;
+  font-family: $font-family-accent;
+}
+
+// 지도 영역
+.mapSection {
+  padding: 16px;
+  position: relative;
+}
+
+.mapHeader {
+  margin-bottom: 16px;
+}
+
+.searchSection {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  flex: 1;
+  
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+}
+
+.searchBtn {
+  background-color: $color-primary;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: darken($color-primary, 10%);
+  }
+}
+
+.pageContent {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 24px;
+  height: calc(100vh - 120px);
+  margin: 20px 24px 0 24px;
+}
+
+.mapContainer {
+  position: relative;
+  height: calc(100% - 60px);
+  background-color: #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mapPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 24px;
+  color: #64748b;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+.mapNote {
+  font-size: 14px;
+  margin-top: 8px;
+  color: #94a3b8;
+}
+
+.mapOverlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.overlayContent {
+  text-align: center;
+}
+
+.overlayTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+  font-family: $font-family-accent;
+}
+
+.overlayAddress,
+.overlayCoordinates {
+  font-size: 14px;
+  color: $color-text-secondary;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.addCoordinateBtn {
+  background-color: $color-primary;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: darken($color-primary, 10%);
+  }
+}
+
+// 테이블 영역
+.tableSection {
+  background-color: $color-white;
+  padding: 20px;
+}
+
+.tableTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin: 0 0 16px 0;
+  font-family: $font-family-accent;
+
+  span{
+    color: $color-primary;
+    font-weight: 800;
+  }
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: solid 1px $color-gray;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.dataTable th {
+  background-color: $color-gray;
+  color: $color-text-primary;
+  font-weight: 600;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid $color-gray;
+  white-space: nowrap;
+
+  &:last-child, &:nth-child(3){
+    text-align: center;
+  }
+}
+
+.dataTable td {
+  padding: 12px;
+  border-bottom: 1px solid $color-white;
+  color: $color-text-primary;
+  white-space: normal;   
+  word-break: break-word; 
+
+  &:last-child, &:nth-child(3){
+    text-align: center;
+  }
+}
+
+.dataTable tr:hover {
+  background-color: #f9fafb;
+}
+
+.highlightedRow {
+  background-color: #eff6ff !important;
+  
+  &:hover {
+    background-color: #dbeafe !important;
+  }
+}
+
+.linkBtn,
+.coordinateBtn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+
+  background-color: $color-primary;
+  color: $color-white;
+  white-space: nowrap;
+  
+  &:hover {
+    background-color: darken($color-primary, 10%);
+  }
+}
+

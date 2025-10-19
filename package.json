@@ -1,3 +1,5 @@
+
+
 {
   "name": "by-zip-v2",
   "version": "0.1.0",
@@ -25,11 +27,10 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.0",
     "@eslint/eslintrc": "^3",
-    "@storybook/addon-a11y": "^9.0.10",
-    "@storybook/addon-docs": "^9.0.10",
-    "@storybook/addon-onboarding": "^9.0.10",
-    "@storybook/addon-vitest": "^9.0.10",
-    "@storybook/nextjs-vite": "^9.0.10",
+    "@storybook/addon-a11y": "^9.1.13",
+    "@storybook/addon-docs": "^9.1.13",
+    "@storybook/addon-onboarding": "^9.1.13",
+    "@storybook/nextjs": "^9.1.13",
     "@types/navermaps": "^3.9.1",
     "@types/node": "^20",
     "@types/react": "^19",
