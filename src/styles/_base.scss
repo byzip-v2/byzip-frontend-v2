@@ -1,9 +1,11 @@
 // _base.scss
+@use './_variables.scss' as *;
+
 body {
-  font-family: 'Pretendard', sans-serif;
-  color: $color-text-primary;
+  font-family: var(--font-pretendard);
+  color: var(--color-text-primary);
   background: #fff;
-  font-size: $font-base;
+  font-size: var(--font-base);
   margin: 0;
   padding: 0;
 }

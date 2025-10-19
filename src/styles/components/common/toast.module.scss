@@ -1,0 +1,45 @@
+@import '@/styles/_variables.scss';
+
+.toast {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 40px;
+  border-radius: 80px;
+  color: $color-white;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: $font-family-base;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  animation: fadeInOut 3s ease forwards;
+  z-index: 9999;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-block;
+  min-width: 240px;
+  max-width: 600px;
+
+  &.success {
+    background-color: $color-primary; 
+  }
+
+  &.error {
+    background-color: $color-error; 
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 30px);
+  }
+  10%, 90% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+}

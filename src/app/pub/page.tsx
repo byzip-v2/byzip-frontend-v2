@@ -22,7 +22,7 @@ export default function PubListPage() {
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>📄 퍼블리싱 리스트</h1>
-            {pubSections.map((section, sectionIdx) => (
+            {pubSections.map((section) => (
                 <div key={section.category}>
                     <h2 className={styles.category}>{section.category}</h2>
                     <table className={styles.table}>

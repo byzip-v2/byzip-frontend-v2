@@ -2,6 +2,9 @@
 
 import styles from '@/styles/pages/admin/admin-layout.module.scss';
 import { BarChart3, Folder, LayoutDashboard, Users } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+
 
 export default function AdminLayout({
   children,
@@ -14,7 +17,7 @@ export default function AdminLayout({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.logo}>
-            <img src="/images/admin/logo.png" alt="분양모음집 로고" className={styles.logoIcon} />
+            <Image src="/images/admin/logo.png" alt="분양모음집 로고" className={styles.logoIcon} width={100} height={100} />
             <div className={styles.logoText}>
               <div className={styles.serviceName}>분양모음집</div>
               <div className={styles.adminLabel}>관리자</div>
@@ -31,7 +34,7 @@ export default function AdminLayout({
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <div className={styles.sidebarLogo}>
-              <img src="/images/byzip_logo.png" alt="분양모음집 로고" className={styles.sidebarLogoIcon} />
+              <Image src="/images/byzip_logo.png" alt="분양모음집 로고" className={styles.sidebarLogoIcon} width={100} height={100} />
               <div className={styles.sidebarLogoText}>
                 <div className={styles.sidebarServiceName}>분양모음집</div>
                 <div className={styles.sidebarAdminLabel}>관리자</div>
@@ -42,28 +45,28 @@ export default function AdminLayout({
           <nav className={styles.sidebarNav}>
             <ul className={styles.navList}>
               <li className={styles.navItem}>
-                <a href="/" className={styles.navLink}>
+                <Link href="/" className={styles.navLink}>
                   <LayoutDashboard className={styles.navIcon} size={20} />
                   <span className={styles.navText}>Dashboard</span>
-                </a>
+                </Link>
               </li>
               <li className={styles.navItem}>
-                <a href="/" className={styles.navLink}>
+                <Link href="/" className={styles.navLink}>
                   <Folder className={styles.navIcon} size={20} />
                   <span className={styles.navText}>분양공고 관리</span>
-                </a>
+                </Link>
               </li>
               <li className={`${styles.navItem} ${styles.active}`}>
-                <a href="/pub/admin/geo" className={styles.navLink}>
+                <Link href="/pub/admin/geo" className={styles.navLink}>
                 <Users className={styles.navIcon} size={20} />
                   <span className={styles.navText}>좌표 관리</span>
-                </a>
+                </Link>
               </li>
               <li className={styles.navItem}>
-                <a href="/" className={styles.navLink}>
+                <Link href="/" className={styles.navLink}>
                   <BarChart3 className={styles.navIcon} size={20} />
                   <span className={styles.navText}>버그리포트</span>
-                </a>
+                </Link>
               </li>
             </ul>
           </nav>

@@ -1,14 +1,36 @@
 'use client';
 
+import Toast from '@/app/components/common/Toast/Toast';
 import styles from '@/styles/pages/admin/geo/geo.module.scss';
+import { useState } from 'react';
 
 export default function GeoPage() {
+
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'error') => {
+    setToast({ msg, type });
+  };
+
+  // 좌표 등록 버튼
+  const handleAddCoordinate = async () => {
+    try {
+      // api 로직
+
+      // 성공 시
+      showToast('좌표가 성공적으로 추가되었습니다.', 'success');
+    } catch (error) {
+      console.error(error);
+      // 실패 시
+      showToast('좌표 추가에 실패했습니다. 다시 시도해주세요.', 'error');
+    }
+  };
+
   return (
     <div className={styles.geoPage}>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>좌표 관리</h1>
       </div>
-
       <div className={styles.pageContent}>
         {/* 지도 영역 */}
         <div className={styles.mapSection}>
@@ -38,7 +60,7 @@ export default function GeoPage() {
                 <p className={styles.overlayCoordinates}>
                   위도: 37.5765261 / 경도: 126.9750486
                 </p>
-                <button className={styles.addCoordinateBtn}>공고에 현재 좌표 추가하기</button>
+                <button className={styles.addCoordinateBtn} onClick={handleAddCoordinate} >공고에 현재 좌표 추가하기</button>
               </div>
             </div>
           </div>
@@ -113,6 +135,8 @@ export default function GeoPage() {
           </div>
         </div>
       </div>
+      {/* 토스트 알림 */}
+      {toast && <Toast key={Date.now()} message={toast.msg} type={toast.type} />}
     </div>
   );
 }

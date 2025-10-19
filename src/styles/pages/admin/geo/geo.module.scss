@@ -17,6 +17,7 @@
   font-weight: 600;
   color: #333;
   margin: 0;
+  padding-left: 24px;
   font-family: $font-family-accent;
 }
 
@@ -224,18 +225,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
-}
 
-.linkBtn {
-  background-color: $color-white;
-  color: $color-text-primary;
-  
-  &:hover {
-    background-color: $color-gray;
-  }
-}
-
-.coordinateBtn {
   background-color: $color-primary;
   color: $color-white;
   white-space: nowrap;
@@ -244,5 +234,4 @@
     background-color: darken($color-primary, 10%);
   }
 }
-
 
