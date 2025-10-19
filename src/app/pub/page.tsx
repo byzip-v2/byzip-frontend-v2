@@ -15,8 +15,8 @@ const pubSections = [
             {name: '캘린더', path: '/pub/calendar', note: 'v.1.0_', status: '진행중'},
         ],
     },
-];
 
+];
 
 export default function PubListPage() {
     return (
@@ -46,26 +46,26 @@ export default function PubListPage() {
                                     </Link>
                                 </td>
                                 <td>
+
                     <span
-                        className={`${styles.badge} ${
-                            page.status === '완료'
-                                ? styles.done
-                                : page.status === '진행중'
-                                    ? styles.progress
-                                    : ''
-                        }`}
+                      className={`${styles.badge} ${
+                        page.status === '완료'
+                          ? styles.done
+                          : page.status === '진행중'
+                            ? styles.progress
+                            : ''
+                      }`}
                     >
                       {page.status}
                     </span>
-                                </td>
-                                <td>{page.note}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-            ))}
-
+                  </td>
+                  <td>{page.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-    );
+      ))}
+    </div>
+  );
 }
