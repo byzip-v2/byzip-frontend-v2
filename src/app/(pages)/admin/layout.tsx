@@ -1,42 +1,23 @@
-'use client';
-
 import styles from '@/styles/pages/admin/admin-layout.module.scss';
-import { BarChart3, Folder, LayoutDashboard, Users } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { getUserInfo } from './actions';
+import NavigationMenu from '@/app/(pages)/admin/components/NavigationMenu';
+import UserInfo from '@/app/(pages)/admin/components/UserInfo';
+import { requireAuth } from '@/app/libs/utils/auth';
 
-// 네비게이션 메뉴 
-const navigationItems = [
-  {
-    label: '대시보드',
-    href: '/admin',
-    icon: LayoutDashboard,
-  },
-  {
-    label: '분양공고 관리',
-    href: '/admin/properties',
-    icon: Folder,
-  },
-  {
-    label: '좌표 관리',
-    href: '/admin/geo',
-    icon: Users,
-  },
-  {
-    label: '버그리포트',
-    href: '/admin/bugs',
-    icon: BarChart3,
-  },
-];
-
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  
+  // 로그인하지 않은 사용자는 로그인 페이지로 리다이렉트
+  await requireAuth('/login');
+
+  // 사용자 정보 가져오기
+  const userInfoResult = await getUserInfo();
+  const userInfo =
+    userInfoResult.success && userInfoResult.data ? userInfoResult.data : null;
+
   return (
     <div className={styles.adminLayout}>
       {/* 헤더 */}
@@ -57,10 +38,7 @@ export default function AdminLayout({
           </div>
         </div>
         <div className={styles.headerRight}>
-          <h1 className={styles.pageTitle}>
-            {navigationItems.find((item) => item.href === pathname)?.label ||
-              '관리자'}
-          </h1>
+          <h1 className={styles.pageTitle}>관리자</h1>
         </div>
       </header>
 
@@ -84,35 +62,10 @@ export default function AdminLayout({
           </div>
 
           {/* 네비게이션 메뉴 */}
-          <nav className={styles.sidebarNav}>
-            <ul className={styles.navList}>
-              {navigationItems.map((item) => {
-                const IconComponent = item.icon;
-                const isActive = pathname === item.href;
-
-                return (
-                  <li
-                    key={item.label}
-                    className={`${styles.navItem} ${isActive ? styles.active : ''}`}
-                  >
-                    <Link href={item.href} className={styles.navLink}>
-                      <IconComponent className={styles.navIcon} size={20} />
-                      <span className={styles.navText}>{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <NavigationMenu />
 
           {/* 사용자 정보 */}
-          <div className={styles.userInfo}>
-            <div className={styles.userDetails}>
-              <div className={styles.userName}>박성환</div>
-              <div className={styles.userEmail}>psh@by-zip.com</div>
-            </div>
-            <button className={styles.logoutBtn}>로그아웃</button>
-          </div>
+          <UserInfo userInfo={userInfo} />
         </aside>
 
         {/* 메인 콘텐츠 */}
