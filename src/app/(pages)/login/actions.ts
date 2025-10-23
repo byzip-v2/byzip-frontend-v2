@@ -12,7 +12,7 @@ import type {
   LoginRequestDto,
   TokenDataDto,
 } from 'byzip-v2-sdk';
-import { createServerApi } from '@/app/libs/utils/api';
+import { serverApiWithoutToken } from '@/app/libs/utils/api';
 import { ActionResult } from 'next/dist/server/app-render/types';
 
 /**
@@ -39,7 +39,7 @@ export async function loginAction(
     };
 
     // API 요청 (serverApi 사용)
-    const response = await createServerApi({ autoToken: false }).post<
+    const response = await serverApiWithoutToken.post<
       BaseResponseDto<TokenDataDto>
     >('/auth/login', requestBody);
 

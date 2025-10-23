@@ -4,7 +4,7 @@
  * 분석 페이지 Server Actions
  */
 
-import { createServerApi } from '@/app/libs/utils/api';
+import { serverApiWithoutToken } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 
 interface DailyVisitor {
@@ -34,9 +34,9 @@ export interface AnalyticsData {
 export async function getAnalyticsData(): Promise<ActionResult<AnalyticsData>> {
   try {
     // API 요청 (serverApi가 자동으로 토큰 추가)
-    const response = await createServerApi({
-      autoToken: false,
-    }).get<AnalyticsData>(`${process.env.NEXT_PUBLIC_BASE_URL}/api/analytics`);
+    const response = await serverApiWithoutToken.get<AnalyticsData>(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/analytics`,
+    );
 
     // 응답 구조 검증
     if (response.status !== 200 || !response.data) {
