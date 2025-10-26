@@ -13,15 +13,31 @@ interface TableData {
 }
 
 // InfoWindow용 JSX 컴포넌트
-const InfoWindowContent = () => (
+const InfoWindowContent = ({
+  title,
+  roadAddress,
+  jibunAddress,
+  coords,
+}: {
+  title: string | undefined;
+  roadAddress: string | undefined;
+  jibunAddress: string | undefined;
+  coords: { lat: number; lng: number } | null;
+}) => (
   <div className={styles.mapOverlay}>
     <div className={styles.overlayContent}>
-      <h3 className={styles.overlayTitle}>[모집공고명] 군산소룡신도시</h3>
+      {title && <h3 className={styles.overlayTitle}>[모집공고명] {title}</h3>}
       <p className={styles.overlayAddress}>
-        도로명 주소: 전북특별자치도 정읍시 수성2로 13-12(수성동) 주공1단지아파트
+        도로명 주소: {roadAddress || '찾을 수 없습니다'}
       </p>
+      {jibunAddress && (
+        <p className={styles.overlayAddress}>
+          지번 주소: {jibunAddress || '찾을 수 없습니다'}
+        </p>
+      )}
       <p className={styles.overlayCoordinates}>
-        위도: 37.5765261 / 경도: 126.9750486
+        위도: {coords?.lat.toFixed(7) || '찾을 수 없습니다'} / 경도:{' '}
+        {coords?.lng.toFixed(7) || '찾을 수 없습니다'}
       </p>
       <button className={styles.addCoordinateBtn}>
         공고에 현재 좌표 추가하기
@@ -70,7 +86,6 @@ export default function GeoPage() {
   ]);
 
   const [searchAddress, setSearchAddress] = useState<string>('');
-  const [showMapOverlay, setShowMapOverlay] = useState<boolean>(false);
   const [selectedData, setSelectedData] = useState<TableData | null>(null);
 
   // 네이버 지도 API 로드 확인
@@ -113,15 +128,15 @@ export default function GeoPage() {
   };
 
   // 주소 검색 시 좌표로 변환
-  const searchAddressToCoordinate = () => {
-    if (!searchAddress.trim()) return;
+  const searchAddressToCoordinate = (address: string, title?: string) => {
+    if (!address.trim()) return;
 
     if (!checkNaverMapsLoaded()) {
       console.error('네이버 지도 API가 로드되지 않았습니다.');
       return;
     }
 
-    naver.maps.Service.geocode({ query: searchAddress }, (status, response) => {
+    naver.maps.Service.geocode({ query: address }, (status, response) => {
       if (status === naver.maps.Service.Status.ERROR) {
         alert('주소를 찾을 수 없습니다.');
         return;
@@ -140,23 +155,15 @@ export default function GeoPage() {
 
       mapRef.current?.setCenter(point);
 
-      // mapOverlay가 표시되어 있다면 좌표 정보 업데이트
-      if (showMapOverlay && selectedData) {
-        setShowMapOverlay(true);
-      }
-
-      const htmlAddresses = [];
-
-      if (item.roadAddress) {
-        htmlAddresses.push(`[도로명 주소] ${item.roadAddress}`);
-      }
-
-      if (item.jibunAddress) {
-        htmlAddresses.push(`[지번 주소] ${item.jibunAddress}`);
-      }
-
-      // JSX 컴포넌트를 HTML 문자열로 변환
-      const htmlContent = renderToString(<InfoWindowContent />);
+      // JSX 컴포넌트를 HTML 문자열로 변환 (동적 데이터 전달)
+      const htmlContent = renderToString(
+        <InfoWindowContent
+          title={title}
+          roadAddress={item.roadAddress}
+          jibunAddress={item.jibunAddress}
+          coords={{ lat: parseFloat(item.y), lng: parseFloat(item.x) }}
+        />,
+      );
 
       infowindowRef.current?.setContent(htmlContent);
       infowindowRef.current?.open(mapRef.current!, point);
@@ -190,11 +197,10 @@ export default function GeoPage() {
         const items = response.v2.results;
         if (!items.length) return;
 
-        const htmlAddresses: string[] = [];
+        let roadAddress = '';
+        let jibunAddress = '';
 
         items.forEach((item) => {
-          const addrType =
-            item.name === 'roadaddr' ? '[도로명 주소]' : '[지번 주소]';
           const address =
             item.region.area1.name +
             ' ' +
@@ -208,11 +214,23 @@ export default function GeoPage() {
             (item.land.number2 ? '-' + item.land.number2 : '') +
             (item.land.addition0?.value ? ' ' + item.land.addition0.value : '');
 
-          htmlAddresses.push(`${addrType} ${address}`);
+          // 도로명 주소와 지번 주소 저장
+          if (item.name === 'roadaddr') {
+            roadAddress = address;
+          } else if (item.name === 'addr') {
+            jibunAddress = address;
+          }
         });
 
-        // JSX 컴포넌트를 HTML 문자열로 변환
-        const htmlContent = renderToString(<InfoWindowContent />);
+        // JSX 컴포넌트를 HTML 문자열로 변환 (동적 데이터 전달)
+        const htmlContent = renderToString(
+          <InfoWindowContent
+            title={selectedData?.title}
+            roadAddress={roadAddress}
+            jibunAddress={jibunAddress}
+            coords={{ lat: latlng.y, lng: latlng.x }}
+          />,
+        );
         infowindowRef.current?.setContent(htmlContent);
         infowindowRef.current?.open(mapRef.current!, latlng);
       },
@@ -223,7 +241,7 @@ export default function GeoPage() {
   const handleCoordinateSearch = (data: TableData) => {
     setSearchAddress(data.address);
     setSelectedData(data);
-    searchAddressToCoordinate();
+    searchAddressToCoordinate(data.address, data.title);
   };
 
   return (
@@ -259,13 +277,13 @@ export default function GeoPage() {
                   onChange={(e) => setSearchAddress(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      searchAddressToCoordinate();
+                      searchAddressToCoordinate(searchAddress);
                     }
                   }}
                 />
                 <button
                   className={styles.searchBtn}
-                  onClick={searchAddressToCoordinate}
+                  onClick={() => searchAddressToCoordinate(searchAddress)}
                 >
                   좌표 검색
                 </button>
@@ -291,10 +309,14 @@ export default function GeoPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tableData.map((data, index) => (
+                  {tableData.map((data) => (
                     <tr
                       key={data.id}
-                      className={index === 0 ? styles.highlightedRow : ''}
+                      className={
+                        selectedData?.id === data.id
+                          ? styles.highlightedRow
+                          : ''
+                      }
                     >
                       <td>{data.title}</td>
                       <td>{data.address}</td>
