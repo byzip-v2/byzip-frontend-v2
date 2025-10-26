@@ -1,9 +1,8 @@
 import Link from 'next/link';
 
 const links = [
-  { href: '/login', label: '로그인' },
+  { href: '/admin', label: '관리자' },
   { href: '/analytics', label: '구글 애널리틱스' },
-  { href: '/map', label: '지도 좌표 변환' },
   { href: '/pub', label: '퍼블 리스트' },
 ];
 

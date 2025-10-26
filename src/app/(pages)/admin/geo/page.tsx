@@ -49,6 +49,10 @@ const InfoWindowContent = ({
 export default function GeoPage() {
   const mapRef = useRef<naver.maps.Map | null>(null);
   const infowindowRef = useRef<naver.maps.InfoWindow | null>(null);
+  // mapRef 클로저 문제로 인해 선택된 데이터를 ref로 관리
+  const selectedDataRef = useRef<TableData | null>(null);
+
+  const [searchAddress, setSearchAddress] = useState<string>('');
 
   // 테이블 데이터
   const [tableData] = useState<TableData[]>([
@@ -84,9 +88,6 @@ export default function GeoPage() {
       link: 'https://example.com',
     },
   ]);
-
-  const [searchAddress, setSearchAddress] = useState<string>('');
-  const [selectedData, setSelectedData] = useState<TableData | null>(null);
 
   // 네이버 지도 API 로드 확인
   const checkNaverMapsLoaded = () => {
@@ -128,7 +129,7 @@ export default function GeoPage() {
   };
 
   // 주소 검색 시 좌표로 변환
-  const searchAddressToCoordinate = (address: string, title?: string) => {
+  const searchAddressToCoordinate = (address: string) => {
     if (!address.trim()) return;
 
     if (!checkNaverMapsLoaded()) {
@@ -158,7 +159,7 @@ export default function GeoPage() {
       // JSX 컴포넌트를 HTML 문자열로 변환 (동적 데이터 전달)
       const htmlContent = renderToString(
         <InfoWindowContent
-          title={title}
+          title={selectedDataRef.current?.title}
           roadAddress={item.roadAddress}
           jibunAddress={item.jibunAddress}
           coords={{ lat: parseFloat(item.y), lng: parseFloat(item.x) }}
@@ -225,7 +226,7 @@ export default function GeoPage() {
         // JSX 컴포넌트를 HTML 문자열로 변환 (동적 데이터 전달)
         const htmlContent = renderToString(
           <InfoWindowContent
-            title={selectedData?.title}
+            title={selectedDataRef.current?.title}
             roadAddress={roadAddress}
             jibunAddress={jibunAddress}
             coords={{ lat: latlng.y, lng: latlng.x }}
@@ -240,8 +241,8 @@ export default function GeoPage() {
   // 좌표 찾기 버튼 클릭 핸들러
   const handleCoordinateSearch = (data: TableData) => {
     setSearchAddress(data.address);
-    setSelectedData(data);
-    searchAddressToCoordinate(data.address, data.title);
+    selectedDataRef.current = data; // ref 업데이트
+    searchAddressToCoordinate(data.address);
   };
 
   return (
@@ -313,7 +314,7 @@ export default function GeoPage() {
                     <tr
                       key={data.id}
                       className={
-                        selectedData?.id === data.id
+                        selectedDataRef.current?.id === data.id
                           ? styles.highlightedRow
                           : ''
                       }
