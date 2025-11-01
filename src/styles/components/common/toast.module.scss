@@ -2,17 +2,15 @@
 
 .toast {
   position: fixed;
-  bottom: 48px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 20px;
+  right: 20px;
   padding: 10px 40px;
   border-radius: 80px;
   color: $color-white;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   font-family: $font-family-base;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  animation: fadeInOut 3s ease forwards;
   z-index: 9999;
   text-align: center;
   white-space: nowrap;
@@ -20,27 +18,33 @@
   min-width: 240px;
   max-width: 600px;
 
-  &.success {
-    background-color: $color-primary;
+  &.enter {
+    animation: slideInFromRight 500ms ease forwards;
   }
 
-  &.error {
-    background-color: $color-error;
+  &.exit {
+    animation: slideOutToRight 500ms ease forwards;
   }
 }
 
-@keyframes fadeInOut {
-  0% {
+@keyframes slideInFromRight {
+  from {
     opacity: 0;
-    transform: translate(-50%, 30px);
+    transform: translateX(24px);
   }
-  10%,
-  90% {
+  to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateX(0);
   }
-  100% {
+}
+
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
     opacity: 0;
-    transform: translate(-50%, 10px);
+    transform: translateX(24px);
   }
 }

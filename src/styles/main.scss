@@ -1,5 +1,17 @@
-@use "./_variables.scss";
+@use "./_variables.scss" as *;
 @use "./_base.scss";
+
+
+
+:root {
+  --color-primary: #{$color-primary};
+  --color-secondary: #{$color-secondary};
+  --color-error: #{$color-error};
+  --color-white: #{$color-white};
+  --color-gray: #{$color-gray};
+  --color-text-primary: #{$color-text-primary};
+  --color-text-secondary: #{$color-text-secondary};
+}
 
 
 // reset & base style
