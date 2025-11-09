@@ -7,7 +7,7 @@
 
 import axios from 'axios';
 import type { GetMeResponseDto } from 'byzip-v2-sdk';
-import { serverApi } from '@/app/libs/utils/api';
+import { serverApiWithToekn } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 
 /**
@@ -22,8 +22,9 @@ import type { ActionResult } from '@/app/libs/types/api';
  */
 export async function getUserInfo(): Promise<ActionResult<GetMeResponseDto>> {
   try {
-    // API 요청 
-    const response = await serverApi.get<GetMeResponseDto>('/users/me');
+    // API 요청 (토큰 자동 포함)
+    const response =
+      await serverApiWithToekn.get<GetMeResponseDto>('/users/me');
 
     // SDK 응답 구조 검증
     if (response.status != 200 || !response.data) {

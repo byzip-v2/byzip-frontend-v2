@@ -90,7 +90,7 @@ export default function LoginForm() {
           <LucideMail size={16} />
           <input
             type="text"
-            placeholder="아이디를 입력하세요"
+            placeholder="아이디를 입력해 주세요."
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             disabled={isPending}
@@ -107,7 +107,7 @@ export default function LoginForm() {
           <Lock size={16} />
           <input
             type={showPassword ? 'text' : 'password'}
-            placeholder="비밀번호를 입력하세요"
+            placeholder="비밀번호를 입력해 주세요."
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onFocus={() => setPwFocused(true)}

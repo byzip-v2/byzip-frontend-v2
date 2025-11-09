@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { logoutAction } from '@/app/(pages)/login/actions';
+import styles from '@/styles/pages/admin/admin-layout.module.scss';
 
 export default function LogoutButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,15 +29,7 @@ export default function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={isLoading}
-      style={{
-        padding: '8px 16px',
-        backgroundColor: '#dc3545',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: isLoading ? 'not-allowed' : 'pointer',
-        opacity: isLoading ? 0.6 : 1,
-      }}
+      className={styles.logoutBtn}
     >
       {isLoading ? '로그아웃 중...' : '로그아웃'}
     </button>
