@@ -145,7 +145,7 @@ const createApiClient = (): AxiosInstance => {
  * Server Actions용 API 클라이언트 생성
  *
  * @param options - API 클라이언트 설정 옵션
- * @param options.autoToken - 자동으로 토큰을 추가할지 여부 (기본값: true)
+ * @param options.autoToken - 자동으로 토큰을 추가할지 여부
  * @returns {AxiosInstance} 서버 사이드용 Axios 인스턴스
  *
  * @description
@@ -166,22 +166,11 @@ const createApiClient = (): AxiosInstance => {
  * - 에러 표준화
  * - 네트워크 에러 처리
  *
- * @example
- * ```typescript
- * // 토큰 자동 추가 (기본값)
- * const apiWithToken = createServerApi();
- * await apiWithToken.get('/users/me');
- *
- * // 토큰 없이 사용 (로그인 API 등)
- * const apiWithoutToken = createServerApi({ autoToken: false });
- * await apiWithoutToken.post('/auth/login', data);
- * ```
  */
-export const createServerApi = (
-  options: { autoToken?: boolean } = {},
-): AxiosInstance => {
-  // 기본적으로 토큰을 자동으로 추가
-  const { autoToken = true } = options;
+export const createServerApi = (options: {
+  autoToken: boolean;
+}): AxiosInstance => {
+  const { autoToken } = options;
 
   const instance = axios.create({
     baseURL: getApiBaseUrl(),
@@ -279,10 +268,7 @@ export const createServerApi = (
 export const clientApi = createApiClient();
 
 /**
- * 서버 사이드 API 클라이언트 인스턴스 (토큰 자동 추가)
- *  * @example
- * ```typescript
- * // 토큰 없이 사용 시
- * await createServerApi({ autoToken: false }).post('/auth/login', data);
+ * 서버 사이드 API 클라이언트 인스턴스
  */
-export const serverApi = createServerApi();
+export const serverApiWithToekn = createServerApi({ autoToken: true });
+export const serverApiWithoutToken = createServerApi({ autoToken: false });
