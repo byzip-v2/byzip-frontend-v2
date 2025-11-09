@@ -11,7 +11,7 @@ function createMarkerEl(opts: { title: string; addr?: string; badge?: string }) 
   el.className = 'bz-marker';
   el.innerHTML = `
     <div class="label">
-      <span class="title">도로명주소: </span>
+      <span class="title">도로명주소:</span>
       ${opts.addr ? `<span class="addr">${opts.addr}</span>` : ''}
     </div>
   `;
