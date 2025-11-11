@@ -4,6 +4,9 @@ import { getUserInfo } from './actions';
 import NavigationMenu from '@/app/(pages)/admin/components/NavigationMenu';
 import UserInfo from '@/app/(pages)/admin/components/UserInfo';
 
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({
   children,
 }: {

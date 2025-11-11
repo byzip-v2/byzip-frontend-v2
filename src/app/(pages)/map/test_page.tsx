@@ -1,12 +1,15 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Script from 'next/script';
 import styles from '@/styles/pages/map/Map.module.scss';
 
-
 // 퍼블 마커 DOM 생성 (전역 CSS .bz-marker 사용)
-function createMarkerEl(opts: { title: string; addr?: string; badge?: string }) {
+function createMarkerEl(opts: {
+  title: string;
+  addr?: string;
+  badge?: string;
+}) {
   const el = document.createElement('div');
   el.className = 'bz-marker';
   el.innerHTML = `
@@ -41,39 +44,37 @@ export default function MapPage() {
 
   const [ready, setReady] = useState(false); // ✅ SDK/맵 로드 플래그
 
-
   // ⭐ 커스텀 마커 올리기/교체
-// upsertMarker: 위치/HTML 갱신
-const upsertMarker = (
-  position: naver.maps.LatLng,
-  payload: { title: string; addr?: string; badge?: string }
-) => {
-  const el = createMarkerEl(payload); // 네가 만든 HTML 엘리먼트
+  // upsertMarker: 위치/HTML 갱신
+  const upsertMarker = (
+    position: naver.maps.LatLng,
+    payload: { title: string; addr?: string; badge?: string },
+  ) => {
+    const el = createMarkerEl(payload); // 네가 만든 HTML 엘리먼트
 
-  // 클릭 이벤트(선택)
-  naver.maps.Event.addDOMListener(el, 'click', () => {
-    // 상세 패널 오픈 등
-  });
-
-  const icon = {
-    content: el,                                     // ⭐ HTML 넣기
-    anchor: new naver.maps.Point(24, 48),            // 핀 하단이 좌표를 가리키게 조정
-  };
-
-  if (!markerRef.current) {
-    markerRef.current = new naver.maps.Marker({
-      map: mapRef.current!,
-      position,
-      icon,
-      zIndex: 10,
+    // 클릭 이벤트(선택)
+    naver.maps.Event.addDOMListener(el, 'click', () => {
+      // 상세 패널 오픈 등
     });
-  } else {
-    markerRef.current.setPosition(position);
-    markerRef.current.setIcon(icon as any);
-    markerRef.current.setMap(mapRef.current!);
-  }
-};
 
+    const icon = {
+      content: el, // ⭐ HTML 넣기
+      anchor: new naver.maps.Point(24, 48), // 핀 하단이 좌표를 가리키게 조정
+    };
+
+    if (!markerRef.current) {
+      markerRef.current = new naver.maps.Marker({
+        map: mapRef.current!,
+        position,
+        icon,
+        zIndex: 10,
+      });
+    } else {
+      markerRef.current.setPosition(position);
+      markerRef.current.setIcon(icon as any);
+      markerRef.current.setMap(mapRef.current!);
+    }
+  };
 
   // 지도 초기화
   const initializeMap = () => {
@@ -119,7 +120,6 @@ const upsertMarker = (
 
       mapRef.current?.setCenter(point);
       setCoords({ lat: parseFloat(item.y), lng: parseFloat(item.x) });
-
 
       const lines: string[] = [];
       if (item.roadAddress) lines.push(`[도로명] ${item.roadAddress}`);
@@ -179,14 +179,17 @@ const upsertMarker = (
         const items = response.v2.results;
         if (!items.length) return;
 
-                const lines: string[] = [];
+        const lines: string[] = [];
         items.forEach((item) => {
           const type = item.name === 'roadaddr' ? '[도로명]' : '[지번]';
           const addr =
             item.region.area1.name +
-            ' ' + item.region.area2.name +
-            ' ' + item.region.area3.name +
-            ' ' + item.region.area4.name +
+            ' ' +
+            item.region.area2.name +
+            ' ' +
+            item.region.area3.name +
+            ' ' +
+            item.region.area4.name +
             (item.land.number1 ? ' ' + item.land.number1 : '') +
             (item.land.number2 ? '-' + item.land.number2 : '') +
             (item.land.addition0?.value ? ' ' + item.land.addition0.value : '');
