@@ -6,12 +6,13 @@ const meta: Meta<typeof Toast> = {
   component: Toast,
   tags: ['autodocs'],
   argTypes: {
-    type: {
-      control: { type: 'radio' },
-      options: ['success', 'error'],
-    },
     message: {
-      control: 'text',
+      control: "text",
+      description: "토스트에 표시할 메시지",
+    },
+    color: {
+      control: "color",
+      description: "배경 색상",
     },
   },
 };
@@ -22,13 +23,14 @@ type Story = StoryObj<typeof Toast>;
 export const Success: Story = {
   args: {
     message: "좌표 등록 성공",
-    type: 'success',
+    color: "#3270ff", // 파랑 (primary)
   },
 };
 
 export const Error: Story = {
   args: {
     message: "좌표 등록 실패",
-    type: 'error',
+    color: "#ff4d4f", // 빨강 (error)
   },
 };
+

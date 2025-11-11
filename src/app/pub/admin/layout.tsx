@@ -4,13 +4,26 @@ import styles from '@/styles/pages/admin/admin-layout.module.scss';
 import { BarChart3, Folder, LayoutDashboard, Users } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
+const NAV = [
+  { href: '/pub/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/pub/admin/notice', icon: Folder, label: '분양공고 관리' },
+  { href: '/pub/admin/geo', icon: Users, label: '좌표 관리' },
+  { href: '/pub/admin/bug', icon: BarChart3, label: '버그리포트' },
+];
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  const pathname = usePathname();
+
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + '/');
+
   return (
     <div className={styles.adminLayout}>
       {/* 헤더 */}
@@ -42,32 +55,19 @@ export default function AdminLayout({
             </div>
           </div>
           
-          <nav className={styles.sidebarNav}>
+   <nav className={styles.sidebarNav}>
             <ul className={styles.navList}>
-              <li className={styles.navItem}>
-                <Link href="/" className={styles.navLink}>
-                  <LayoutDashboard className={styles.navIcon} size={20} />
-                  <span className={styles.navText}>Dashboard</span>
-                </Link>
-              </li>
-              <li className={styles.navItem}>
-                <Link href="/" className={styles.navLink}>
-                  <Folder className={styles.navIcon} size={20} />
-                  <span className={styles.navText}>분양공고 관리</span>
-                </Link>
-              </li>
-              <li className={`${styles.navItem} ${styles.active}`}>
-                <Link href="/pub/admin/geo" className={styles.navLink}>
-                <Users className={styles.navIcon} size={20} />
-                  <span className={styles.navText}>좌표 관리</span>
-                </Link>
-              </li>
-              <li className={styles.navItem}>
-                <Link href="/" className={styles.navLink}>
-                  <BarChart3 className={styles.navIcon} size={20} />
-                  <span className={styles.navText}>버그리포트</span>
-                </Link>
-              </li>
+              {NAV.map(({ href, icon: Icon, label }) => (
+                <li
+                  key={href}
+                  className={`${styles.navItem} ${isActive(href) ? styles.active : ''}`}
+                >
+                  <Link href={href} className={styles.navLink}>
+                    <Icon className={styles.navIcon} size={20} />
+                    <span className={styles.navText}>{label}</span>
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
 
