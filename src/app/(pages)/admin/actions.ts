@@ -10,6 +10,7 @@ import type { GetMeDataDto, GetMeResponseDto } from 'byzip-v2-sdk';
 import {
   serverApiWithToekn,
   serverApiWithoutToken,
+  logErrorToDatabase,
 } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 
@@ -45,6 +46,11 @@ export async function getUserInfo(): Promise<ActionResult<GetMeDataDto>> {
       data: userInfo.data,
     };
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'getUserInfo',
+      skipAxiosError: true,
+    }).catch(() => {});
+
     if (axios.isAxiosError(error)) {
       // HTTP 에러 응답
       if (error.response) {
@@ -123,6 +129,11 @@ export async function triggerTestError(
       message: '에러가 발생하지 않았습니다.',
     };
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'triggerTestError',
+      skipAxiosError: true,
+    }).catch(() => {});
+
     // 에러가 정상적으로 발생한 경우
     if (axios.isAxiosError(error)) {
       return {
@@ -156,6 +167,11 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
       message: '에러가 발생하지 않았습니다.',
     };
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'testGetUserInfoError',
+      skipAxiosError: true,
+    }).catch(() => {});
+
     // 에러가 정상적으로 발생한 경우
     if (axios.isAxiosError(error)) {
       return {

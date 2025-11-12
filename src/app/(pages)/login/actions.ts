@@ -15,6 +15,7 @@ import type {
 import {
   serverApiWithToekn,
   serverApiWithoutToken,
+  logErrorToDatabase,
 } from '@/app/libs/utils/api';
 import { ActionResult } from 'next/dist/server/app-render/types';
 
@@ -95,6 +96,11 @@ export async function loginAction(
       message: responseData.message || '로그인에 성공했습니다.',
     };
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'loginAction',
+      skipAxiosError: true,
+    }).catch(() => {});
+
     // axios 에러 처리
     console.error('Login error:', error);
 
@@ -147,6 +153,10 @@ export async function logoutAction(): Promise<void> {
   try {
     await serverApiWithToekn.post('/auth/logout');
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'logoutAction',
+      skipAxiosError: true,
+    }).catch(() => {});
     console.error('Logout error:', error);
   }
 

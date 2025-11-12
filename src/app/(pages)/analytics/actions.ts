@@ -4,7 +4,10 @@
  * 분석 페이지 Server Actions
  */
 
-import { serverApiWithoutToken } from '@/app/libs/utils/api';
+import {
+  serverApiWithoutToken,
+  logErrorToDatabase,
+} from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 
 interface DailyVisitor {
@@ -54,6 +57,10 @@ export async function getAnalyticsData(): Promise<ActionResult<AnalyticsData>> {
       data: data,
     };
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'getAnalyticsData',
+      skipAxiosError: true,
+    }).catch(() => {});
     console.error('getAnalyticsData error:', error);
     return {
       success: false,
