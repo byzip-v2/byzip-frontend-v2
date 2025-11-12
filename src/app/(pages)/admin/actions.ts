@@ -7,7 +7,10 @@
 
 import axios from 'axios';
 import type { GetMeDataDto, GetMeResponseDto } from 'byzip-v2-sdk';
-import { serverApiWithToekn } from '@/app/libs/utils/api';
+import {
+  serverApiWithToekn,
+  serverApiWithoutToken,
+} from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 
 /**
@@ -70,6 +73,100 @@ export async function getUserInfo(): Promise<ActionResult<GetMeDataDto>> {
     return {
       success: false,
       message: '사용자 정보 조회 중 오류가 발생했습니다. 다시 시도해주세요.',
+    };
+  }
+}
+
+/**
+ * 에러 발생 테스트용 Server Action
+ *
+ * @param errorType - 발생시킬 에러 타입 ('404' | '500' | 'network' | 'timeout')
+ * @returns 테스트 결과
+ *
+ * @description
+ * 버그 리포트 기능을 테스트하기 위한 에러 발생 함수입니다.
+ */
+export async function triggerTestError(
+  errorType: '404' | '500' | 'network' | 'timeout',
+): Promise<ActionResult> {
+  try {
+    switch (errorType) {
+      case '404':
+        // 404 에러 발생 (존재하지 않는 엔드포인트)
+        await serverApiWithToekn.get('/test/not-found-endpoint');
+        break;
+      case '500':
+        // 500 에러 발생 (서버 에러 시뮬레이션)
+        await serverApiWithToekn.get('/test/server-error');
+        break;
+      case 'network':
+        // 네트워크 에러 발생 (잘못된 URL)
+        // serverApiWithoutToken을 사용하여 응답 인터셉터가 실행되도록 함
+        await serverApiWithoutToken.get(
+          'https://invalid-url-that-does-not-exist-12345.com/api/test',
+          {
+            timeout: 5000,
+          },
+        );
+        break;
+      case 'timeout':
+        // 타임아웃 에러 발생
+        // serverApiWithToekn을 사용하여 응답 인터셉터가 실행되도록 함
+        await serverApiWithToekn.get('/test/timeout', {
+          timeout: 1, // 1ms 타임아웃으로 강제 타임아웃 발생
+        });
+        break;
+    }
+
+    return {
+      success: true,
+      message: '에러가 발생하지 않았습니다.',
+    };
+  } catch (error) {
+    // 에러가 정상적으로 발생한 경우
+    if (axios.isAxiosError(error)) {
+      return {
+        success: false,
+        message: `테스트 에러 발생: ${errorType} (${error.response?.status || 'Network Error'})`,
+      };
+    }
+
+    return {
+      success: false,
+      message: `테스트 에러 발생: ${errorType}`,
+    };
+  }
+}
+
+/**
+ * getUserInfo 에러 테스트용 Server Action
+ *
+ * @description
+ * getUserInfo() 함수에서 에러를 발생시켜 버그 리포트 기능을 테스트합니다.
+ * 실제 /users/me API를 호출하지만, 존재하지 않는 엔드포인트를 호출하여 404 에러를 발생시킵니다.
+ */
+export async function testGetUserInfoError(): Promise<ActionResult> {
+  try {
+    // 존재하지 않는 엔드포인트를 호출하여 404 에러 발생
+    // 이렇게 하면 getUserInfo()와 동일한 방식으로 에러가 발생하고 버그 리포트가 저장됩니다
+    await serverApiWithToekn.get('/users/me-invalid-endpoint-for-test');
+
+    return {
+      success: true,
+      message: '에러가 발생하지 않았습니다.',
+    };
+  } catch (error) {
+    // 에러가 정상적으로 발생한 경우
+    if (axios.isAxiosError(error)) {
+      return {
+        success: false,
+        message: `getUserInfo 테스트 에러 발생: ${error.response?.status || 'Network Error'}`,
+      };
+    }
+
+    return {
+      success: false,
+      message: 'getUserInfo 테스트 에러 발생',
     };
   }
 }
