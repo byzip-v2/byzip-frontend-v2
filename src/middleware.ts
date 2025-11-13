@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { logErrorToDatabase } from '@/app/libs/utils/api';
 
 // 미들웨어 실행 경로 설정
 export const config = {
@@ -17,82 +18,95 @@ export const config = {
  * 4. 인증 상태에 따라 접근 제어 및 리다이렉트 처리
  */
 export async function middleware(request: NextRequest) {
-  // ========== 1단계: 경로 파악 ==========
-  const { pathname } = request.nextUrl;
-  const isLoginPage = pathname === '/login';
-  const isAdminPage = pathname.startsWith('/admin');
+  try {
+    // ========== 1단계: 경로 파악 ==========
+    const { pathname } = request.nextUrl;
+    const isLoginPage = pathname === '/login';
+    const isAdminPage = pathname.startsWith('/admin');
 
-  // ========== 2단계: 쿠키에서 토큰 추출 ==========
-  const accessToken = request.cookies.get('accessToken')?.value;
-  const refreshToken = request.cookies.get('refreshToken')?.value;
+    // ========== 2단계: 쿠키에서 토큰 추출 ==========
+    const accessToken = request.cookies.get('accessToken')?.value;
+    const refreshToken = request.cookies.get('refreshToken')?.value;
 
-  // ========== 3단계: 토큰 검증 및 재발급 처리 ==========
-  // - isAccessAllowed: 페이지 접근 허용 여부 (리다이렉트 결정)
-  // - isAuthenticated: 실제 인증 상태 (유효한 토큰 보유 여부)
-  // - refreshedTokens: 재발급된 토큰
-  const { isAccessAllowed, isAuthenticated, refreshedTokens } =
-    await handleAuthentication({
-      accessToken,
-      refreshToken,
-      isLoginPage,
-    });
+    // ========== 3단계: 토큰 검증 및 재발급 처리 ==========
+    // - isAccessAllowed: 페이지 접근 허용 여부 (리다이렉트 결정)
+    // - isAuthenticated: 실제 인증 상태 (유효한 토큰 보유 여부)
+    // - refreshedTokens: 재발급된 토큰
+    const { isAccessAllowed, isAuthenticated, refreshedTokens } =
+      await handleAuthentication({
+        accessToken,
+        refreshToken,
+        isLoginPage,
+      });
 
-  // ========== 4단계: 인증 실패 시 처리 ==========
-  if (!isAccessAllowed) {
-    if (isLoginPage) {
-      // 로그인 페이지는 인증 실패하면 페이지 유지
-      return NextResponse.next();
+    // ========== 4단계: 인증 실패 시 처리 ==========
+    if (!isAccessAllowed) {
+      if (isLoginPage) {
+        // 로그인 페이지는 인증 실패하면 페이지 유지
+        return NextResponse.next();
+      }
+      // 관리자 페이지는 인증 실패 시 로그인 페이지로 리다이렉트
+      console.warn('🔐 [Middleware] 인증 실패 → 로그인 페이지로 리다이렉트');
+      return redirectToLogin(request);
     }
-    // 관리자 페이지는 인증 실패 시 로그인 페이지로 리다이렉트
-    console.warn('🔐 [Middleware] 인증 실패 → 로그인 페이지로 리다이렉트');
-    return redirectToLogin(request);
-  }
 
-  // ========== 5단계: 로그인 페이지에서 이미 인증된 경우 처리 ==========
-  // 로그인 페이지에 접근했는데 유효한 토큰이 있는 경우 관리자 페이지로 리다이렉트
-  if (isLoginPage && isAuthenticated) {
-    const response = redirectToAdmin(request);
+    // ========== 5단계: 로그인 페이지에서 이미 인증된 경우 처리 ==========
+    // 로그인 페이지에 접근했는데 유효한 토큰이 있는 경우 관리자 페이지로 리다이렉트
+    if (isLoginPage && isAuthenticated) {
+      const response = redirectToAdmin(request);
 
-    // 토큰이 재발급된 경우 쿠키에 새로 저장
-    if (refreshedTokens) {
+      // 토큰이 재발급된 경우 쿠키에 새로 저장
+      if (refreshedTokens) {
+        setCookie(
+          response,
+          'accessToken',
+          refreshedTokens.accessToken,
+          60, // 1분
+        );
+        setCookie(
+          response,
+          'refreshToken',
+          refreshedTokens.refreshToken,
+          60 * 10, // 10분
+        );
+      }
+      return response;
+    }
+
+    // ========== 6단계: 관리자 페이지에서 토큰 재발급된 경우 처리 ==========
+    // 관리자 페이지 접근 시 토큰이 재발급된 경우 쿠키에 저장하고 요청 계속 진행
+    if (isAdminPage && refreshedTokens) {
+      const response = NextResponse.next();
       setCookie(
         response,
         'accessToken',
         refreshedTokens.accessToken,
-        60, // 1분
+        60 * 60 * 24, // 1일
       );
       setCookie(
         response,
         'refreshToken',
         refreshedTokens.refreshToken,
-        60 * 10, // 10분
+        60 * 60 * 24 * 30, // 30일
       );
+      return response;
     }
-    return response;
-  }
 
-  // ========== 6단계: 관리자 페이지에서 토큰 재발급된 경우 처리 ==========
-  // 관리자 페이지 접근 시 토큰이 재발급된 경우 쿠키에 저장하고 요청 계속 진행
-  if (isAdminPage && refreshedTokens) {
-    const response = NextResponse.next();
-    setCookie(
-      response,
-      'accessToken',
-      refreshedTokens.accessToken,
-      60 * 60 * 24, // 1일
-    );
-    setCookie(
-      response,
-      'refreshToken',
-      refreshedTokens.refreshToken,
-      60 * 60 * 24 * 30, // 30일
-    );
-    return response;
-  }
+    // ========== 7단계: 정상 처리 완료 ==========
+    // 위 조건에 해당하지 않는 경우 요청을 그대로 진행
+    return NextResponse.next();
+  } catch (error) {
+    // 미들웨어 실행 중 예상치 못한 에러 발생 시 로깅
+    await logErrorToDatabase(error, {
+      actionName: 'middleware',
+    }).catch((logError) => {
+      console.error('🔐 [Middleware] 에러 로깅 실패:', logError);
+    });
 
-  // ========== 7단계: 정상 처리 완료 ==========
-  // 위 조건에 해당하지 않는 경우 요청을 그대로 진행
-  return NextResponse.next();
+    // 에러 발생 시에도 기본 동작 수행 (로그인 페이지로 리다이렉트)
+    console.error('🔐 [Middleware] 미들웨어 실행 중 오류 발생:', error);
+    return redirectToLogin(request);
+  }
 }
 
 // 토큰 데이터 타입
@@ -129,37 +143,48 @@ async function handleAuthentication({
   refreshToken?: string;
   isLoginPage: boolean;
 }): Promise<AuthResult> {
-  // ========== 1단계: 리프레시 토큰 존재 여부 확인 ==========
-  if (!refreshToken) {
-    return { isAccessAllowed: false, isAuthenticated: false };
-  }
-
-  // ========== 2단계: 리프레시 토큰 유효성 검사 ==========
-  const { isRefreshTokenValid } = isValidToken({ refreshtoken: refreshToken });
-  if (!isRefreshTokenValid) {
-    // 리프레시 토큰이 만료된 경우 인증 불가
-    return { isAccessAllowed: false, isAuthenticated: false };
-  }
-
-  // ========== 3단계: 액세스 토큰 유효성 검사 및 재발급 ==========
-  const { isAccessTokenValid } = isValidToken({ accesstoken: accessToken });
-  if (!accessToken || !isAccessTokenValid) {
-    // 액세스 토큰이 없거나 만료된 경우 재발급 시도
-    const tokenData = await refreshTokens(refreshToken);
-    if (tokenData) {
-      // 재발급 성공: 접근 허용, 인증됨, 새 토큰 반환
-      return {
-        isAccessAllowed: true,
-        isAuthenticated: true,
-        refreshedTokens: tokenData,
-      };
+  try {
+    // ========== 1단계: 리프레시 토큰 존재 여부 확인 ==========
+    if (!refreshToken) {
+      return { isAccessAllowed: false, isAuthenticated: false };
     }
-    // 재발급 실패 시:
+
+    // ========== 2단계: 리프레시 토큰 유효성 검사 ==========
+    const { isRefreshTokenValid } = isValidToken({
+      refreshtoken: refreshToken,
+    });
+    if (!isRefreshTokenValid) {
+      // 리프레시 토큰이 만료된 경우 인증 불가
+      return { isAccessAllowed: false, isAuthenticated: false };
+    }
+
+    // ========== 3단계: 액세스 토큰 유효성 검사 및 재발급 ==========
+    const { isAccessTokenValid } = isValidToken({ accesstoken: accessToken });
+    if (!accessToken || !isAccessTokenValid) {
+      // 액세스 토큰이 없거나 만료된 경우 재발급 시도
+      const tokenData = await refreshTokens(refreshToken);
+      if (tokenData) {
+        // 재발급 성공: 접근 허용, 인증됨, 새 토큰 반환
+        return {
+          isAccessAllowed: true,
+          isAuthenticated: true,
+          refreshedTokens: tokenData,
+        };
+      }
+      // 재발급 실패 시:
+      return { isAccessAllowed: isLoginPage, isAuthenticated: false };
+    }
+
+    // 액세스 토큰이 유효하면 재발급 없이 접근 허용
+    return { isAccessAllowed: true, isAuthenticated: true };
+  } catch (error) {
+    // 인증 처리 중 예상치 못한 에러 발생 시 로깅
+    await logErrorToDatabase(error, {
+      actionName: 'handleAuthentication - 인증 처리 실패',
+    }).catch(() => {});
+    // 에러 발생 시 인증 실패로 처리
     return { isAccessAllowed: isLoginPage, isAuthenticated: false };
   }
-
-  // 액세스 토큰이 유효하면 재발급 없이 접근 허용
-  return { isAccessAllowed: true, isAuthenticated: true };
 }
 
 /**
@@ -207,7 +232,10 @@ function isValidToken({
     }
   } catch (error) {
     // 토큰 디코딩 실패 시 (형식 오류, 만료된 토큰 등)
-    console.error('토큰 디코딩 실패:', error);
+    console.error('🔐 [Middleware] 토큰 디코딩 실패:', error);
+    logErrorToDatabase(error, {
+      actionName: 'isValidToken - 토큰 디코딩 실패',
+    }).catch(() => {});
   }
 
   return result;
@@ -225,9 +253,11 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     // ========== 1단계: API Base URL 확인 ==========
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiBaseUrl) {
-      console.error(
-        '🔐 [Middleware] NEXT_PUBLIC_API_URL이 설정되어 있지 않습니다.',
-      );
+      const error = new Error('NEXT_PUBLIC_API_URL이 설정되어 있지 않습니다.');
+      console.error('🔐 [Middleware]', error.message);
+      await logErrorToDatabase(error, {
+        actionName: 'refreshTokens - API URL 미설정',
+      }).catch(() => {});
       return null;
     }
 
@@ -240,10 +270,11 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
 
     // ========== 3단계: 응답 상태 확인 ==========
     if (!refreshResponse.ok) {
-      console.error(
-        '🔐 [Middleware] 토큰 갱신 요청 실패:',
-        refreshResponse.status,
-      );
+      const error = new Error(`토큰 갱신 요청 실패: ${refreshResponse.status}`);
+      console.error('🔐 [Middleware]', error.message);
+      await logErrorToDatabase(error, {
+        actionName: `refreshTokens - HTTP ${refreshResponse.status}`,
+      }).catch(() => {});
       return null;
     }
 
@@ -255,7 +286,11 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
 
     // ========== 5단계: 응답 데이터 검증 ==========
     if (!json.success || !json.data?.accessToken || !json.data.refreshToken) {
-      console.error('🔐 [Middleware] 토큰 갱신 응답 형식이 올바르지 않습니다.');
+      const error = new Error('토큰 갱신 응답 형식이 올바르지 않습니다.');
+      console.error('🔐 [Middleware]', error.message);
+      await logErrorToDatabase(error, {
+        actionName: 'refreshTokens - 응답 형식 오류',
+      }).catch(() => {});
       return null;
     }
 
@@ -267,7 +302,10 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     };
   } catch (error) {
     // 네트워크 오류 등 예외 상황 처리
-    console.error('🔐 [Middleware] 토큰 갱신 중 오류 발생:', error);
+    console.error('🔐 [Middleware]', error);
+    await logErrorToDatabase(error, {
+      actionName: 'refreshTokens - 예외 발생',
+    }).catch(() => {});
     return null;
   }
 }

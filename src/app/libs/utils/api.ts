@@ -346,7 +346,7 @@ interface LogErrorOptions {
  * 내부에서 AxiosError와 일반 Error를 자동으로 구분하여 처리합니다.
  *
  * **중복 로깅 방지:**
- * - 서버 액션에서 `serverApiWithToekn` 등을 사용할 때, AxiosError는 interceptor에서 이미 로깅됩니다.
+ * - 서버 액션에서 `serverApiWithToken` 등을 사용할 때, AxiosError는 interceptor에서 이미 로깅됩니다.
  * - 따라서 서버 액션의 catch 블록에서는 `skipAxiosError: true`를 전달하여 중복 로깅을 방지하세요.
  *
  * @example
@@ -629,5 +629,5 @@ export const clientApi = createApiClient();
 /**
  * 서버 사이드 API 클라이언트 인스턴스
  */
-export const serverApiWithToekn = createServerApi({ autoToken: true });
+export const serverApiWithToken = createServerApi({ autoToken: true });
 export const serverApiWithoutToken = createServerApi({ autoToken: false });

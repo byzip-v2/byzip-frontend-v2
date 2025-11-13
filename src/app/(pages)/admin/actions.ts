@@ -8,7 +8,7 @@
 import axios from 'axios';
 import type { GetMeDataDto, GetMeResponseDto } from 'byzip-v2-sdk';
 import {
-  serverApiWithToekn,
+  serverApiWithToken,
   serverApiWithoutToken,
   logErrorToDatabase,
 } from '@/app/libs/utils/api';
@@ -28,7 +28,7 @@ export async function getUserInfo(): Promise<ActionResult<GetMeDataDto>> {
   try {
     // API 요청 (토큰 자동 포함)
     const response =
-      await serverApiWithToekn.get<GetMeResponseDto>('/users/me');
+      await serverApiWithToken.get<GetMeResponseDto>('/users/me');
 
     // SDK 응답 구조 검증
     if (response.status != 200 || !response.data) {
@@ -99,11 +99,11 @@ export async function triggerTestError(
     switch (errorType) {
       case '404':
         // 404 에러 발생 (존재하지 않는 엔드포인트)
-        await serverApiWithToekn.get('/test/not-found-endpoint');
+        await serverApiWithToken.get('/test/not-found-endpoint');
         break;
       case '500':
         // 500 에러 발생 (서버 에러 시뮬레이션)
-        await serverApiWithToekn.get('/test/server-error');
+        await serverApiWithToken.get('/test/server-error');
         break;
       case 'network':
         // 네트워크 에러 발생 (잘못된 URL)
@@ -117,8 +117,8 @@ export async function triggerTestError(
         break;
       case 'timeout':
         // 타임아웃 에러 발생
-        // serverApiWithToekn을 사용하여 응답 인터셉터가 실행되도록 함
-        await serverApiWithToekn.get('/test/timeout', {
+        // serverApiWithToken을 사용하여 응답 인터셉터가 실행되도록 함
+        await serverApiWithToken.get('/test/timeout', {
           timeout: 1, // 1ms 타임아웃으로 강제 타임아웃 발생
         });
         break;
@@ -160,7 +160,7 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
   try {
     // 존재하지 않는 엔드포인트를 호출하여 404 에러 발생
     // 이렇게 하면 getUserInfo()와 동일한 방식으로 에러가 발생하고 버그 리포트가 저장됩니다
-    await serverApiWithToekn.get('/users/me-invalid-endpoint-for-test');
+    await serverApiWithToken.get('/users/me-invalid-endpoint-for-test');
 
     return {
       success: true,

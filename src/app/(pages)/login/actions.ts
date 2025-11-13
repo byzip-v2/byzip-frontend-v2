@@ -13,7 +13,7 @@ import type {
   TokenDataDto,
 } from 'byzip-v2-sdk';
 import {
-  serverApiWithToekn,
+  serverApiWithToken,
   serverApiWithoutToken,
   logErrorToDatabase,
 } from '@/app/libs/utils/api';
@@ -151,7 +151,7 @@ export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
 
   try {
-    await serverApiWithToekn.post('/auth/logout');
+    await serverApiWithToken.post('/auth/logout');
   } catch (error) {
     logErrorToDatabase(error, {
       actionName: 'logoutAction',
