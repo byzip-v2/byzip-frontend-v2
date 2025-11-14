@@ -9,16 +9,16 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios';
 
+import type { ApiError } from '@/app/libs/types/api';
+import { getAccessToken, getUserId } from '@/app/libs/utils/auth';
+import { getUserAgent, getReferer } from '@/app/libs/utils/headers';
+import type { CreateBugReportDto } from 'byzip-v2-sdk';
+import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
+
 // User-Agent를 저장하기 위한 확장 타입
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   __userAgent?: string;
 }
-
-import { headers } from 'next/headers';
-import type { ApiError } from '@/app/libs/types/api';
-import { getAccessToken, getUserId } from '@/app/libs/utils/auth';
-import type { CreateBugReportDto } from 'byzip-v2-sdk';
-import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
 
 /**
  * API 기본 URL 가져오기
@@ -187,9 +187,10 @@ const createBugReport = async (
 const logAxiosError = async (
   error: AxiosError,
   config: InternalAxiosRequestConfig,
+  errorTypeOverride?: BugReportErrorType,
 ): Promise<void> => {
   try {
-    const errorType = determineErrorType(error);
+    const errorType = errorTypeOverride || determineErrorType(error);
     const severity = determineSeverity(error);
 
     // 에러 메시지 추출
@@ -265,27 +266,21 @@ const logAxiosError = async (
 const logGeneralError = async (
   error: Error | unknown,
   actionName?: string,
+  errorTypeOverride?: BugReportErrorType,
 ): Promise<void> => {
   try {
-    const errorType = determineErrorType(error);
+    const errorType = errorTypeOverride || determineErrorType(error);
     const severity = determineSeverity(error);
 
     const errorMessage =
       error instanceof Error ? error.message : String(error) || 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
 
-    // User-Agent 추출
-    let userAgent: string | undefined;
-    try {
-      const headersList = await headers();
-      userAgent = headersList.get('user-agent') || undefined;
-    } catch {
-      // userAgent 추출 실패 시 undefined 유지
-    }
+    // User-Agent 추출 (서버/클라이언트 환경 자동 감지)
+    const userAgent = await getUserAgent();
 
     const userId = await getUserId();
-    const url =
-      (await headers().catch(() => null))?.get('referer') || 'unknown';
+    const url = await getReferer();
 
     let title: string;
     let description: string;
@@ -333,6 +328,8 @@ interface LogErrorOptions {
   actionName?: string;
   /** AxiosError인 경우 로깅을 건너뛸지 여부 (서버 액션에서 중복 로깅 방지용) */
   skipAxiosError?: boolean;
+  /** 에러 타입 (지정하지 않으면 자동 판단) */
+  errorType?: BugReportErrorType;
 }
 
 /**
@@ -365,7 +362,7 @@ export const logErrorToDatabase = async (
   error: AxiosError | Error | unknown,
   options?: LogErrorOptions,
 ): Promise<void> => {
-  const { config, actionName, skipAxiosError } = options || {};
+  const { config, actionName, skipAxiosError, errorType } = options || {};
 
   // AxiosError이면 서버 액션 로깅 건너뛰기
   if (axios.isAxiosError(error) && skipAxiosError) {
@@ -373,114 +370,12 @@ export const logErrorToDatabase = async (
   }
 
   if (axios.isAxiosError(error) && config) {
-    await logAxiosError(error, config);
+    await logAxiosError(error, config, errorType);
   } else {
-    await logGeneralError(error, actionName);
+    await logGeneralError(error, actionName, errorType);
   }
 };
 
-/**
- * Axios 인스턴스 생성
- *
- * @returns {AxiosInstance} 설정이 적용된 Axios 인스턴스
- *
- * @description
- * 공통 설정이 적용된 API 클라이언트를 생성합니다.
- *
- * **기본 설정:**
- * - baseURL: 환경변수에서 가져온 API URL
- * - timeout: 10초
- * - headers: Content-Type: application/json
- *
- * **요청 인터셉터:**
- * - localStorage의 accessToken을 자동으로 Authorization 헤더에 추가
- * - Bearer Token 방식 사용
- *
- * **응답 인터셉터:**
- * - 네트워크 에러를 ApiError 형식으로 변환
- * - API 에러 응답을 표준화된 형식으로 변환
- *
- * @example
- * ```typescript
- * const client = createApiClient();
- * const response = await client.get('/users/me');
- * ```
- */
-const createApiClient = (): AxiosInstance => {
-  const instance = axios.create({
-    baseURL: getApiBaseUrl(),
-    timeout: 10000, // 10초 타임아웃
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  // 요청 인터셉터: 토큰이 있는 경우 자동으로 헤더에 추가
-  instance.interceptors.request.use(
-    (config) => {
-      // 브라우저 환경에서만 localStorage 접근
-      if (typeof window !== 'undefined') {
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-          config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    },
-  );
-
-  // 응답 인터셉터: 에러 처리 표준화
-  instance.interceptors.response.use(
-    (response) => response,
-    (error: AxiosError<ApiError>) => {
-      // 네트워크 에러 처리
-      if (!error.response) {
-        return Promise.reject({
-          message: '네트워크 연결을 확인해주세요.',
-          statusCode: 0,
-          error: 'NetworkError',
-        } as ApiError);
-      }
-
-      // API 에러 응답 처리
-      const apiError: ApiError = {
-        message:
-          error.response.data?.message || '알 수 없는 오류가 발생했습니다.',
-        statusCode: error.response.status,
-        error: error.response.data?.error,
-      };
-
-      return Promise.reject(apiError);
-    },
-  );
-
-  return instance;
-};
-
-/**
- * API 클라이언트 인스턴스
- *
- * @description
- * 애플리케이션 전체에서 재사용되는 Axios 인스턴스입니다.
- * 자동으로 토큰 인증 헤더를 추가하고, 에러를 표준화된 형식으로 변환합니다.
- *
- * @example
- * ```typescript
- * import { apiClient } from '@/app/libs/utils/api-client';
- *
- * // GET 요청
- * const response = await apiClient.get('/users/me');
- *
- * // POST 요청
- * const response = await apiClient.post('/auth/login', {
- *   userId: 'admin',
- *   password: 'password123'
- * });
- * ```
- */
 /**
  * Server Actions용 API 클라이언트 생성
  *
@@ -529,14 +424,13 @@ export const createServerApi = (options: {
       );
 
       try {
-        const headersList = await headers();
-        const userAgent = headersList.get('user-agent');
+        const userAgent = await getUserAgent();
         if (userAgent) {
           // config에 userAgent 저장 (에러 로깅 시 사용)
           (config as ExtendedAxiosRequestConfig).__userAgent = userAgent;
         }
       } catch {
-        // headers() 사용 실패 시 무시 (클라이언트 사이드 또는 다른 환경)
+        // userAgent 추출 실패 시 무시
       }
 
       // autoToken이 true인 경우에만 토큰 추가
@@ -620,11 +514,6 @@ export const createServerApi = (options: {
 
   return instance;
 };
-
-/**
- * 클라이언트 사이드 API 클라이언트 인스턴스
- */
-export const clientApi = createApiClient();
 
 /**
  * 서버 사이드 API 클라이언트 인스턴스

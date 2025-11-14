@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios';
-import type { GetMeDataDto, GetMeResponseDto } from 'byzip-v2-sdk';
+import { BugReportErrorType, type GetMeDataDto, type GetMeResponseDto } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
   serverApiWithoutToken,
@@ -49,6 +49,7 @@ export async function getUserInfo(): Promise<ActionResult<GetMeDataDto>> {
     logErrorToDatabase(error, {
       actionName: 'getUserInfo',
       skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
 
     if (axios.isAxiosError(error)) {
@@ -132,6 +133,7 @@ export async function triggerTestError(
     logErrorToDatabase(error, {
       actionName: 'triggerTestError',
       skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
 
     // 에러가 정상적으로 발생한 경우
@@ -170,6 +172,7 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
     logErrorToDatabase(error, {
       actionName: 'testGetUserInfoError',
       skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
 
     // 에러가 정상적으로 발생한 경우

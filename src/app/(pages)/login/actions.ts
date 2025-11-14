@@ -7,10 +7,11 @@
 
 import { cookies } from 'next/headers';
 import axios from 'axios';
-import type {
-  BaseResponseDto,
-  LoginRequestDto,
-  TokenDataDto,
+import {
+  BugReportErrorType,
+  type BaseResponseDto,
+  type LoginRequestDto,
+  type TokenDataDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -99,6 +100,7 @@ export async function loginAction(
     logErrorToDatabase(error, {
       actionName: 'loginAction',
       skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
 
     // axios 에러 처리
@@ -156,6 +158,7 @@ export async function logoutAction(): Promise<void> {
     logErrorToDatabase(error, {
       actionName: 'logoutAction',
       skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
     console.error('Logout error:', error);
   }

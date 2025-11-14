@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { logErrorToDatabase } from '@/app/libs/utils/api';
+import { BugReportErrorType } from 'byzip-v2-sdk';
 
 // 미들웨어 실행 경로 설정
 export const config = {
@@ -99,6 +100,7 @@ export async function middleware(request: NextRequest) {
     // 미들웨어 실행 중 예상치 못한 에러 발생 시 로깅
     await logErrorToDatabase(error, {
       actionName: 'middleware',
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch((logError) => {
       console.error('🔐 [Middleware] 에러 로깅 실패:', logError);
     });
@@ -181,6 +183,7 @@ async function handleAuthentication({
     // 인증 처리 중 예상치 못한 에러 발생 시 로깅
     await logErrorToDatabase(error, {
       actionName: 'handleAuthentication - 인증 처리 실패',
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
     // 에러 발생 시 인증 실패로 처리
     return { isAccessAllowed: isLoginPage, isAuthenticated: false };
@@ -235,6 +238,7 @@ function isValidToken({
     console.error('🔐 [Middleware] 토큰 디코딩 실패:', error);
     logErrorToDatabase(error, {
       actionName: 'isValidToken - 토큰 디코딩 실패',
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
   }
 
@@ -257,6 +261,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
       console.error('🔐 [Middleware]', error.message);
       await logErrorToDatabase(error, {
         actionName: 'refreshTokens - API URL 미설정',
+        errorType: BugReportErrorType.SERVER_ERROR,
       }).catch(() => {});
       return null;
     }
@@ -274,6 +279,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
       console.error('🔐 [Middleware]', error.message);
       await logErrorToDatabase(error, {
         actionName: `refreshTokens - HTTP ${refreshResponse.status}`,
+        errorType: BugReportErrorType.SERVER_ERROR,
       }).catch(() => {});
       return null;
     }
@@ -290,6 +296,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
       console.error('🔐 [Middleware]', error.message);
       await logErrorToDatabase(error, {
         actionName: 'refreshTokens - 응답 형식 오류',
+        errorType: BugReportErrorType.SERVER_ERROR,
       }).catch(() => {});
       return null;
     }
@@ -305,6 +312,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     console.error('🔐 [Middleware]', error);
     await logErrorToDatabase(error, {
       actionName: 'refreshTokens - 예외 발생',
+      errorType: BugReportErrorType.SERVER_ERROR,
     }).catch(() => {});
     return null;
   }
