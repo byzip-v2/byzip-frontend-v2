@@ -8,8 +8,17 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
 } from 'axios';
+
 import type { ApiError } from '@/app/libs/types/api';
-import { getAccessToken } from '@/app/libs/utils/auth';
+import { getAccessToken, getUserId } from '@/app/libs/utils/auth';
+import { getUserAgent, getReferer } from '@/app/libs/utils/headers';
+import type { CreateBugReportDto } from 'byzip-v2-sdk';
+import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
+
+// User-Agent를 저장하기 위한 확장 타입
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
+  __userAgent?: string;
+}
 
 /**
  * API 기본 URL 가져오기
@@ -40,107 +49,333 @@ const getApiBaseUrl = (): string => {
 };
 
 /**
- * Axios 인스턴스 생성
+ * 에러 타입을 자동으로 판단
  *
- * @returns {AxiosInstance} 설정이 적용된 Axios 인스턴스
- *
- * @description
- * 공통 설정이 적용된 API 클라이언트를 생성합니다.
- *
- * **기본 설정:**
- * - baseURL: 환경변수에서 가져온 API URL
- * - timeout: 10초
- * - headers: Content-Type: application/json
- *
- * **요청 인터셉터:**
- * - localStorage의 accessToken을 자동으로 Authorization 헤더에 추가
- * - Bearer Token 방식 사용
- *
- * **응답 인터셉터:**
- * - 네트워크 에러를 ApiError 형식으로 변환
- * - API 에러 응답을 표준화된 형식으로 변환
- *
- * @example
- * ```typescript
- * const client = createApiClient();
- * const response = await client.get('/users/me');
- * ```
+ * @param error - Axios 에러 객체 또는 일반 Error 객체
+ * @returns BugReportErrorType
  */
-const createApiClient = (): AxiosInstance => {
-  const instance = axios.create({
-    baseURL: getApiBaseUrl(),
-    timeout: 10000, // 10초 타임아웃
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+const determineErrorType = (
+  error: AxiosError | Error | unknown,
+): BugReportErrorType => {
+  // AxiosError인 경우 네트워크/HTTP 상태 코드 기반 판단
+  if (axios.isAxiosError(error)) {
+    // 네트워크 에러
+    if (!error.response && error.request) {
+      return BugReportErrorType.NETWORK_ERROR;
+    }
 
-  // 요청 인터셉터: 토큰이 있는 경우 자동으로 헤더에 추가
-  instance.interceptors.request.use(
-    (config) => {
-      // 브라우저 환경에서만 localStorage 접근
-      if (typeof window !== 'undefined') {
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-          config.headers.Authorization = `Bearer ${accessToken}`;
-        }
+    // HTTP 상태 코드 기반 판단
+    if (error.response) {
+      const status = error.response.status;
+      if (status >= 500) {
+        return BugReportErrorType.SERVER_ERROR;
       }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    },
-  );
-
-  // 응답 인터셉터: 에러 처리 표준화
-  instance.interceptors.response.use(
-    (response) => response,
-    (error: AxiosError<ApiError>) => {
-      // 네트워크 에러 처리
-      if (!error.response) {
-        return Promise.reject({
-          message: '네트워크 연결을 확인해주세요.',
-          statusCode: 0,
-          error: 'NetworkError',
-        } as ApiError);
+      if (status >= 400) {
+        return BugReportErrorType.CLIENT_ERROR;
       }
+    }
+  }
 
-      // API 에러 응답 처리
-      const apiError: ApiError = {
-        message:
-          error.response.data?.message || '알 수 없는 오류가 발생했습니다.',
-        statusCode: error.response.status,
-        error: error.response.data?.error,
-      };
+  // Error 객체인 경우 name과 message 기반 판단
+  if (error instanceof Error) {
+    const errorName = error.name?.toLowerCase() || '';
+    const errorMessage = error.message?.toLowerCase() || '';
 
-      return Promise.reject(apiError);
-    },
-  );
+    // Error 타입별 판단
+    if (errorName === 'typeerror' || errorMessage.includes('type')) {
+      return BugReportErrorType.TYPE_ERROR;
+    }
+    if (errorName === 'referenceerror' || errorMessage.includes('reference')) {
+      return BugReportErrorType.REFERENCE_ERROR;
+    }
+    if (errorName === 'syntaxerror' || errorMessage.includes('syntax')) {
+      return BugReportErrorType.SYNTAX_ERROR;
+    }
+    if (
+      errorName === 'validationerror' ||
+      errorMessage.includes('validation')
+    ) {
+      return BugReportErrorType.VALIDATION_ERROR;
+    }
+    if (errorName === 'runtimeerror' || errorMessage.includes('runtime')) {
+      return BugReportErrorType.RUNTIME_ERROR;
+    }
+  }
 
-  return instance;
+  return BugReportErrorType.UNKNOWN;
 };
 
 /**
- * API 클라이언트 인스턴스
+ * 에러 심각도를 자동으로 판단
+ *
+ * @param error - Axios 에러 객체 또는 일반 Error 객체
+ * @returns BugReportSeverity
+ */
+const determineSeverity = (
+  error: AxiosError | Error | unknown,
+): BugReportSeverity => {
+  // AxiosError인 경우 HTTP 상태 코드 기반 판단
+  if (axios.isAxiosError(error)) {
+    if (error.response) {
+      const status = error.response.status;
+      if (status >= 500) {
+        return BugReportSeverity.HIGH;
+      }
+      if (status === 401 || status === 403) {
+        return BugReportSeverity.HIGH;
+      }
+      if (status >= 400) {
+        return BugReportSeverity.MEDIUM;
+      }
+    }
+
+    // 네트워크 에러는 medium
+    if (!error.response && error.request) {
+      return BugReportSeverity.MEDIUM;
+    }
+
+    return BugReportSeverity.LOW;
+  }
+
+  // 일반 Error인 경우
+  if (error instanceof Error) {
+    const errorName = error.name?.toLowerCase() || '';
+    const errorMessage = error.message?.toLowerCase() || '';
+
+    // 심각한 에러 타입은 HIGH
+    if (
+      errorName === 'typeerror' ||
+      errorName === 'referenceerror' ||
+      errorMessage.includes('cannot read') ||
+      errorMessage.includes('undefined')
+    ) {
+      return BugReportSeverity.HIGH;
+    }
+
+    // 일반적인 에러는 MEDIUM
+    return BugReportSeverity.MEDIUM;
+  }
+
+  return BugReportSeverity.MEDIUM;
+};
+
+/**
+ * 버그 리포트를 DB에 저장하는 공통 함수
+ */
+const createBugReport = async (
+  bugReportData: CreateBugReportDto,
+): Promise<void> => {
+  const apiBaseUrl = getApiBaseUrl();
+  await axios
+    .post(`${apiBaseUrl}/bug-reports`, bugReportData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 5000, // 5초 타임아웃
+    })
+    .catch((logError) => {
+      console.warn(
+        '🔍 [Error Logger] 버그 리포트 저장 실패:',
+        logError.message,
+      );
+    });
+};
+
+/**
+ * AxiosError를 로깅
+ */
+const logAxiosError = async (
+  error: AxiosError,
+  config: InternalAxiosRequestConfig,
+  errorTypeOverride?: BugReportErrorType,
+): Promise<void> => {
+  try {
+    const errorType = errorTypeOverride || determineErrorType(error);
+    const severity = determineSeverity(error);
+
+    // 에러 메시지 추출
+    let errorMessage = 'Unknown error';
+    if (error.response?.data) {
+      if (
+        typeof error.response.data === 'object' &&
+        'message' in error.response.data
+      ) {
+        errorMessage = String(
+          (error.response.data as { message?: string }).message,
+        );
+      } else {
+        errorMessage = String(error.response.data);
+      }
+    } else {
+      errorMessage = error.message || 'Unknown error';
+    }
+
+    // User-Agent 추출
+    let userAgent: string | undefined;
+    try {
+      const extendedConfig = config as ExtendedAxiosRequestConfig;
+      if (extendedConfig.__userAgent) {
+        userAgent = extendedConfig.__userAgent;
+      }
+    } catch {
+      // userAgent 추출 실패 시 undefined 유지
+    }
+
+    const userId = await getUserId();
+
+    // 요청 URL 구성
+    const baseURL = config.baseURL || getApiBaseUrl();
+    const url = config.url ? `${baseURL}${config.url}` : baseURL;
+
+    const method = config.method?.toUpperCase() || 'UNKNOWN';
+    const endpoint = config.url || 'unknown';
+    const title = `${method} ${endpoint}`;
+    const description = `${method} ${endpoint} 요청 중 오류 발생: ${errorMessage}`;
+
+    const errorCode = error.response?.status.toString() || '0';
+
+    const metadata: Record<string, unknown> = {
+      method: config.method,
+      baseURL: config.baseURL,
+      timeout: config.timeout,
+      headers: config.headers,
+      ...(error.response?.data ? { responseData: error.response.data } : {}),
+    };
+
+    await createBugReport({
+      title,
+      description,
+      errorMessage,
+      errorStack: error.stack,
+      errorType,
+      errorCode,
+      url,
+      userAgent,
+      severity,
+      userId,
+      metadata,
+    });
+  } catch (logError) {
+    console.warn('🔍 [Error Logger] 버그 리포트 저장 중 오류:', logError);
+  }
+};
+
+/**
+ * 일반 Error를 로깅
+ */
+const logGeneralError = async (
+  error: Error | unknown,
+  actionName?: string,
+  errorTypeOverride?: BugReportErrorType,
+): Promise<void> => {
+  try {
+    const errorType = errorTypeOverride || determineErrorType(error);
+    const severity = determineSeverity(error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : String(error) || 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    // User-Agent 추출 (서버/클라이언트 환경 자동 감지)
+    const userAgent = await getUserAgent();
+
+    const userId = await getUserId();
+    const url = await getReferer();
+
+    let title: string;
+    let description: string;
+    if (actionName) {
+      title = `Server Action Error: ${actionName}`;
+      description = `Server Action "${actionName}" 실행 중 오류 발생: ${errorMessage}`;
+    } else if (error instanceof Error) {
+      title = `Error: ${error.name || 'Unknown'}`;
+      description = `오류 발생: ${errorMessage}`;
+    } else {
+      title = 'Unknown Error';
+      description = `오류 발생: ${errorMessage}`;
+    }
+
+    const metadata: Record<string, unknown> = {
+      ...(actionName ? { actionName } : {}),
+      errorName: error instanceof Error ? error.name : 'Unknown',
+    };
+
+    await createBugReport({
+      title,
+      description,
+      errorMessage,
+      errorStack,
+      errorType,
+      errorCode: undefined,
+      url,
+      userAgent,
+      severity,
+      userId,
+      metadata,
+    });
+  } catch (logError) {
+    console.warn('🔍 [Error Logger] 버그 리포트 저장 중 오류:', logError);
+  }
+};
+
+/**
+ * 에러 로깅 옵션
+ */
+interface LogErrorOptions {
+  /** 요청 설정 객체 (AxiosError인 경우 필수) */
+  config?: InternalAxiosRequestConfig;
+  /** Server Action 이름 (일반 Error인 경우 사용) */
+  actionName?: string;
+  /** AxiosError인 경우 로깅을 건너뛸지 여부 (서버 액션에서 중복 로깅 방지용) */
+  skipAxiosError?: boolean;
+  /** 에러 타입 (지정하지 않으면 자동 판단) */
+  errorType?: BugReportErrorType;
+}
+
+/**
+ * 에러 정보를 수집하여 버그 리포트를 생성하고 DB에 저장
+ *
+ * @param error - Axios 에러 객체 또는 일반 Error 객체
+ * @param options - 에러 로깅 옵션
  *
  * @description
- * 애플리케이션 전체에서 재사용되는 Axios 인스턴스입니다.
- * 자동으로 토큰 인증 헤더를 추가하고, 에러를 표준화된 형식으로 변환합니다.
+ * 에러 발생 시 자동으로 버그 리포트를 생성하여 DB에 저장합니다.
+ * 내부에서 AxiosError와 일반 Error를 자동으로 구분하여 처리합니다.
+ *
+ * **중복 로깅 방지:**
+ * - 서버 액션에서 `serverApiWithToken` 등을 사용할 때, AxiosError는 interceptor에서 이미 로깅됩니다.
+ * - 따라서 서버 액션의 catch 블록에서는 `skipAxiosError: true`를 전달하여 중복 로깅을 방지하세요.
  *
  * @example
  * ```typescript
- * import { apiClient } from '@/app/libs/utils/api-client';
+ * // AxiosError인 경우
+ * logErrorToDatabase(error, { config: error.config });
  *
- * // GET 요청
- * const response = await apiClient.get('/users/me');
+ * // 일반 Error인 경우 (Server Action)
+ * logErrorToDatabase(error, { actionName: 'getUserInfo' });
  *
- * // POST 요청
- * const response = await apiClient.post('/auth/login', {
- *   userId: 'admin',
- *   password: 'password123'
- * });
+ * // 서버 액션에서 AxiosError 중복 로깅 방지
+ * logErrorToDatabase(error, { actionName: 'getUserInfo', skipAxiosError: true });
  * ```
  */
+export const logErrorToDatabase = async (
+  error: AxiosError | Error | unknown,
+  options?: LogErrorOptions,
+): Promise<void> => {
+  const { config, actionName, skipAxiosError, errorType } = options || {};
+
+  // AxiosError이면 서버 액션 로깅 건너뛰기
+  if (axios.isAxiosError(error) && skipAxiosError) {
+    return;
+  }
+
+  if (axios.isAxiosError(error) && config) {
+    await logAxiosError(error, config, errorType);
+  } else {
+    await logGeneralError(error, actionName, errorType);
+  }
+};
+
 /**
  * Server Actions용 API 클라이언트 생성
  *
@@ -188,6 +423,16 @@ export const createServerApi = (options: {
         `🔍 [Server API] ${config.method?.toUpperCase()} ${config.url}`,
       );
 
+      try {
+        const userAgent = await getUserAgent();
+        if (userAgent) {
+          // config에 userAgent 저장 (에러 로깅 시 사용)
+          (config as ExtendedAxiosRequestConfig).__userAgent = userAgent;
+        }
+      } catch {
+        // userAgent 추출 실패 시 무시
+      }
+
       // autoToken이 true인 경우에만 토큰 추가
       if (autoToken) {
         try {
@@ -220,7 +465,7 @@ export const createServerApi = (options: {
       console.log(`🔍 [Server API] ${response.status} ${response.config.url}`);
       return response;
     },
-    (error: AxiosError) => {
+    async (error: AxiosError) => {
       // 에러 로깅
       console.error('🔍 [Server API] Response Error:', {
         status: error.response?.status,
@@ -228,6 +473,14 @@ export const createServerApi = (options: {
         message: error.message,
         data: error.response?.data,
       });
+
+      // 버그 리포트 저장
+      if (error.config) {
+        logErrorToDatabase(error, { config: error.config }).catch(() => {});
+      } else {
+        // config가 없는 경우에도 로깅 시도
+        logErrorToDatabase(error).catch(() => {});
+      }
 
       // 에러 표준화
       if (error.response) {
@@ -263,12 +516,7 @@ export const createServerApi = (options: {
 };
 
 /**
- * 클라이언트 사이드 API 클라이언트 인스턴스
- */
-export const clientApi = createApiClient();
-
-/**
  * 서버 사이드 API 클라이언트 인스턴스
  */
-export const serverApiWithToekn = createServerApi({ autoToken: true });
+export const serverApiWithToken = createServerApi({ autoToken: true });
 export const serverApiWithoutToken = createServerApi({ autoToken: false });

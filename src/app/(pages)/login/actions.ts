@@ -7,14 +7,16 @@
 
 import { cookies } from 'next/headers';
 import axios from 'axios';
-import type {
-  BaseResponseDto,
-  LoginRequestDto,
-  TokenDataDto,
+import {
+  BugReportErrorType,
+  type BaseResponseDto,
+  type LoginRequestDto,
+  type TokenDataDto,
 } from 'byzip-v2-sdk';
 import {
-  serverApiWithToekn,
+  serverApiWithToken,
   serverApiWithoutToken,
+  logErrorToDatabase,
 } from '@/app/libs/utils/api';
 import { ActionResult } from 'next/dist/server/app-render/types';
 
@@ -95,6 +97,12 @@ export async function loginAction(
       message: responseData.message || '로그인에 성공했습니다.',
     };
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'loginAction',
+      skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
+    }).catch(() => {});
+
     // axios 에러 처리
     console.error('Login error:', error);
 
@@ -145,8 +153,13 @@ export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
 
   try {
-    await serverApiWithToekn.post('/auth/logout');
+    await serverApiWithToken.post('/auth/logout');
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'logoutAction',
+      skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
+    }).catch(() => {});
     console.error('Logout error:', error);
   }
 
