@@ -6,10 +6,10 @@ import { useState } from 'react';
 
 export default function GeoPage() {
 
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; color: 'primary' | 'error' } | null>(null);
 
-  const showToast = (msg: string, type: 'success' | 'error') => {
-    setToast({ msg, type });
+  const showToast = (msg: string, color: 'primary' | 'error') => {
+    setToast({ msg, color });
   };
 
   // 좌표 등록 버튼
@@ -18,7 +18,7 @@ export default function GeoPage() {
       // api 로직
 
       // 성공 시
-      showToast('좌표가 성공적으로 추가되었습니다.', 'success');
+      showToast('좌표가 성공적으로 추가되었습니다.', 'primary');
     } catch (error) {
       console.error(error);
       // 실패 시
@@ -136,7 +136,7 @@ export default function GeoPage() {
         </div>
       </div>
       {/* 토스트 알림 */}
-      {toast && <Toast key={Date.now()} message={toast.msg} type={toast.type} />}
+      {toast && <Toast key={Date.now()} message={toast.msg} color={toast.color} />}
     </div>
   );
 }

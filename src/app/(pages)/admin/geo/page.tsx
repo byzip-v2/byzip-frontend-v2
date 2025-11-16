@@ -46,9 +46,12 @@ const InfoWindowContent = ({
   </div>
 );
 
+// TODO: 좌표 등록 시 토스트 알림 추가
 export default function GeoPage() {
   const mapRef = useRef<naver.maps.Map | null>(null);
   const infowindowRef = useRef<naver.maps.InfoWindow | null>(null);
+  const markerRef = useRef<naver.maps.Marker | null>(null);
+
   // mapRef 클로저 문제로 인해 선택된 데이터를 ref로 관리
   const selectedDataRef = useRef<TableData | null>(null);
 
@@ -105,8 +108,11 @@ export default function GeoPage() {
       return;
     }
 
+    // 지도 초기 중심 좌표
+    const initialCenter = new naver.maps.LatLng(37.3595316, 127.1052133);
+
     mapRef.current = new naver.maps.Map('map', {
-      center: new naver.maps.LatLng(37.3595316, 127.1052133),
+      center: initialCenter,
       zoom: 15,
     });
 
@@ -116,16 +122,31 @@ export default function GeoPage() {
       backgroundColor: 'transparent',
       borderColor: 'transparent',
       disableAnchor: true,
-      // anchorColor: 'red',
-      // anchorSize: new naver.maps.Size(30, 5),
-      // pixelOffset: new naver.maps.Point(0, -50),
+      pixelOffset: new naver.maps.Point(0, -40),
     });
 
-    // 지도 클릭 시 마커 이동 및 좌표 표시
+    // 마커 초기화
+    markerRef.current = new naver.maps.Marker({
+      position: initialCenter,
+      map: mapRef.current,
+    });
+
+    // 지도 클릭 시 마커 표시 및 좌표 표시
     mapRef.current.addListener('click', (e: { coord: naver.maps.LatLng }) => {
       const latlng = e.coord;
+      // 클릭한 위치에 마커 표시
+      setMarkerPosition(latlng);
+      // 역지오코딩으로 주소 가져오기
       searchCoordinateToAddress(latlng);
     });
+  };
+
+  /**
+   * 마커 위치 업데이트 함수
+   */
+  const setMarkerPosition = (position: naver.maps.LatLng) => {
+    if (!markerRef.current) return;
+    markerRef.current.setPosition(position);
   };
 
   // 주소 검색 시 좌표로 변환
@@ -155,6 +176,9 @@ export default function GeoPage() {
       );
 
       mapRef.current?.setCenter(point);
+
+      // 마커 표시
+      setMarkerPosition(point);
 
       // JSX 컴포넌트를 HTML 문자열로 변환 (동적 데이터 전달)
       const htmlContent = renderToString(
@@ -222,6 +246,9 @@ export default function GeoPage() {
             jibunAddress = address;
           }
         });
+
+        // 마커 표시
+        setMarkerPosition(latlng);
 
         // JSX 컴포넌트를 HTML 문자열로 변환 (동적 데이터 전달)
         const htmlContent = renderToString(

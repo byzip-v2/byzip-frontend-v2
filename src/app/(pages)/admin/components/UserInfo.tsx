@@ -1,10 +1,10 @@
 import React from 'react';
 import styles from '@/styles/pages/admin/admin-layout.module.scss';
-import { GetMeResponseDto } from 'byzip-v2-sdk';
+import { GetMeDataDto } from 'byzip-v2-sdk';
 import LogoutButton from './LogoutButton';
 
 interface UserInfoProps {
-  userInfo: GetMeResponseDto | null;
+  userInfo: GetMeDataDto | null;
 }
 
 export default function UserInfo({ userInfo }: UserInfoProps) {

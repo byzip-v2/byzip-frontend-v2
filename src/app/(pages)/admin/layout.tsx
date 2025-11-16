@@ -3,16 +3,15 @@ import Image from 'next/image';
 import { getUserInfo } from './actions';
 import NavigationMenu from '@/app/(pages)/admin/components/NavigationMenu';
 import UserInfo from '@/app/(pages)/admin/components/UserInfo';
-import { requireAuth } from '@/app/libs/utils/auth';
+
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // 로그인하지 않은 사용자는 로그인 페이지로 리다이렉트
-  await requireAuth('/login');
-
   // 사용자 정보 가져오기
   const userInfoResult = await getUserInfo();
   const userInfo =

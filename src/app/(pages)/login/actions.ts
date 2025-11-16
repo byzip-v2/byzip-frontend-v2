@@ -12,7 +12,10 @@ import type {
   LoginRequestDto,
   TokenDataDto,
 } from 'byzip-v2-sdk';
-import { serverApiWithoutToken } from '@/app/libs/utils/api';
+import {
+  serverApiWithToekn,
+  serverApiWithoutToken,
+} from '@/app/libs/utils/api';
 import { ActionResult } from 'next/dist/server/app-render/types';
 
 /**
@@ -75,7 +78,7 @@ export async function loginAction(
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365, // 365일
+      maxAge: 60, // 1분
       path: '/',
     });
 
@@ -83,7 +86,7 @@ export async function loginAction(
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365, // 365일
+      maxAge: 60 * 10, // 10분
       path: '/',
     });
 
@@ -140,6 +143,12 @@ export async function loginAction(
  */
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
+
+  try {
+    await serverApiWithToekn.post('/auth/logout');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 
   // 토큰 쿠키 삭제
   cookieStore.delete('accessToken');

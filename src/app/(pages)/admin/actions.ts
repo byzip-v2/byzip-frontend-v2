@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios';
-import type { GetMeResponseDto } from 'byzip-v2-sdk';
+import type { GetMeDataDto, GetMeResponseDto } from 'byzip-v2-sdk';
 import { serverApiWithToekn } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 
@@ -20,7 +20,7 @@ import type { ActionResult } from '@/app/libs/types/api';
  *
  * @returns 사용자 정보 조회 결과
  */
-export async function getUserInfo(): Promise<ActionResult<GetMeResponseDto>> {
+export async function getUserInfo(): Promise<ActionResult<GetMeDataDto>> {
   try {
     // API 요청 (토큰 자동 포함)
     const response =
@@ -39,7 +39,7 @@ export async function getUserInfo(): Promise<ActionResult<GetMeResponseDto>> {
     return {
       success: true,
       message: '사용자 정보를 성공적으로 가져왔습니다.',
-      data: userInfo,
+      data: userInfo.data,
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
