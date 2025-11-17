@@ -76,7 +76,7 @@ export async function loginAction(
     // maxAge: 365일 (31536000초)
     const cookieStore = await cookies();
 
-    cookieStore.set('accessToken', tokenData.accessToken, {
+    cookieStore.set('access_token', tokenData.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -84,7 +84,7 @@ export async function loginAction(
       path: '/',
     });
 
-    cookieStore.set('refreshToken', tokenData.refreshToken, {
+    cookieStore.set('refresh_token', tokenData.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -152,7 +152,7 @@ export async function loginAction(
  */
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get('accessToken')?.value;
+  const accessToken = cookieStore.get('access_token')?.value;
 
   // 토큰이 있는 경우에만 서버에 로그아웃 요청
   if (accessToken) {
@@ -169,6 +169,6 @@ export async function logoutAction(): Promise<void> {
   }
 
   // 토큰 쿠키 삭제
-  cookieStore.delete('accessToken');
-  cookieStore.delete('refreshToken');
+  cookieStore.delete('access_token');
+  cookieStore.delete('refresh_token');
 }

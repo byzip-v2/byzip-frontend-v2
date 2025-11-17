@@ -451,7 +451,7 @@ export const createServerApi = (options: {
               // 서버 전용 모듈 동적 import
               const { cookies } = await import('next/headers');
               const cookieStore = await cookies();
-              const refreshToken = cookieStore.get('refreshToken')?.value;
+              const refreshToken = cookieStore.get('refresh_token')?.value;
 
               // 리프레시 토큰이 있으면 토큰 갱신 시도
               if (refreshToken) {
@@ -460,7 +460,7 @@ export const createServerApi = (options: {
 
                 if (newTokens) {
                   // 새 토큰을 쿠키에 저장
-                  cookieStore.set('accessToken', newTokens.accessToken, {
+                  cookieStore.set('access_token', newTokens.accessToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
@@ -468,7 +468,7 @@ export const createServerApi = (options: {
                     path: '/',
                   });
 
-                  cookieStore.set('refreshToken', newTokens.refreshToken, {
+                  cookieStore.set('refresh_token', newTokens.refreshToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',

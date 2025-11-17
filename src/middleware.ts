@@ -38,8 +38,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // ========== 3단계: 쿠키에서 토큰 추출 ==========
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
+    const accessToken = request.cookies.get('access_token')?.value;
+    const refreshToken = request.cookies.get('refresh_token')?.value;
 
     // ========== 4단계: 토큰 검증 및 재발급 처리 ==========
     // - isAccessAllowed: 페이지 접근 허용 여부 (리다이렉트 결정)
@@ -72,13 +72,13 @@ export async function middleware(request: NextRequest) {
       if (refreshedTokens) {
         setCookie(
           response,
-          'accessToken',
+          'access_token',
           refreshedTokens.accessToken,
           60, // 1분
         );
         setCookie(
           response,
-          'refreshToken',
+          'refresh_token',
           refreshedTokens.refreshToken,
           60 * 10, // 10분
         );
@@ -92,13 +92,13 @@ export async function middleware(request: NextRequest) {
       const response = NextResponse.next();
       setCookie(
         response,
-        'accessToken',
+        'access_token',
         refreshedTokens.accessToken,
         60 * 60 * 24, // 1일
       );
       setCookie(
         response,
-        'refreshToken',
+        'refresh_token',
         refreshedTokens.refreshToken,
         60 * 60 * 24 * 30, // 30일
       );

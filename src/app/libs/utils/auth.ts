@@ -16,7 +16,7 @@ import { getApiBaseUrl } from './api';
  */
 export async function getAccessToken(): Promise<string | undefined> {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get('accessToken');
+  const accessToken = cookieStore.get('access_token');
 
   return accessToken?.value;
 }
