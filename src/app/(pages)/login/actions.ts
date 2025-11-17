@@ -148,19 +148,24 @@ export async function loginAction(
  *
  * @description
  * 저장된 토큰 쿠키를 모두 삭제합니다.
+ * 토큰이 있는 경우에만 서버에 로그아웃 요청을 보냅니다.
  */
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
+  const accessToken = cookieStore.get('accessToken')?.value;
 
-  try {
-    await serverApiWithToken.post('/auth/logout');
-  } catch (error) {
-    logErrorToDatabase(error, {
-      actionName: 'logoutAction',
-      skipAxiosError: true,
-      errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
-    console.error('Logout error:', error);
+  // 토큰이 있는 경우에만 서버에 로그아웃 요청
+  if (accessToken) {
+    try {
+      await serverApiWithToken.post('/auth/logout');
+    } catch (error) {
+      logErrorToDatabase(error, {
+        actionName: 'logoutAction',
+        skipAxiosError: true,
+        errorType: BugReportErrorType.SERVER_ERROR,
+      }).catch(() => {});
+      console.error('Logout error:', error);
+    }
   }
 
   // 토큰 쿠키 삭제

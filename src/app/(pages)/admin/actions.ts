@@ -6,13 +6,18 @@
  */
 
 import axios from 'axios';
-import { BugReportErrorType, type GetMeDataDto, type GetMeResponseDto } from 'byzip-v2-sdk';
+import {
+  BugReportErrorType,
+  type GetMeDataDto,
+  type GetMeResponseDto,
+} from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
   serverApiWithoutToken,
   logErrorToDatabase,
 } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
+import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
 
 /**
  * 사용자 정보 조회 Server Action
@@ -46,6 +51,10 @@ export async function getUserInfo(): Promise<ActionResult<GetMeDataDto>> {
       data: userInfo.data,
     };
   } catch (error) {
+    // NEXT_REDIRECT 에러는 Next.js가 처리하도록 위임
+    handleNextRedirectError(error);
+
+    console.error('🔍 [getUserInfo] 에러 발생:', error);
     logErrorToDatabase(error, {
       actionName: 'getUserInfo',
       skipAxiosError: true,
@@ -169,6 +178,9 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
       message: '에러가 발생하지 않았습니다.',
     };
   } catch (error) {
+    // NEXT_REDIRECT 에러는 Next.js가 처리하도록 위임
+    handleNextRedirectError(error);
+
     logErrorToDatabase(error, {
       actionName: 'testGetUserInfoError',
       skipAxiosError: true,

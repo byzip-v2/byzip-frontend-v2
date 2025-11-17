@@ -1,5 +1,6 @@
 import ErrorTestButton from './components/ErrorTestButton';
 import ClientErrorTestButton from './components/ClientErrorTestButton';
+import UserMeTestButton from './components/UserMeTestButton';
 
 export default async function AdminPage() {
   return (
@@ -7,6 +8,12 @@ export default async function AdminPage() {
       <header>
         <h1>대시보드</h1>
       </header>
+      <section style={{ marginTop: '32px' }}>
+        <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>
+          API 테스트
+        </h2>
+        <UserMeTestButton />
+      </section>
       <section style={{ marginTop: '32px' }}>
         <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>
           서버 에러 테스트

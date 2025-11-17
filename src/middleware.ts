@@ -20,16 +20,28 @@ export const config = {
  */
 export async function middleware(request: NextRequest) {
   try {
+    console.log(
+      '🔐 [Middleware] 실행:',
+      request.method,
+      request.nextUrl.pathname,
+    );
     // ========== 1단계: 경로 파악 ==========
     const { pathname } = request.nextUrl;
     const isLoginPage = pathname === '/login';
     const isAdminPage = pathname.startsWith('/admin');
 
-    // ========== 2단계: 쿠키에서 토큰 추출 ==========
+    // ========== 2단계: POST 요청(Server Action) 처리 ==========
+    // Server Action 요청의 경우 middleware에서 리다이렉트를 제대로 처리하지 못함
+    // 따라서 POST 요청은 통과시키고, Server Action 내부에서 401 에러 시 redirect()로 처리하도록 함
+    if (request.method === 'POST') {
+      return NextResponse.next();
+    }
+
+    // ========== 3단계: 쿠키에서 토큰 추출 ==========
     const accessToken = request.cookies.get('accessToken')?.value;
     const refreshToken = request.cookies.get('refreshToken')?.value;
 
-    // ========== 3단계: 토큰 검증 및 재발급 처리 ==========
+    // ========== 4단계: 토큰 검증 및 재발급 처리 ==========
     // - isAccessAllowed: 페이지 접근 허용 여부 (리다이렉트 결정)
     // - isAuthenticated: 실제 인증 상태 (유효한 토큰 보유 여부)
     // - refreshedTokens: 재발급된 토큰
@@ -40,7 +52,7 @@ export async function middleware(request: NextRequest) {
         isLoginPage,
       });
 
-    // ========== 4단계: 인증 실패 시 처리 ==========
+    // ========== 5단계: 인증 실패 시 처리 ==========
     if (!isAccessAllowed) {
       if (isLoginPage) {
         // 로그인 페이지는 인증 실패하면 페이지 유지
@@ -51,7 +63,7 @@ export async function middleware(request: NextRequest) {
       return redirectToLogin(request);
     }
 
-    // ========== 5단계: 로그인 페이지에서 이미 인증된 경우 처리 ==========
+    // ========== 6단계: 로그인 페이지에서 이미 인증된 경우 처리 ==========
     // 로그인 페이지에 접근했는데 유효한 토큰이 있는 경우 관리자 페이지로 리다이렉트
     if (isLoginPage && isAuthenticated) {
       const response = redirectToAdmin(request);
@@ -74,7 +86,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // ========== 6단계: 관리자 페이지에서 토큰 재발급된 경우 처리 ==========
+    // ========== 7단계: 관리자 페이지에서 토큰 재발급된 경우 처리 ==========
     // 관리자 페이지 접근 시 토큰이 재발급된 경우 쿠키에 저장하고 요청 계속 진행
     if (isAdminPage && refreshedTokens) {
       const response = NextResponse.next();
@@ -93,7 +105,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // ========== 7단계: 정상 처리 완료 ==========
+    // ========== 8단계: 정상 처리 완료 ==========
     // 위 조건에 해당하지 않는 경우 요청을 그대로 진행
     return NextResponse.next();
   } catch (error) {
