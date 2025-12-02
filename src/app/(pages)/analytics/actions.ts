@@ -4,8 +4,12 @@
  * 분석 페이지 Server Actions
  */
 
-import { serverApiWithoutToken } from '@/app/libs/utils/api';
+import {
+  serverApiWithoutToken,
+  logErrorToDatabase,
+} from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
+import { BugReportErrorType } from 'byzip-v2-sdk';
 
 interface DailyVisitor {
   date: string; // 예: "2025-06-23"
@@ -54,6 +58,11 @@ export async function getAnalyticsData(): Promise<ActionResult<AnalyticsData>> {
       data: data,
     };
   } catch (error) {
+    logErrorToDatabase(error, {
+      actionName: 'getAnalyticsData',
+      skipAxiosError: true,
+      errorType: BugReportErrorType.SERVER_ERROR,
+    }).catch(() => {});
     console.error('getAnalyticsData error:', error);
     return {
       success: false,

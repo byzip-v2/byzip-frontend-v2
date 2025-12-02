@@ -1,14 +1,13 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 
 /**
  * 인증 관련 유틸리티 함수들
  */
 
 /**
- * 현재 사용자의 accessToken을 반환합니다.
+ * 현재 사용자의 accessToken을 반환
  *
  * @returns accessToken 값 (string | undefined)
  */
@@ -20,43 +19,57 @@ export async function getAccessToken(): Promise<string | undefined> {
 }
 
 /**
- * 현재 사용자의 로그인 상태를 확인합니다.
+ * JWT 토큰에서 userId를 추출
  *
- * @returns 로그인 여부 (boolean)
- */
-export async function isAuthenticated(): Promise<boolean> {
-  const accessToken = await getAccessToken();
-  return !!accessToken;
-}
-
-/**
- * 로그인된 사용자만 접근할 수 있는 페이지에서 사용합니다.
- * 로그인되지 않은 경우 로그인 페이지로 리다이렉트합니다.
+ * @param token - JWT 토큰
+ * @returns userId (string | undefined)
  *
- * @param redirectTo - 리다이렉트할 경로 (기본값: '/login')
+ * @description
+ * JWT 토큰의 payload를 디코딩하여 userId를 추출합니다.
+ * 토큰이 유효하지 않거나 userId가 없는 경우 undefined를 반환합니다.
  */
-export async function requireAuth(
-  redirectTo: string = '/login',
-): Promise<void> {
-  const authenticated = await isAuthenticated();
+export async function getUserIdFromToken(
+  token: string,
+): Promise<string | undefined> {
+  try {
+    // JWT 토큰은 header.payload.signature 형식
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return undefined;
+    }
 
-  if (!authenticated) {
-    redirect(redirectTo);
+    // payload 부분 디코딩 (base64url)
+    const payload = parts[1];
+    // base64url을 base64로 변환 (필요한 경우)
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = Buffer.from(base64, 'base64').toString('utf-8');
+    const parsed = JSON.parse(decoded);
+
+    // userId 또는 sub (subject) 필드에서 userId 추출
+    return parsed.userId || parsed.sub || parsed.id || undefined;
+  } catch {
+    // 토큰 디코딩 실패 시 undefined 반환
+    return undefined;
   }
 }
 
 /**
- * 로그인된 사용자가 접근할 수 없는 페이지에서 사용합니다.
- * 로그인된 경우 지정된 페이지로 리다이렉트합니다.
+ * 현재 사용자의 userId를 반환
  *
- * @param redirectTo - 리다이렉트할 경로 (기본값: '/admin')
+ * @returns userId (string | undefined)
+ *
+ * @description
+ * 쿠키에서 accessToken을 가져와서 userId를 추출합니다.
  */
-export async function requireGuest(
-  redirectTo: string = '/admin',
-): Promise<void> {
-  const authenticated = await isAuthenticated();
+export async function getUserId(): Promise<string | undefined> {
+  try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      return undefined;
+    }
 
-  if (authenticated) {
-    redirect(redirectTo);
+    return await getUserIdFromToken(accessToken);
+  } catch {
+    return undefined;
   }
 }
