@@ -33,8 +33,28 @@ const MOCK: BugRow[] = [
   { id: 'uuid', title: '500 - Internal Server Error', detail: 'The server encountered an internal e...', count: 1, status: 'done', memo: '메인 페이지 속도 저하 원인...' },
 ];
 
+const STATUS_LABEL: Record<BugStatus, string> = {
+  open: '확인 필요',
+  'need-fix': '개발중',
+  progress: '해결중',
+  done: '확인 완료',
+};
+
+// 디테일 영역에 뿌릴 더미 발생일
+const MOCK_OCCURS = [
+  '2025.03.21 11:32:44',
+  '2025.03.20 11:32:44',
+  '2025.03.19 11:32:44',
+  '2025.03.18 11:32:44',
+  '2025.03.17 11:32:44',
+  '2025.03.16 11:32:44',
+];
+
 export default function BugReportPage() {
   const [q, setQ] = useState('');
+  const [selected, setSelected] = useState<BugRow | null>(null);
+  const [detailStatus, setDetailStatus] = useState<BugStatus>('done');
+
   const list = useMemo(
     () =>
       q.trim()
@@ -54,6 +74,14 @@ export default function BugReportPage() {
     const done = list.filter((r) => r.status === 'done').length;
     return { open, progress, done, total: list.length };
   }, [list]);
+
+  // 행 클릭 시 서랍 오픈
+  const handleRowClick = (row: BugRow) => {
+    setSelected(row);
+    setDetailStatus(row.status);
+  };
+
+  const closeDrawer = () => setSelected(null);
 
   return (
     <div className={styles.page}>
@@ -94,7 +122,7 @@ export default function BugReportPage() {
       {/* 테이블 */}
       <section className={styles.tableWrap}>
         <div className={styles.total}>Total {stats.total} bugs</div>
-        <div className={styles.tableContainer}>
+          <div className={styles.tableContainer}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -107,7 +135,13 @@ export default function BugReportPage() {
             </thead>
             <tbody>
               {list.map((r, i) => (
-                <tr key={`${r.id}-${i}`} className={r.highlight ? styles.highlight : ''}>
+                <tr
+                  key={`${r.id}-${i}`}
+                  className={`${r.highlight ? styles.highlight : ''} ${
+                    selected === r ? styles.rowSelected : ''
+                  }`}
+                  onClick={() => handleRowClick(r)}
+                >
                   <td className={styles.mono}>uuid</td>
                   <td>
                     <div className={styles.rowTitle}>
@@ -129,13 +163,7 @@ export default function BugReportPage() {
                           : styles.open
                       }`}
                     >
-                      {r.status === 'done'
-                        ? '확인 완료'
-                        : r.status === 'progress'
-                        ? '해결중'
-                        : r.status === 'need-fix'
-                        ? '개발중'
-                        : '확인 필요'}
+                      {STATUS_LABEL[r.status]}
                     </span>
                   </td>
                   <td className={styles.ellipsis}>{r.memo}</td>
@@ -156,6 +184,82 @@ export default function BugReportPage() {
           <button className={styles.arrow}>{'>'}</button>
         </div>
       </section>
+ {/* 오른쪽 디테일 서랍 */}
+      {selected && (
+        <>
+          <div className={styles.drawerBackdrop} onClick={closeDrawer} />
+          <aside className={styles.drawer}>
+            <div className={styles.drawerHeader}>
+              <div>
+                <div className={styles.drawerLabel}>고유번호</div>
+                <div className={styles.drawerId}>{selected.id}</div>
+              </div>
+              <button className={styles.drawerClose} onClick={closeDrawer}>
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.drawerRowTop}>
+              <div>
+                <span className={styles.drawerLabel}>발생횟수</span>
+                <span className={styles.drawerCount}>{selected.count}회</span>
+              </div>
+              <div className={styles.drawerStatusBox}>
+                <span className={styles.drawerLabel}>상태</span>
+                <select
+                  className={styles.drawerSelect}
+                  value={detailStatus}
+                  onChange={(e) => setDetailStatus(e.target.value as BugStatus)}
+                >
+                  <option value="open">확인 필요</option>
+                  <option value="need-fix">개발중</option>
+                  <option value="progress">해결중</option>
+                  <option value="done">확인 완료</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 내용 */}
+            <section className={styles.drawerSection}>
+              <h3 className={styles.drawerSectionTitle}>내용</h3>
+              <div className={styles.drawerContentBox}>
+                <div className={styles.rowTitle}>
+                  <span className={styles.dot} />
+                  <span className={styles.err}>{selected.title}</span>
+                </div>
+                <p className={styles.drawerParagraph}>
+                  {selected.detail.replace('...', ' or misconfiguration and was unable to complete the request.')}
+                </p>
+              </div>
+            </section>
+
+            {/* 발생일 리스트 */}
+            <section className={styles.drawerSection}>
+              <h3 className={styles.drawerSectionTitle}>발생일</h3>
+              <div className={styles.drawerListBox}>
+                <ul>
+                  {MOCK_OCCURS.map((d) => (
+                    <li key={d}>{d}</li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+
+            {/* 메모 */}
+            <section className={styles.drawerSection}>
+              <h3 className={styles.drawerSectionTitle}>메모</h3>
+              <textarea
+                className={styles.drawerMemo}
+                defaultValue={selected.memo}
+              />
+            </section>
+
+            <div className={styles.drawerFooter}>
+              <button className={styles.drawerSubmit}>수정 완료</button>
+            </div>
+          </aside>
+        </>
+      )}
     </div>
   );
 }
