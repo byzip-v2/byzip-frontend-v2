@@ -570,6 +570,11 @@
   border-radius: 10px;
   padding: 12px 14px;
   background: $color-surface-subtle;
+  min-height: 120px;
+  max-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  word-break: break-word;
 }
 
 .drawerParagraph {
@@ -582,9 +587,12 @@
   border: 1px solid $color-gray;
   border-radius: 10px;
   padding: 10px 14px;
-  max-height: 180px;
+  min-height: 120px;
+  max-height: 120px;
   overflow-y: auto;
+  overflow-x: hidden;
   background: $color-surface-subtle;
+  word-break: break-word;
 
   ul {
     list-style: none;
@@ -599,11 +607,17 @@
       }
     }
   }
+
+  .drawerParagraph {
+    white-space: pre-wrap;
+  }
 }
 
 .drawerMemo {
   width: 100%;
   min-height: 120px;
+  max-height: 120px;
+  overflow-y: auto;
   resize: none;
   border-radius: 10px;
   border: 1px solid $color-gray;

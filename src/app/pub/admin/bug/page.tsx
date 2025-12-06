@@ -309,7 +309,7 @@ export default function BugReportPage() {
       <div className={styles.searchRow}>
         <div className={styles.searchBox}>
           <input
-            placeholder="고유번호 및 내용을 입력하세요."
+            placeholder="검색할 내용을 입력해 주세요."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -559,7 +559,17 @@ export default function BugReportPage() {
               <section className={styles.drawerSection}>
                 <h3 className={styles.drawerSectionTitle}>발생영역</h3>
                 <div className={styles.drawerListBox}>
-                  <div className={styles.drawerParagraph}>좌표관리 페이지</div>
+                  <div className={styles.drawerParagraph}>'AxiosError: Request failed with status code 500
+    at settle (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/settle.js:24:12)
+    at IncomingMessage.handleStreamEnd (webpack-internal:///(action-browser)/./node_modules/axios/lib/adapters/http.js:648:71)
+    at IncomingMessage.emit (node:events:526:35)
+    at endReadableNT (node:internal/streams/readable:1408:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+    at Axios.request (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/Axios.js:57:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async loginAction (webpack-internal:///(action-browser)/./src/app/(pages)/login/actions.ts:43:26)
+    at async C:\Users\winte\OneDrive\바탕 화면\Project\byzip-frontend-v2\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:417:2449
+    at async handleAction (C:\Users\winte\OneDrive\바탕 화면\Project\byzip-frontend-v2\node_module...'</div>
                 </div>
               </section>
 
