@@ -1,3 +1,5 @@
+@use '../../_variables.scss' as *;
+
 .summaryWrapper {
   padding: 2rem;
 
@@ -16,7 +18,7 @@
     }
 
     pre {
-      background-color: #f4f4f4;
+      background-color: $color-surface-track;
       padding: 0.75rem;
       border-radius: 0.5rem;
       font-size: 0.8rem;

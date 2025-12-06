@@ -53,15 +53,15 @@ textarea {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f4f4f4;
+  background: $color-surface-track;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: $color-border-muted;
   border-radius: 4px;
   
   &:hover {
-    background: #999;
+    background: $color-text-soft;
   }
 }
 
@@ -81,19 +81,19 @@ textarea {
   background: var(--color-primary);
   box-shadow: 0 6px 16px rgba(0,0,0,.18);
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 700;
+  color: $color-white; font-weight: 700;
 }
 
 .bz-marker .label {
   margin-top: 8px;
   padding: 8px 12px;
-  background: #fff;
+  background: $color-white;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,.12);
   white-space: nowrap;
   font-size: 13px;
-  color: #1e1e1e;
+  color: $color-text-primary;
 }
 
 .bz-marker .title { font-weight: 600; margin-right: 6px; }
-.bz-marker .addr  { color: #666; }
+.bz-marker .addr  { color: $color-text-secondary; }

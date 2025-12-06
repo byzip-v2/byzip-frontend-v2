@@ -64,7 +64,7 @@
 .sidebarServiceName {
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: $color-text-muted;
   line-height: 1.2;
   font-family: $font-family-accent;
 }
@@ -112,7 +112,7 @@
 
   &:hover {
     background-color: $color-gray;
-    color: #333;
+    color: $color-text-muted;
   }
 }
 
@@ -146,7 +146,7 @@
 .userName {
   font-size: 16px;
   font-weight: 700;
-  color: #333;
+  color: $color-text-muted;
   margin-bottom: 2px;
 }
 
