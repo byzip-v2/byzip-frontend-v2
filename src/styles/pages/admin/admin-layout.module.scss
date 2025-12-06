@@ -129,10 +129,10 @@
 
 // 사용자 정보
 .userInfo {
-  padding: 16px 24px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background-color: $color-white;
   margin: 16px;
   position: relative;
@@ -141,33 +141,37 @@
 .userDetails {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .userName {
   font-size: 16px;
   font-weight: 700;
   color: $color-text-muted;
-  margin-bottom: 2px;
 }
 
 .userEmail {
-  font-size: 14px;
+  font-size: 13px;
   color: $color-text-secondary;
+  line-height: 1.3;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .logoutBtn {
   background-color: $color-primary;
   border: none;
   color: $color-white;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-left: auto;
 
   &:hover {
     background-color: color.adjust($color-primary, $lightness: -10%);
