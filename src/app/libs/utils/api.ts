@@ -470,7 +470,7 @@ export const createServerApi = (options: {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
-                    maxAge: 60, // 1분
+                    maxAge: 3600 * 24, // 1일
                     path: '/',
                   });
 
@@ -478,7 +478,7 @@ export const createServerApi = (options: {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
-                    maxAge: 60 * 10, // 10분
+                    maxAge: 3600 * 24 * 30, // 30일
                     path: '/',
                   });
 
