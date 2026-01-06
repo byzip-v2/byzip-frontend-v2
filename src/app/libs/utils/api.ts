@@ -16,6 +16,7 @@ import {
   refreshAccessToken,
 } from '@/app/libs/utils/auth';
 import { getUserAgent, getReferer } from '@/app/libs/utils/headers';
+import { notifySlackBugReport } from '@/app/libs/utils/notifySlack';
 import type { CreateBugReportDto } from 'byzip-v2-sdk';
 import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
 
@@ -170,6 +171,8 @@ const createBugReport = async (
   bugReportData: CreateBugReportDto,
 ): Promise<void> => {
   const apiBaseUrl = getApiBaseUrl();
+
+  // DB에 저장
   await axios
     .post(`${apiBaseUrl}/bug-reports`, bugReportData, {
       headers: {
@@ -183,6 +186,9 @@ const createBugReport = async (
         logError.message,
       );
     });
+
+  // Slack 알림 전송 (
+  notifySlackBugReport(bugReportData);
 };
 
 /**
