@@ -18,7 +18,6 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   const pathname = usePathname();
 
   const isActive = (href: string) =>
@@ -30,7 +29,13 @@ export default function AdminLayout({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.logo}>
-            <Image src="/images/admin/logo.png" alt="분양모음집 로고" className={styles.logoIcon} width={100} height={100} />
+            <Image
+              src="/images/admin/logo.png"
+              alt="분양모음집 로고"
+              className={styles.logoIcon}
+              width={100}
+              height={100}
+            />
             <div className={styles.logoText}>
               <div className={styles.serviceName}>분양모음집</div>
               <div className={styles.adminLabel}>관리자</div>
@@ -47,15 +52,21 @@ export default function AdminLayout({
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <div className={styles.sidebarLogo}>
-              <Image src="/images/byzip_logo.png" alt="분양모음집 로고" className={styles.sidebarLogoIcon} width={100} height={100} />
+              <Image
+                src="/images/byzip_logo.png"
+                alt="분양모음집 로고"
+                className={styles.sidebarLogoIcon}
+                width={100}
+                height={100}
+              />
               <div className={styles.sidebarLogoText}>
                 <div className={styles.sidebarServiceName}>분양모음집</div>
                 <div className={styles.sidebarAdminLabel}>관리자</div>
               </div>
             </div>
           </div>
-          
-   <nav className={styles.sidebarNav}>
+
+          <nav className={styles.sidebarNav}>
             <ul className={styles.navList}>
               {NAV.map(({ href, icon: Icon, label }) => (
                 <li
@@ -83,9 +94,7 @@ export default function AdminLayout({
 
         {/* 메인 콘텐츠 */}
         <main className={styles.main}>
-          <div className={styles.mainContent}>
-            {children}
-          </div>
+          <div className={styles.mainContent}>{children}</div>
         </main>
       </div>
     </div>

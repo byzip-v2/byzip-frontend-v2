@@ -1,3 +1,5 @@
+@use '../_variables.scss' as *;
+
 .container {
   padding: 32px;
   font-family: sans-serif;
@@ -12,14 +14,14 @@
   margin-top: 32px;
   font-size: 18px;
   font-weight: bold;
-  color: #444;
+  color: $color-text-dim;
 }
 
 .table {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  background-color: #fff;
+  background-color: $color-white;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
   border-radius: 8px;
   overflow: hidden;
@@ -28,18 +30,18 @@
   th,
   td {
     padding: 12px 16px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid $color-border-light;
     text-align: left;
     font-size: 14px;
   }
 
   th {
-    background-color: #f9f9f9;
+    background-color: $color-surface-muted;
     font-weight: 600;
   }
 
   tr:hover {
-    background-color: #f6faff;
+    background-color: $color-surface-hover;
   }
 
   td:first-child {
@@ -48,7 +50,7 @@
 }
 
 .link {
-  color: #0070f3;
+  color: $color-link;
   text-decoration: none;
 
   &:hover {
@@ -62,14 +64,14 @@
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  color: white;
+  color: $color-white;
   text-align: center;
 
   &.done {
-    background-color: #22c55e; // 초록
+    background-color: $color-badge-success; // 초록
   }
 
   &.progress {
-    background-color: #f59e0b; // 주황
+    background-color: $color-badge-warning; // 주황
   }
 }
