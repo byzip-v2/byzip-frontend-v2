@@ -19,6 +19,10 @@ import {
   logErrorToDatabase,
 } from '@/app/libs/utils/api';
 import { ActionResult } from 'next/dist/server/app-render/types';
+import {
+  accessTokenMaxAge,
+  refreshTokenMaxAge,
+} from '@/app/libs/utils/constants';
 
 /**
  * 로그인 Server Action
@@ -80,7 +84,7 @@ export async function loginAction(
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60, // 1분
+      maxAge: accessTokenMaxAge,
       path: '/',
     });
 
@@ -88,7 +92,7 @@ export async function loginAction(
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 10, // 10분
+      maxAge: refreshTokenMaxAge,
       path: '/',
     });
 

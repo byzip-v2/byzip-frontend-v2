@@ -19,6 +19,7 @@ import { getUserAgent, getReferer } from '@/app/libs/utils/headers';
 import { notifySlackBugReport } from '@/app/libs/utils/notifySlack';
 import type { CreateBugReportDto } from 'byzip-v2-sdk';
 import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
+import { accessTokenMaxAge, refreshTokenMaxAge } from './constants';
 
 // User-Agent를 저장하기 위한 확장 타입
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -470,7 +471,7 @@ export const createServerApi = (options: {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
-                    maxAge: 3600 * 24, // 1일
+                    maxAge: accessTokenMaxAge,
                     path: '/',
                   });
 
@@ -478,7 +479,7 @@ export const createServerApi = (options: {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
-                    maxAge: 3600 * 24 * 30, // 30일
+                    maxAge: refreshTokenMaxAge,
                     path: '/',
                   });
 

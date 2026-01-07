@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { logErrorToDatabase } from '@/app/libs/utils/api';
 import { BugReportErrorType } from 'byzip-v2-sdk';
+import {
+  accessTokenMaxAge,
+  refreshTokenMaxAge,
+} from './app/libs/utils/constants';
 
 // 미들웨어 실행 경로 설정
 export const config = {
@@ -74,13 +78,13 @@ export async function middleware(request: NextRequest) {
           response,
           'access_token',
           refreshedTokens.accessToken,
-          60, // 1분
+          accessTokenMaxAge,
         );
         setCookie(
           response,
           'refresh_token',
           refreshedTokens.refreshToken,
-          60 * 10, // 10분
+          refreshTokenMaxAge,
         );
       }
       return response;
@@ -94,13 +98,13 @@ export async function middleware(request: NextRequest) {
         response,
         'access_token',
         refreshedTokens.accessToken,
-        60 * 60 * 24, // 1일
+        accessTokenMaxAge,
       );
       setCookie(
         response,
         'refresh_token',
         refreshedTokens.refreshToken,
-        60 * 60 * 24 * 30, // 30일
+        refreshTokenMaxAge,
       );
       return response;
     }
