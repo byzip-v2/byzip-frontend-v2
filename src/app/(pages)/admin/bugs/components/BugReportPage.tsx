@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
 import {
   updateBugReport,
@@ -76,6 +76,8 @@ export default function BugReportPage({
   searchParams,
 }: BugReportClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParamsHook = useSearchParams();
 
   const [q, setQ] = useState(searchParams.q || '');
 
@@ -127,7 +129,7 @@ export default function BugReportPage({
   // URL 업데이트 유틸리티
   const updateUrl = useCallback(
     (updates: Record<string, string | number | undefined>) => {
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(searchParamsHook.toString());
       Object.entries(updates).forEach(([key, value]) => {
         if (value === undefined || value === '' || value === 'all') {
           params.delete(key);
@@ -135,10 +137,16 @@ export default function BugReportPage({
           params.set(key, String(value));
         }
       });
-      router.push(`?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`);
     },
-    [router],
+    [router, pathname, searchParamsHook],
   );
+
+  // 페이지 변경 시 선택 항목 및 서랍 초기화
+  useEffect(() => {
+    setSelectedRowIds(new Set());
+    setSelected(null);
+  }, [searchParams.page]);
 
   // 검색 실행
   const handleSearch = () => {
@@ -421,7 +429,7 @@ export default function BugReportPage({
                         <span className={styles.dot} />
                         <span className={styles.err}>{r.title}</span>
                       </div>
-                      <div className={styles.rowDetail}>{r.description}</div>
+                      <div className={styles.rowDetail}>{r.errorMessage}</div>
                     </td>
                     <td>{r.formattedDate}</td>
                     <td>
@@ -439,7 +447,7 @@ export default function BugReportPage({
                         {STATUS_LABEL[r.uiStatus]}
                       </span>
                     </td>
-                    <td className={styles.ellipsis}>{r.memo || '-'}</td>
+                    <td className={styles.ellipsis}>{r.memo || ''}</td>
                     <td className={styles.assignee}>
                       {r.assigneeId || '미지정'}
                     </td>
@@ -473,16 +481,17 @@ export default function BugReportPage({
             {Array.from(
               { length: Math.min(10, initialMeta.totalPages) },
               (_, i) => {
+                const currentPage = Number(searchParams.page) || 1;
                 const startPage = Math.max(
                   1,
-                  Math.min(initialMeta.page - 4, initialMeta.totalPages - 9),
+                  Math.min(currentPage - 4, initialMeta.totalPages - 9),
                 );
                 const p = startPage + i;
                 if (p > initialMeta.totalPages) return null;
                 return (
                   <button
                     key={p}
-                    className={`${styles.pageBtn} ${p === initialMeta.page ? styles.active : ''}`}
+                    className={`${styles.pageBtn} ${p === currentPage ? styles.active : ''}`}
                     onClick={() => handlePageChange(p)}
                   >
                     {p}
@@ -605,16 +614,8 @@ export default function BugReportPage({
                     <span className={styles.err}>{selected.title}</span>
                   </div>
                   <p className={styles.drawerParagraph}>
-                    {selected.description}
+                    {selected.errorMessage}
                   </p>
-                  {selected.errorMessage && (
-                    <p
-                      className={styles.drawerParagraph}
-                      style={{ marginTop: '10px', color: '#ff4d4f' }}
-                    >
-                      <strong>ErrorMessage:</strong> {selected.errorMessage}
-                    </p>
-                  )}
                 </div>
               </section>
 

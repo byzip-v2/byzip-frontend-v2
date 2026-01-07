@@ -133,10 +133,11 @@ export async function updateBugReport(
   data: UpdateBugReportDto,
 ): Promise<ActionResult<BugReportDataDtoWithMemo>> {
   try {
-    const response = await serverApiWithToken.patch<any>(
-      `/bug-reports/${id}`,
-      data,
-    );
+    const response = await serverApiWithToken.patch<{
+      success: boolean;
+      message?: string;
+      data: BugReportDataDtoWithMemo;
+    }>(`/bug-reports/${id}`, data);
 
     if (response.status !== 200 || !response.data.success) {
       return {
@@ -189,10 +190,10 @@ export async function bulkUpdateBugStatus(
   status: string,
 ): Promise<ActionResult> {
   try {
-    const response = await serverApiWithToken.patch<any>(
-      '/bug-reports/bulk-status',
-      { ids, status },
-    );
+    const response = await serverApiWithToken.patch<{
+      success: boolean;
+      message?: string;
+    }>('/bug-reports/bulk-status', { ids, status });
 
     if (response.status !== 200 || !response.data.success) {
       return {

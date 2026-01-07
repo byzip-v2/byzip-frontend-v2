@@ -1,6 +1,6 @@
 'use server';
 
-import { getBugReports } from './actions';
+import { getBugReports, type GetBugReportsParams } from './actions';
 import BugReportPage, {
   BugStatus,
   mapUiToApiStatus,
@@ -19,7 +19,7 @@ export default async function Page({ searchParams }: BugReportPageProps) {
   const { q, status, page } = params;
 
   // API 파라미터 준비
-  const apiParams: any = {
+  const apiParams: GetBugReportsParams = {
     search: q || undefined,
     page: Number(page) || 1,
     limit: 10,

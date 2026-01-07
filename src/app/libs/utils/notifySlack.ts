@@ -15,6 +15,11 @@ export const notifySlackBugReport = async (
 ): Promise<void> => {
   const webhookUrl = process.env.SLACK_BUG_REPORT_WEBHOOK_URL;
 
+  // 개발 환경(로컬)에서는 Slack 알림을 보내지 않음
+  if (process.env.NEXT_PUBLIC_BASE_URL === 'http://localhost:3000') {
+    return;
+  }
+
   if (!webhookUrl) {
     console.warn(
       '🔍 [Slack Notifier] SLACK_BUG_REPORT_WEBHOOK_URL이 설정되지 않았습니다.',

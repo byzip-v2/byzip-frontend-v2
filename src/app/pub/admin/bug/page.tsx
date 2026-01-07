@@ -253,7 +253,7 @@ export default function BugReportPage() {
     setStatusActionOpen((v) => !v);
   };
 
-  const handleBulkStatusSelect = (status: BugStatus) => {
+  const handleBulkStatusSelect = (_status: BugStatus) => {
     // 퍼블 상태: 선택 후 닫기만 수행
     setStatusActionOpen(false);
   };
@@ -559,7 +559,8 @@ export default function BugReportPage() {
               <section className={styles.drawerSection}>
                 <h3 className={styles.drawerSectionTitle}>발생영역</h3>
                 <div className={styles.drawerListBox}>
-                  <div className={styles.drawerParagraph}>'AxiosError: Request failed with status code 500
+                  <div className={styles.drawerParagraph}>
+                    {`'AxiosError: Request failed with status code 500
     at settle (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/settle.js:24:12)
     at IncomingMessage.handleStreamEnd (webpack-internal:///(action-browser)/./node_modules/axios/lib/adapters/http.js:648:71)
     at IncomingMessage.emit (node:events:526:35)
@@ -568,8 +569,9 @@ export default function BugReportPage() {
     at Axios.request (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/Axios.js:57:41)
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
     at async loginAction (webpack-internal:///(action-browser)/./src/app/(pages)/login/actions.ts:43:26)
-    at async C:\Users\winte\OneDrive\바탕 화면\Project\byzip-frontend-v2\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:417:2449
-    at async handleAction (C:\Users\winte\OneDrive\바탕 화면\Project\byzip-frontend-v2\node_module...'</div>
+    at async C:\\Users\\winte\\OneDrive\\바탕 화면\\Project\\byzip-frontend-v2\\node_modules\\next\\dist\\compiled\\next-server\\app-page.runtime.dev.js:417:2449
+    at async handleAction (C:\\Users\\winte\\OneDrive\\바탕 화면\\Project\\byzip-frontend-v2\\node_module...'`}
+                  </div>
                 </div>
               </section>
 
