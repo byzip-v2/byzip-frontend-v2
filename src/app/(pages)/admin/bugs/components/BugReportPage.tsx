@@ -105,6 +105,8 @@ export default function BugReportPage({
     memo: string;
   } | null>(null);
 
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const statusFilter = (searchParams.status as StatusFilter) || 'all';
 
   // 데이터 가공
@@ -229,7 +231,7 @@ export default function BugReportPage({
     setStatusOpen(false);
   };
 
-  const handleSelectAssignee = (name: string) => {
+  const handleSelectAssignee = (name: string | null) => {
     setDetailAssignee(name);
     setAssigneeOpen(false);
   };
@@ -259,20 +261,25 @@ export default function BugReportPage({
   };
 
   const handleUpdate = async () => {
-    if (!selected) return;
+    if (!selected || isUpdating) return;
 
-    const apiStatus = mapUiToApiStatus(detailStatus);
-    const result = await updateBugReport(selected.id, {
-      status: apiStatus,
-      assigneeId: detailAssignee || undefined,
-      memo: detailMemo,
-    });
+    setIsUpdating(true);
+    try {
+      const apiStatus = mapUiToApiStatus(detailStatus);
+      const result = await updateBugReport(selected.id, {
+        status: apiStatus,
+        assigneeId: detailAssignee || undefined,
+        memo: detailMemo,
+      });
 
-    if (result.success) {
-      closeDrawer();
-      router.refresh(); // 데이터 새로고침
-    } else {
-      alert(result.message);
+      if (result.success) {
+        closeDrawer();
+        router.refresh(); // 데이터 새로고침
+      } else {
+        alert(result.message);
+      }
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -588,6 +595,15 @@ export default function BugReportPage({
                     </button>
                     {assigneeOpen && (
                       <div className={styles.selectMenu}>
+                        <button
+                          type="button"
+                          className={`${styles.selectOption} ${
+                            detailAssignee === null ? styles.active : ''
+                          }`}
+                          onClick={() => handleSelectAssignee(null)}
+                        >
+                          미지정
+                        </button>
                         {ASSIGNEES.map((name) => (
                           <button
                             key={name}
@@ -660,10 +676,10 @@ export default function BugReportPage({
               <div className={styles.drawerFooter}>
                 <button
                   className={styles.drawerSubmit}
-                  disabled={!hasDrawerChanges}
+                  disabled={!hasDrawerChanges || isUpdating}
                   onClick={handleUpdate}
                 >
-                  수정 완료
+                  {isUpdating ? '수정 중...' : '수정 완료'}
                 </button>
               </div>
             </div>

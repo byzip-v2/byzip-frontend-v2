@@ -253,7 +253,7 @@ export default function BugReportPage() {
     setStatusActionOpen((v) => !v);
   };
 
-  const handleBulkStatusSelect = (_status: BugStatus) => {
+  const handleBulkStatusSelect = () => {
     // 퍼블 상태: 선택 후 닫기만 수행
     setStatusActionOpen(false);
   };
@@ -331,7 +331,7 @@ export default function BugReportPage() {
                     key={status}
                     type="button"
                     className={styles.statusActionOption}
-                    onClick={() => handleBulkStatusSelect(status)}
+                    onClick={() => handleBulkStatusSelect()}
                   >
                     {STATUS_LABEL[status]}
                   </button>
