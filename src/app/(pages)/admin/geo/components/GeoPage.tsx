@@ -5,8 +5,8 @@ import { HousingSupplyDataDto } from 'byzip-v2-sdk';
 import Script from 'next/script';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '@/app/components/common/Toast/Toast';
 import { updateHousingSupplyCoords } from '../actions';
+import { useToast } from '@/app/libs/hooks/useToast';
 
 interface GeoClientProps {
   initialData: HousingSupplyDataDto[];
@@ -22,17 +22,8 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   const [searchAddress, setSearchAddress] = useState<string>('');
   const [tableData, setTableData] =
     useState<HousingSupplyDataDto[]>(initialData);
-  const [toast, setToast] = useState<{
-    msg: string;
-    color: 'primary' | 'error';
-    id: number;
-  } | null>(null);
-
+  const { showToast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const showToast = (msg: string, color: 'primary' | 'error' = 'primary') => {
-    setToast({ msg, color, id: Date.now() });
-  };
 
   useEffect(() => {
     setTableData(initialData);
@@ -351,9 +342,6 @@ export default function GeoPage({ initialData }: GeoClientProps) {
           </div>
         </div>
       </div>
-      {toast && (
-        <Toast key={toast.id} message={toast.msg} color={toast.color} />
-      )}
     </>
   );
 }

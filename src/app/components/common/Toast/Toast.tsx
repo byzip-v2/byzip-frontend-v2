@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import styles from '@/styles/components/common/toast.module.scss';
+import { ToastColor } from '@/app/libs/hooks/useToast';
 
 interface ToastProps {
   message: string;
-  color?: string;
+  color?: ToastColor;
 }
 
 const DURATION = 3000;
