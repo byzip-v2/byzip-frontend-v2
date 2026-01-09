@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import styles from '@/styles/components/common/toast.module.scss';
-import { ToastColor } from '@/app/libs/hooks/useToast';
 
 interface ToastProps {
   message: string;
-  color?: ToastColor;
+  color?: string;
 }
 
 const DURATION = 3000;
@@ -29,8 +28,8 @@ export default function Toast({ message, color = 'primary' }: ToastProps) {
   if (!visible) return null;
 
   return (
-    <div 
-    className={`${styles.toast} ${leaving ? styles.exit : styles.enter}`}
+    <div
+      className={`${styles.toast} ${leaving ? styles.exit : styles.enter}`}
       style={{ backgroundColor: `var(--color-${color})` }}
     >
       {message}

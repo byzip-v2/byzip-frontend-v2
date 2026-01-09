@@ -229,7 +229,7 @@ export default function GeoPage({ initialData }: GeoClientProps) {
       } else {
         showToast(result.message, 'error');
       }
-    } catch (err) {
+    } catch {
       showToast('좌표 업데이트 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsUpdating(false);
