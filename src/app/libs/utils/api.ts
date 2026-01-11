@@ -10,10 +10,16 @@ import axios, {
 } from 'axios';
 
 import type { ApiError } from '@/app/libs/types/api';
-import { getAccessToken, getUserId } from '@/app/libs/utils/auth';
+import {
+  getAccessToken,
+  getUserId,
+  refreshAccessToken,
+} from '@/app/libs/utils/auth';
 import { getUserAgent, getReferer } from '@/app/libs/utils/headers';
+import { notifySlackBugReport } from '@/app/libs/utils/notifySlack';
 import type { CreateBugReportDto } from 'byzip-v2-sdk';
 import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
+import { accessTokenMaxAge, refreshTokenMaxAge } from './constants';
 
 // User-Agent를 저장하기 위한 확장 타입
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -34,7 +40,7 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
  * const apiUrl = getApiBaseUrl();
  * ```
  */
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   // 환경변수가 설정되지 않은 경우 경고 로그 출력
@@ -166,6 +172,8 @@ const createBugReport = async (
   bugReportData: CreateBugReportDto,
 ): Promise<void> => {
   const apiBaseUrl = getApiBaseUrl();
+
+  // DB에 저장
   await axios
     .post(`${apiBaseUrl}/bug-reports`, bugReportData, {
       headers: {
@@ -179,6 +187,9 @@ const createBugReport = async (
         logError.message,
       );
     });
+
+  // Slack 알림 전송 (
+  notifySlackBugReport(bugReportData);
 };
 
 /**
@@ -400,6 +411,7 @@ export const logErrorToDatabase = async (
  * - 응답 로깅
  * - 에러 표준화
  * - 네트워크 에러 처리
+ * - 401 에러 시 리프레시 토큰으로 토큰 갱신 시도
  *
  */
 export const createServerApi = (options: {
@@ -436,17 +448,74 @@ export const createServerApi = (options: {
       // autoToken이 true인 경우에만 토큰 추가
       if (autoToken) {
         try {
-          const accessToken = await getAccessToken();
+          console.log('🔍 [Server API] 요청 인터셉터 실행');
+          let accessToken = await getAccessToken();
+          console.log('🔍 [Server API] 토큰:', accessToken);
 
+          // accessToken이 없는 경우 리프레시 토큰으로 갱신 시도
           if (!accessToken) {
-            throw new Error('로그인이 필요합니다.');
+            try {
+              // 서버 전용 모듈 동적 import
+              const { cookies } = await import('next/headers');
+              const cookieStore = await cookies();
+              const refreshToken = cookieStore.get('refresh_token')?.value;
+
+              // 리프레시 토큰이 있으면 토큰 갱신 시도
+              if (refreshToken) {
+                console.log('🔍 [Server API] 리프레시 토큰으로 갱신 시도');
+                const newTokens = await refreshAccessToken(refreshToken);
+
+                if (newTokens) {
+                  // 새 토큰을 쿠키에 저장
+                  cookieStore.set('access_token', newTokens.accessToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    maxAge: accessTokenMaxAge,
+                    path: '/',
+                  });
+
+                  cookieStore.set('refresh_token', newTokens.refreshToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    maxAge: refreshTokenMaxAge,
+                    path: '/',
+                  });
+
+                  accessToken = newTokens.accessToken;
+                  console.log('🔍 [Server API] 토큰 갱신 성공');
+                } else {
+                  // 토큰 갱신 실패 시 토큰 없이 요청 전송 (서버에서 401 받으면 응답 인터셉터에서 처리)
+                  console.error(
+                    '🔍 [Server API] 토큰 갱신 실패 - 토큰 없이 요청 전송',
+                  );
+                  accessToken = undefined;
+                }
+              } else {
+                // 리프레시 토큰이 없으면 토큰 없이 요청 전송 (서버에서 401 받으면 응답 인터셉터에서 처리)
+                console.log(
+                  '🔍 [Server API] 리프레시 토큰이 없습니다 - 토큰 없이 요청 전송',
+                );
+              }
+            } catch (refreshError) {
+              console.warn(
+                '🔍 [Server API] 리프레시 토큰 갱신 실패:',
+                refreshError,
+              );
+              // 에러 발생 시에도 토큰 없이 요청 전송 (서버에서 401 받으면 응답 인터셉터에서 처리)
+              accessToken = undefined;
+            }
           }
 
-          config.headers.Authorization = `Bearer ${accessToken}`;
+          // 토큰이 있으면 헤더에 추가, 없으면 토큰 없이 요청 전송 (서버에서 401 처리)
+          if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
+          }
         } catch (error) {
-          // 토큰이 없거나 가져오기 실패 시 에러 반환
-          console.warn('🔍 [Server API] 토큰을 가져올 수 없습니다:', error);
-          throw error;
+          // 예상치 못한 에러 발생 시에도 요청은 전송 (서버에서 처리)
+          console.warn('🔍 [Server API] 토큰 처리 중 에러:', error);
+          // 에러를 던지지 않고 토큰 없이 요청 전송
         }
       }
 
@@ -466,6 +535,17 @@ export const createServerApi = (options: {
       return response;
     },
     async (error: AxiosError) => {
+      console.log('🔍 [Server API] Response Error:', error.response?.status);
+
+      // 401 에러 처리: Request Interceptor에서 이미 토큰 갱신을 시도했으므로
+      // 여기서는 인증 실패로 간주하고 리다이렉트만 처리
+      if (error.response?.status === 401) {
+        console.log('🔍 [Server API] 401 에러 처리');
+        // redirect()는 try/catch 블록 밖에서 호출해야 함 (Next.js 요구사항)
+        const { redirect } = await import('next/navigation');
+        redirect('/login');
+      }
+
       // 에러 로깅
       console.error('🔍 [Server API] Response Error:', {
         status: error.response?.status,
