@@ -8,7 +8,9 @@
   font-family: $font-family-base;
 }
 
-.head { padding: 16px 8px 0 8px; }
+.head {
+  padding: 16px 8px 0 8px;
+}
 .title {
   margin: 0;
   font-size: 24px;
@@ -23,25 +25,80 @@
   grid-template-columns: repeat(3, 220px);
   justify-content: center;
   align-items: center;
-  gap: 100px;
-  margin: 16px 8px 12px 8px;
+  gap: 80px;
+  margin: 12px 8px 8px 8px;
 }
 .card {
   border-radius: 12px;
   padding: 14px 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.06);
-  .cardLabel { font-size: 12px; color: $color-text-secondary; margin-bottom: 6px; }
-  .cardNum { font-size: 24px; font-weight: 800; color: $color-text-primary; }
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+  .cardLabel {
+    font-size: 12px;
+    color: $color-text-secondary;
+    margin-bottom: 6px;
+  }
+  .cardNum {
+    font-size: 24px;
+    font-weight: 800;
+    color: $color-text-primary;
+  }
 }
-.yellow { background: #fff7cc; }
-.mint   { background: #e9faf2; }
-.purple { background: #e7e8ff; }
+.cardButton {
+  width: 100%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  display: inline-block;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+.activeCard {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+.yellow {
+  background: $card-open-bg;
+  color: color.adjust($card-open-bg, $lightness: -55%, $saturation: 10%);
+  &.cardButton:hover {
+    border-color: color.adjust($card-open-bg, $lightness: -8%);
+  }
+  &.activeCard {
+    border-color: color.adjust($card-open-bg, $lightness: -12%);
+  }
+}
+.mint {
+  background: $card-progress-bg;
+  color: color.adjust($card-progress-bg, $lightness: -45%, $saturation: -35%);
+  &.cardButton:hover {
+    border-color: color.adjust($card-progress-bg, $lightness: -10%);
+  }
+  &.activeCard {
+    border-color: color.adjust($card-progress-bg, $lightness: -14%);
+  }
+}
+.purple {
+  background: $card-done-bg;
+  color: color.adjust($card-done-bg, $lightness: -45%, $saturation: -25%);
+  &.cardButton:hover {
+    border-color: color.adjust($card-done-bg, $lightness: -8%);
+  }
+  &.activeCard {
+    border-color: color.adjust($card-done-bg, $lightness: -12%);
+  }
+}
 
 /* 검색 */
 .searchRow {
   display: flex;
-  justify-content: flex-end;             
-  margin: 8px 8px 12px 8px;
+  justify-content: flex-end;
+  margin: 30px 8px 4px 8px;
 }
 .searchBox {
   display: flex;
@@ -49,50 +106,225 @@
   input {
     width: 280px;
     padding: 10px 12px;
-    border: 1px solid #d9d9d9; border-radius: 8px;
+    border: 1px solid $color-border;
+    border-radius: 8px;
     font-size: 14px;
-    &:focus { outline: none; border-color: $color-primary; }
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
   }
   button {
-    padding: 10px 16px; border: 0; border-radius: 8px;
-    background: $color-primary; color: #fff; font-weight: 600; cursor: pointer;
-    &:hover { background: color.adjust($color-primary, $lightness: -10%); }
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: $color-primary;
+    color: $color-white;
+    font-weight: 600;
+    cursor: pointer;
+    &:hover {
+      background: color.adjust($color-primary, $lightness: -10%);
+    }
+  }
+}
+.statusDropdownWrap {
+  position: relative;
+}
+.statusActionBtn {
+  padding: 10px 16px;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  background: $color-white;
+  color: $color-text-primary;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 96px;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: $color-text-secondary;
+    background: $color-gray;
+    border-color: $color-border-subtle;
+  }
+}
+.statusActionMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 150px;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $color-white;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 910;
+}
+.statusActionMenu button.statusActionOption {
+  width: 100%;
+  padding: 10px 12px;
+  background: $color-white;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: $color-text-primary;
+  font-weight: 600;
+  line-height: 1.2;
+  appearance: none;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background: $color-gray;
+    outline: none;
+    color: $color-text-primary;
   }
 }
 
 /* === 테이블 === */
-.tableWrap { margin: 8px; }
-.total { font-size: 12px; color: $color-text-secondary; margin: 8px 0 6px 4px; }
+.tableWrap {
+  margin: 8px;
+}
+.total {
+  font-size: 12px;
+  color: $color-text-secondary;
+  margin: 8px 0 6px 4px;
+}
+.totalNum {
+  color: $color-primary;
+  font-weight: 800;
+}
 
 .tableContainer {
-  border: 1px solid $color-gray; border-radius: 10px; overflow: hidden; background: #fff;
+  border: 1px solid $color-gray;
+  border-radius: 10px;
+  overflow: hidden;
+  background: $color-white;
 }
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
+
   th {
     background: $color-gray;
     color: $color-text-primary;
-    font-weight: 700;
-    text-align: left;
-    padding: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
     white-space: nowrap;
   }
+
   td {
-    padding: 12px;
-    border-top: 1px solid #fafafa;
+    padding: 6px 12px;
+    border-top: 1px solid $color-surface-subtle;
     color: $color-text-primary;
     vertical-align: middle;
   }
-}
-.highlight { background: #eef4ff; }
 
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-.rowTitle { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: #ff4d4f; display: inline-block; }
-.err { color: #ff4d4f; font-weight: 600; }
-.rowDetail { color: $color-text-secondary; }
+  th,
+  td {
+    text-align: center;
+  }
+
+  // 텍스트 폭이 넓은 컬럼만 좌측 정렬로 통일
+  th:nth-child(2),
+  td:nth-child(2),
+  th:nth-child(5),
+  td:nth-child(5) {
+    text-align: left;
+  }
+
+  // 상태 칼럼 우측 여백 확보
+  th:nth-child(4),
+  td:nth-child(4) {
+    padding-right: 20px;
+  }
+
+  // 메모/담당자 칼럼 여백 보정
+  th:nth-child(5),
+  td:nth-child(5) {
+    padding-left: 24px;
+    padding-right: 28px;
+  }
+
+  th:nth-child(6),
+  td:nth-child(6) {
+    padding-left: 36px;
+  }
+
+  tbody tr {
+    height: 44px;
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: center;
+  }
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 1px;
+  max-width: 400px;
+}
+
+.err {
+  color: $color-error;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowDetail {
+  color: $color-text-secondary;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.checkCell {
+  width: 60px;
+  input {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.assigneeHeader {
+  text-align: center;
+}
+.assignee {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.highlight {
+  background: $color-highlight-soft;
+}
+
+.mono {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    monospace;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $color-error;
+  display: inline-block;
+}
 
 .badge {
   display: inline-block;
@@ -103,22 +335,319 @@
   font-weight: 600;
   text-align: center;
 }
-.open     { background: #fff2cc; color: #8a6d00; }
-.progress { background: #e7f5ff; color: #1d5fbf; }
-.needfix  { background: #ffe8e8; color: #c14646; }
-.done     { background: #e9f7ef; color: #248a52; }
+.statusNeeded {
+  background: $card-open-bg;
+  color: color.adjust($card-open-bg, $lightness: -55%, $saturation: 10%);
+}
+.statusProgress {
+  background: $card-progress-bg;
+  color: color.adjust($card-progress-bg, $lightness: -45%, $saturation: -35%);
+}
+.statusDone {
+  background: $card-done-bg;
+  color: color.adjust($card-done-bg, $lightness: -45%, $saturation: -25%);
+}
+.statusNotBug {
+  background: $color-gray;
+  color: $color-text-secondary;
+}
 
 .ellipsis {
-  max-width: 360px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* === 페이지네이션 === */
 .paging {
-  display: flex; justify-content: center; gap: 6px; padding: 16px 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 0;
 }
-.pageBtn, .arrow {
-  min-width: 32px; height: 32px; padding: 0 8px;
-  border: 1px solid #e6e6e6; border-radius: 8px; background: #fff; cursor: pointer;
+.pageBtn,
+.arrow {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid $color-border-subtle;
+  border-radius: 8px;
+  background: $color-white;
+  cursor: pointer;
 }
-.pageBtn.active { background: $color-primary; border-color: $color-primary; color: #fff; }
+.pageBtn.active {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: $color-white;
+}
+
+/* 행 선택 강조 */
+.rowSelected {
+  background: $color-highlight-soft;
+}
+
+/* 서랍 백드롭 */
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 900;
+}
+
+/* 오른쪽 서랍 */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 480px;
+  height: 100vh;
+  background: $color-white;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+  padding: 24px 24px 20px 24px;
+  z-index: 901;
+  display: flex;
+  flex-direction: column;
+  animation: drawer-slide-in 0.25s ease-out;
+}
+.drawerBody {
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+@keyframes drawer-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.drawerLabel {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.drawerId {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.drawerClose {
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+.drawerMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drawerRowTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+
+  .drawerCount {
+    margin-left: 4px;
+    font-weight: 700;
+    color: $color-text-primary;
+  }
+}
+
+.drawerStatusBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.drawerField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.selectField {
+  position: relative;
+}
+.selectTrigger {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid $color-border;
+  background: $color-white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  color: $color-text-primary;
+}
+.selectValue {
+  font-weight: 600;
+}
+.selectPlaceholder {
+  color: $color-text-secondary;
+}
+.selectCaret {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+.selectMenu {
+  position: absolute;
+  z-index: 905;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $color-white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+.selectOption {
+  width: 100%;
+  padding: 10px 12px;
+  background: $color-white;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: $color-text-primary;
+
+  &:hover {
+    background: $color-gray;
+  }
+
+  &.active {
+    background: $color-primary;
+    color: $color-white;
+  }
+}
+
+.drawerSelect {
+  min-width: 140px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid $color-border;
+  font-size: 14px;
+}
+
+.drawerSection {
+  margin-bottom: 16px;
+}
+
+.drawerSectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: $color-text-primary;
+}
+
+.drawerContentBox {
+  border: 1px solid $color-gray;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: $color-surface-subtle;
+  min-height: 120px;
+  max-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  word-break: break-word;
+}
+
+.drawerParagraph {
+  margin-top: 4px;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.drawerListBox {
+  border: 1px solid $color-gray;
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-height: 120px;
+  max-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: $color-surface-subtle;
+  word-break: break-word;
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      font-size: 13px;
+      color: $color-text-primary;
+      & + li {
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .drawerParagraph {
+    white-space: pre-wrap;
+  }
+}
+
+.drawerMemo {
+  width: 100%;
+  min-height: 120px;
+  max-height: 120px;
+  overflow-y: auto;
+  resize: none;
+  border-radius: 10px;
+  border: 1px solid $color-gray;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.drawerFooter {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+.drawerSubmit {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 0;
+  background: $color-primary;
+  color: $color-white;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: color.adjust($color-primary, $lightness: -8%);
+  }
+
+  &:disabled {
+    background: $color-gray;
+    color: $color-text-secondary;
+    cursor: not-allowed;
+  }
+}

@@ -19,6 +19,10 @@ import {
   logErrorToDatabase,
 } from '@/app/libs/utils/api';
 import { ActionResult } from 'next/dist/server/app-render/types';
+import {
+  accessTokenMaxAge,
+  refreshTokenMaxAge,
+} from '@/app/libs/utils/constants';
 
 /**
  * 로그인 Server Action
@@ -76,19 +80,19 @@ export async function loginAction(
     // maxAge: 365일 (31536000초)
     const cookieStore = await cookies();
 
-    cookieStore.set('accessToken', tokenData.accessToken, {
+    cookieStore.set('access_token', tokenData.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60, // 1분
+      maxAge: accessTokenMaxAge,
       path: '/',
     });
 
-    cookieStore.set('refreshToken', tokenData.refreshToken, {
+    cookieStore.set('refresh_token', tokenData.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 10, // 10분
+      maxAge: refreshTokenMaxAge,
       path: '/',
     });
 
@@ -148,22 +152,27 @@ export async function loginAction(
  *
  * @description
  * 저장된 토큰 쿠키를 모두 삭제합니다.
+ * 토큰이 있는 경우에만 서버에 로그아웃 요청을 보냅니다.
  */
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
+  const accessToken = cookieStore.get('access_token')?.value;
 
-  try {
-    await serverApiWithToken.post('/auth/logout');
-  } catch (error) {
-    logErrorToDatabase(error, {
-      actionName: 'logoutAction',
-      skipAxiosError: true,
-      errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
-    console.error('Logout error:', error);
+  // 토큰이 있는 경우에만 서버에 로그아웃 요청
+  if (accessToken) {
+    try {
+      await serverApiWithToken.post('/auth/logout');
+    } catch (error) {
+      logErrorToDatabase(error, {
+        actionName: 'logoutAction',
+        skipAxiosError: true,
+        errorType: BugReportErrorType.SERVER_ERROR,
+      }).catch(() => {});
+      console.error('Logout error:', error);
+    }
   }
 
   // 토큰 쿠키 삭제
-  cookieStore.delete('accessToken');
-  cookieStore.delete('refreshToken');
+  cookieStore.delete('access_token');
+  cookieStore.delete('refresh_token');
 }

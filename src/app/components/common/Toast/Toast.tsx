@@ -28,8 +28,8 @@ export default function Toast({ message, color = 'primary' }: ToastProps) {
   if (!visible) return null;
 
   return (
-    <div 
-    className={`${styles.toast} ${leaving ? styles.exit : styles.enter}`}
+    <div
+      className={`${styles.toast} ${leaving ? styles.exit : styles.enter}`}
       style={{ backgroundColor: `var(--color-${color})` }}
     >
       {message}

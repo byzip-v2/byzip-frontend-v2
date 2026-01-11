@@ -1,6 +1,9 @@
 'use server';
 
+import axios from 'axios';
+import { BaseResponseDto, TokenDataDto } from 'byzip-v2-sdk';
 import { cookies } from 'next/headers';
+import { getApiBaseUrl } from './api';
 
 /**
  * 인증 관련 유틸리티 함수들
@@ -13,7 +16,7 @@ import { cookies } from 'next/headers';
  */
 export async function getAccessToken(): Promise<string | undefined> {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get('accessToken');
+  const accessToken = cookieStore.get('access_token');
 
   return accessToken?.value;
 }
@@ -73,3 +76,36 @@ export async function getUserId(): Promise<string | undefined> {
     return undefined;
   }
 }
+
+/**
+ * 리프레시 토큰으로 새 액세스 토큰 발급 (서버 전용)
+ *
+ * @param refreshToken - 리프레시 토큰
+ * @returns 새로 발급받은 토큰 데이터 (실패 시 null)
+ */
+export const refreshAccessToken = async (
+  refreshToken: string,
+): Promise<TokenDataDto | null> => {
+  try {
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await axios.post<BaseResponseDto<TokenDataDto>>(
+      `${apiBaseUrl}/auth/refresh`,
+      { refreshToken },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 5000,
+      },
+    );
+
+    if (response.data.data?.accessToken && response.data.data?.refreshToken) {
+      return response.data.data;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('🔍 [Server API] 토큰 갱신 실패:', error);
+    return null;
+  }
+};
