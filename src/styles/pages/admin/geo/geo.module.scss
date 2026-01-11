@@ -61,9 +61,19 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 96px;
 
   &:hover {
     background-color: color.adjust($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background-color: color.adjust($color-primary, $lightness: 10%);
   }
 }
 
@@ -72,7 +82,7 @@
   grid-template-columns: 2fr 3fr;
   gap: 24px;
   height: calc(100vh - 120px);
-  margin: 20px 24px 0 24px;
+  margin: 20px 0 0 0;
 }
 
 .mapContainer {
@@ -91,7 +101,11 @@
   height: 100%;
   font-size: 24px;
   color: $color-text-slate;
-  background: linear-gradient(135deg, $color-surface-geo 0%, $color-surface-geo-strong 100%);
+  background: linear-gradient(
+    135deg,
+    $color-surface-geo 0%,
+    $color-surface-geo-strong 100%
+  );
 }
 
 .mapNote {
@@ -154,6 +168,13 @@
   padding: 20px;
 }
 
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .tableTitle {
   font-size: 18px;
   font-weight: 600;
@@ -164,6 +185,33 @@
   span {
     color: $color-primary;
     font-weight: 800;
+  }
+}
+
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  min-width: 96px;
+  border-radius: 8px;
+  border: 0;
+  background: $color-primary;
+  color: $color-white;
+  cursor: pointer;
+  gap: 6px;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: $color-white;
+    background: color.adjust($color-primary, $lightness: 10%);
   }
 }
 

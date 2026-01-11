@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Spinner from '@/app/components/common/Spinner/Spinner';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
+import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 
 type BugStatus = 'in-progress' | 'completed' | 'needed' | 'not-bug';
 const ASSIGNEES = ['박성환', '이희령', '정윤숙'] as const;
@@ -133,6 +135,7 @@ export default function BugReportPage() {
     assignee: AssigneeName;
     memo: string;
   } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   // 검색어 적용된 원본 리스트
   const baseList = useMemo(() => {
@@ -258,6 +261,16 @@ export default function BugReportPage() {
     setStatusActionOpen(false);
   };
 
+  const handleSearch = async () => {
+    setIsSearching(true);
+    try {
+      // API 호출 자리
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const hasDrawerChanges =
     !!selected &&
     !!initialDetail &&
@@ -267,10 +280,7 @@ export default function BugReportPage() {
 
   return (
     <div className={styles.page}>
-      {/* 상단 타이틀 */}
-      <div className={styles.head}>
-        <h1 className={styles.title}>버그 리포트</h1>
-      </div>
+      <AdminPageHeader title="버그 리포트" />
 
       {/* 통계 카드 */}
       <section className={styles.stats}>
@@ -313,7 +323,9 @@ export default function BugReportPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <button>검색</button>
+          <button onClick={handleSearch} disabled={isSearching}>
+            {isSearching ? <Spinner /> : '검색'}
+          </button>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
@@ -559,17 +571,25 @@ export default function BugReportPage() {
               <section className={styles.drawerSection}>
                 <h3 className={styles.drawerSectionTitle}>발생영역</h3>
                 <div className={styles.drawerListBox}>
-                  <div className={styles.drawerParagraph}>'AxiosError: Request failed with status code 500
-    at settle (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/settle.js:24:12)
-    at IncomingMessage.handleStreamEnd (webpack-internal:///(action-browser)/./node_modules/axios/lib/adapters/http.js:648:71)
-    at IncomingMessage.emit (node:events:526:35)
-    at endReadableNT (node:internal/streams/readable:1408:12)
-    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
-    at Axios.request (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/Axios.js:57:41)
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async loginAction (webpack-internal:///(action-browser)/./src/app/(pages)/login/actions.ts:43:26)
-    at async C:\Users\winte\OneDrive\바탕 화면\Project\byzip-frontend-v2\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:417:2449
-    at async handleAction (C:\Users\winte\OneDrive\바탕 화면\Project\byzip-frontend-v2\node_module...'</div>
+                  <div className={styles.drawerParagraph}>
+                    'AxiosError: Request failed with status code 500 at settle
+                    (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/settle.js:24:12)
+                    at IncomingMessage.handleStreamEnd
+                    (webpack-internal:///(action-browser)/./node_modules/axios/lib/adapters/http.js:648:71)
+                    at IncomingMessage.emit (node:events:526:35) at
+                    endReadableNT (node:internal/streams/readable:1408:12) at
+                    process.processTicksAndRejections
+                    (node:internal/process/task_queues:82:21) at Axios.request
+                    (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/Axios.js:57:41)
+                    at process.processTicksAndRejections
+                    (node:internal/process/task_queues:95:5) at async
+                    loginAction
+                    (webpack-internal:///(action-browser)/./src/app/(pages)/login/actions.ts:43:26)
+                    at async C:\Users\winte\OneDrive\바탕
+                    화면\Project\byzip-frontend-v2\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:417:2449
+                    at async handleAction (C:\Users\winte\OneDrive\바탕
+                    화면\Project\byzip-frontend-v2\node_module...'
+                  </div>
                 </div>
               </section>
 
