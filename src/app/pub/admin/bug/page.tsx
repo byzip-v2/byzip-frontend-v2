@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Spinner from '@/app/components/common/Spinner/Spinner';
+import Alert from '@/app/components/common/Alert/Alert';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 
@@ -136,6 +137,8 @@ export default function BugReportPage() {
     memo: string;
   } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
 
   // 검색어 적용된 원본 리스트
   const baseList = useMemo(() => {
@@ -277,6 +280,28 @@ export default function BugReportPage() {
     (detailStatus !== initialDetail.status ||
       detailAssignee !== initialDetail.assignee ||
       detailMemo !== initialDetail.memo);
+
+  const editReport = async () => {
+    if (!selected || !initialDetail) return;
+    setIsSubmitting(true);
+    try {
+      await fetch('/api/slack/bug-assignee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          occurredAt: selected.lastOccurredAt,
+          status: detailStatus,
+          prevAssignee: initialDetail.assignee,
+          nextAssignee: detailAssignee ?? initialDetail.assignee,
+        }),
+      });
+      setAlertOpen(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -606,15 +631,21 @@ export default function BugReportPage() {
               <div className={styles.drawerFooter}>
                 <button
                   className={styles.drawerSubmit}
-                  disabled={!hasDrawerChanges}
+                  disabled={!hasDrawerChanges || isSubmitting}
+                  onClick={editReport}
                 >
-                  수정 완료
+                  {isSubmitting ? <Spinner /> : '수정 완료'}
                 </button>
               </div>
             </div>
           </aside>
         </>
       )}
+      <Alert
+        open={alertOpen}
+        text="버그 리포트가 수정되었습니다."
+        onConfirm={() => setAlertOpen(false)}
+      />
     </div>
   );
 }

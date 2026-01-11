@@ -80,6 +80,7 @@ export default function GeoPage() {
               🗺️ 지도 영역
               <div className={styles.mapNote}>네이버 지도 API 연동 예정</div>
             </div>
+            <div className={styles.mapMarker} aria-hidden="true" />
             <div className={styles.mapOverlay}>
               <div className={styles.overlayContent}>
                 <h3 className={styles.overlayTitle}>
