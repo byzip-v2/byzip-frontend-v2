@@ -117,6 +117,7 @@ const STATUS_LABEL: Record<BugStatus, string> = {
 
 export default function BugReportPage() {
   const [q, setQ] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selected, setSelected] = useState<BugRow | null>(null);
   const [detailStatus, setDetailStatus] = useState<BugStatus>('in-progress');
   const [detailAssignee, setDetailAssignee] = useState<AssigneeName | null>(
@@ -265,6 +266,7 @@ export default function BugReportPage() {
   };
 
   const handleSearch = async () => {
+    setQ(searchInput);
     setIsSearching(true);
     try {
       // API 호출 자리
@@ -345,8 +347,8 @@ export default function BugReportPage() {
         <div className={styles.searchBox}>
           <input
             placeholder="검색할 내용을 입력해 주세요."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
           <button onClick={handleSearch} disabled={isSearching}>
             {isSearching ? <Spinner /> : '검색'}
