@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Spinner from '@/app/components/common/Spinner/Spinner';
+import Alert from '@/app/components/common/Alert/Alert';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
+import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 
 type BugStatus = 'in-progress' | 'completed' | 'needed' | 'not-bug';
 const ASSIGNEES = ['박성환', '이희령', '정윤숙'] as const;
@@ -114,6 +117,7 @@ const STATUS_LABEL: Record<BugStatus, string> = {
 
 export default function BugReportPage() {
   const [q, setQ] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selected, setSelected] = useState<BugRow | null>(null);
   const [detailStatus, setDetailStatus] = useState<BugStatus>('in-progress');
   const [detailAssignee, setDetailAssignee] = useState<AssigneeName | null>(
@@ -133,6 +137,9 @@ export default function BugReportPage() {
     assignee: AssigneeName;
     memo: string;
   } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
 
   // 검색어 적용된 원본 리스트
   const baseList = useMemo(() => {
@@ -258,6 +265,17 @@ export default function BugReportPage() {
     setStatusActionOpen(false);
   };
 
+  const handleSearch = async () => {
+    setQ(searchInput);
+    setIsSearching(true);
+    try {
+      // API 호출 자리
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const hasDrawerChanges =
     !!selected &&
     !!initialDetail &&
@@ -265,12 +283,31 @@ export default function BugReportPage() {
       detailAssignee !== initialDetail.assignee ||
       detailMemo !== initialDetail.memo);
 
+  const editReport = async () => {
+    if (!selected || !initialDetail) return;
+    setIsSubmitting(true);
+    try {
+      await fetch('/api/slack/bug-assignee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          occurredAt: selected.lastOccurredAt,
+          status: detailStatus,
+          prevAssignee: initialDetail.assignee,
+          nextAssignee: detailAssignee ?? initialDetail.assignee,
+        }),
+      });
+      setAlertOpen(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
-      {/* 상단 타이틀 */}
-      <div className={styles.head}>
-        <h1 className={styles.title}>버그 리포트</h1>
-      </div>
+      <AdminPageHeader title="버그 리포트" />
 
       {/* 통계 카드 */}
       <section className={styles.stats}>
@@ -310,10 +347,12 @@ export default function BugReportPage() {
         <div className={styles.searchBox}>
           <input
             placeholder="검색할 내용을 입력해 주세요."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
-          <button>검색</button>
+          <button onClick={handleSearch} disabled={isSearching}>
+            {isSearching ? <Spinner /> : '검색'}
+          </button>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
@@ -331,7 +370,7 @@ export default function BugReportPage() {
                     key={status}
                     type="button"
                     className={styles.statusActionOption}
-                    onClick={() => handleBulkStatusSelect()}
+                    onClick={handleBulkStatusSelect}
                   >
                     {STATUS_LABEL[status]}
                   </button>
@@ -560,17 +599,10 @@ export default function BugReportPage() {
                 <h3 className={styles.drawerSectionTitle}>발생영역</h3>
                 <div className={styles.drawerListBox}>
                   <div className={styles.drawerParagraph}>
-                    {`'AxiosError: Request failed with status code 500
-    at settle (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/settle.js:24:12)
-    at IncomingMessage.handleStreamEnd (webpack-internal:///(action-browser)/./node_modules/axios/lib/adapters/http.js:648:71)
-    at IncomingMessage.emit (node:events:526:35)
-    at endReadableNT (node:internal/streams/readable:1408:12)
-    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
-    at Axios.request (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/Axios.js:57:41)
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async loginAction (webpack-internal:///(action-browser)/./src/app/(pages)/login/actions.ts:43:26)
-    at async C:\\Users\\winte\\OneDrive\\바탕 화면\\Project\\byzip-frontend-v2\\node_modules\\next\\dist\\compiled\\next-server\\app-page.runtime.dev.js:417:2449
-    at async handleAction (C:\\Users\\winte\\OneDrive\\바탕 화면\\Project\\byzip-frontend-v2\\node_module...'`}
+                    AxiosError: Request failed with status code 500 at settle
+                    (axios/lib/core/settle.js) → IncomingMessage.handleStreamEnd
+                    (axios/lib/adapters/http.js) → handleAction(...). 예시
+                    로그입니다.
                   </div>
                 </div>
               </section>
@@ -588,15 +620,21 @@ export default function BugReportPage() {
               <div className={styles.drawerFooter}>
                 <button
                   className={styles.drawerSubmit}
-                  disabled={!hasDrawerChanges}
+                  disabled={!hasDrawerChanges || isSubmitting}
+                  onClick={editReport}
                 >
-                  수정 완료
+                  {isSubmitting ? <Spinner /> : '수정 완료'}
                 </button>
               </div>
             </div>
           </aside>
         </>
       )}
+      <Alert
+        open={alertOpen}
+        text="버그 리포트가 수정되었습니다."
+        onConfirm={() => setAlertOpen(false)}
+      />
     </div>
   );
 }

@@ -61,9 +61,19 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 96px;
 
   &:hover {
     background-color: color.adjust($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background-color: color.adjust($color-primary, $lightness: 10%);
   }
 }
 
@@ -72,7 +82,7 @@
   grid-template-columns: 2fr 3fr;
   gap: 24px;
   height: calc(100vh - 120px);
-  margin: 20px 24px 0 24px;
+  margin: 20px 0 0 0;
 }
 
 .mapContainer {
@@ -91,7 +101,11 @@
   height: 100%;
   font-size: 24px;
   color: $color-text-slate;
-  background: linear-gradient(135deg, $color-surface-geo 0%, $color-surface-geo-strong 100%);
+  background: linear-gradient(
+    135deg,
+    $color-surface-geo 0%,
+    $color-surface-geo-strong 100%
+  );
 }
 
 .mapNote {
@@ -105,6 +119,34 @@
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+// 마커 스타일 (실제 지도에서도 그대로 재사용 가능)
+.mapMarker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  width: 32px;
+  height: 32px;
+  background: $color-primary;
+  border: 2px solid $color-white;
+  border-radius: 50% 50% 50% 0;
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(-45deg);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: $color-white;
+    border-radius: 50%;
+    transform: rotate(45deg);
+  }
 }
 
 .overlayContent {
@@ -150,6 +192,13 @@
   padding: 20px;
 }
 
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .tableTitle {
   font-size: 18px;
   font-weight: 600;
@@ -160,6 +209,33 @@
   span {
     color: $color-primary;
     font-weight: 800;
+  }
+}
+
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  min-width: 96px;
+  border-radius: 8px;
+  border: 0;
+  background: $color-primary;
+  color: $color-white;
+  cursor: pointer;
+  gap: 6px;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: $color-white;
+    background: color.adjust($color-primary, $lightness: 10%);
   }
 }
 

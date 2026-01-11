@@ -116,14 +116,23 @@
   }
   button {
     padding: 10px 16px;
+    min-width: 96px;
     border: 0;
     border-radius: 8px;
     background: $color-primary;
     color: $color-white;
     font-weight: 600;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     &:hover {
       background: color.adjust($color-primary, $lightness: -10%);
+    }
+    &:disabled {
+      cursor: not-allowed;
+      background: color.adjust($color-primary, $lightness: 10%);
     }
   }
 }
