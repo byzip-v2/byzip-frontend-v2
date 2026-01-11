@@ -259,7 +259,7 @@ export default function BugReportPage() {
     setStatusActionOpen((v) => !v);
   };
 
-  const handleBulkStatusSelect = (status: BugStatus) => {
+  const handleBulkStatusSelect = () => {
     // 퍼블 상태: 선택 후 닫기만 수행
     setStatusActionOpen(false);
   };
@@ -368,7 +368,7 @@ export default function BugReportPage() {
                     key={status}
                     type="button"
                     className={styles.statusActionOption}
-                    onClick={() => handleBulkStatusSelect(status)}
+                    onClick={handleBulkStatusSelect}
                   >
                     {STATUS_LABEL[status]}
                   </button>
@@ -597,23 +597,10 @@ export default function BugReportPage() {
                 <h3 className={styles.drawerSectionTitle}>발생영역</h3>
                 <div className={styles.drawerListBox}>
                   <div className={styles.drawerParagraph}>
-                    'AxiosError: Request failed with status code 500 at settle
-                    (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/settle.js:24:12)
-                    at IncomingMessage.handleStreamEnd
-                    (webpack-internal:///(action-browser)/./node_modules/axios/lib/adapters/http.js:648:71)
-                    at IncomingMessage.emit (node:events:526:35) at
-                    endReadableNT (node:internal/streams/readable:1408:12) at
-                    process.processTicksAndRejections
-                    (node:internal/process/task_queues:82:21) at Axios.request
-                    (webpack-internal:///(action-browser)/./node_modules/axios/lib/core/Axios.js:57:41)
-                    at process.processTicksAndRejections
-                    (node:internal/process/task_queues:95:5) at async
-                    loginAction
-                    (webpack-internal:///(action-browser)/./src/app/(pages)/login/actions.ts:43:26)
-                    at async C:\Users\winte\OneDrive\바탕
-                    화면\Project\byzip-frontend-v2\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:417:2449
-                    at async handleAction (C:\Users\winte\OneDrive\바탕
-                    화면\Project\byzip-frontend-v2\node_module...'
+                    AxiosError: Request failed with status code 500 at settle
+                    (axios/lib/core/settle.js) → IncomingMessage.handleStreamEnd
+                    (axios/lib/adapters/http.js) → handleAction(...). 예시
+                    로그입니다.
                   </div>
                 </div>
               </section>
