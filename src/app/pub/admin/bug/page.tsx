@@ -260,6 +260,18 @@ export default function BugReportPage() {
     setStatusActionOpen((v) => !v);
   };
 
+  useEffect(() => {
+    // 서랍이 열려 있을 때 배경 스크롤 방지
+    if (selected) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selected]);
+
   const handleBulkStatusSelect = () => {
     // 퍼블 상태: 선택 후 닫기만 수행
     setStatusActionOpen(false);
@@ -493,10 +505,19 @@ export default function BugReportPage() {
                 ✕
               </button>
             </div>
-            <div className={styles.drawerBody}>
-              <div className={styles.drawerMeta}>
-                <div className={styles.drawerLabel}>발생일</div>
-                <div className={styles.drawerId}>{selected.lastOccurredAt}</div>
+            <div className={styles.drawerHeaderActions}>
+              <button
+                className={styles.drawerSubmit}
+                disabled={!hasDrawerChanges || isSubmitting}
+                onClick={editReport}
+              >
+                {isSubmitting ? <Spinner /> : '수정 완료'}
+              </button>
+            </div>
+          <div className={styles.drawerBody}>
+            <div className={styles.drawerMeta}>
+              <div className={styles.drawerLabel}>발생일</div>
+              <div className={styles.drawerId}>{selected.lastOccurredAt}</div>
               </div>
               <div className={styles.drawerRowTop}>
                 <div className={styles.drawerField}>
@@ -596,7 +617,7 @@ export default function BugReportPage() {
 
               {/* 발생 영역 */}
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>발생영역</h3>
+                <h3 className={styles.drawerSectionTitle}>에러스택</h3>
                 <div className={styles.drawerListBox}>
                   <div className={styles.drawerParagraph}>
                     AxiosError: Request failed with status code 500 at settle
@@ -616,16 +637,6 @@ export default function BugReportPage() {
                   onChange={(e) => setDetailMemo(e.target.value)}
                 />
               </section>
-
-              <div className={styles.drawerFooter}>
-                <button
-                  className={styles.drawerSubmit}
-                  disabled={!hasDrawerChanges || isSubmitting}
-                  onClick={editReport}
-                >
-                  {isSubmitting ? <Spinner /> : '수정 완료'}
-                </button>
-              </div>
             </div>
           </aside>
         </>
