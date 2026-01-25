@@ -140,6 +140,9 @@ export default function BugReportPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
+  const [viewer, setViewer] = useState<{ title: string; text: string } | null>(
+    null,
+  );
 
   // 검색어 적용된 원본 리스트
   const baseList = useMemo(() => {
@@ -294,6 +297,23 @@ export default function BugReportPage() {
     (detailStatus !== initialDetail.status ||
       detailAssignee !== initialDetail.assignee ||
       detailMemo !== initialDetail.memo);
+
+  const contentText = selected
+    ? selected.detail.replace(
+        '...',
+        ' or misconfiguration and was unable to complete the request.',
+      )
+    : '';
+  const errorStackText =
+    'AxiosError: Request failed with status code 500 at settle (axios/lib/core/settle.js) → IncomingMessage.handleStreamEnd (axios/lib/adapters/http.js) → handleAction(...) → renderErrorModal(...) → submitBugReport(...). 재현 스택이며 긴 내용이 들어왔을 때 영역 내 스크롤이 생깁니다. 추가 라인: requestId=9f1e-22aa span=fetchUserProfile status=500 retry=0.';
+  const metadataText =
+    'traceId: 2f83a-10ab9, release: v1.2.3, locale: ko-KR, device: desktop, featureFlag: bug-fix-24, session: s-233423, correlation: c-9aa-2b33. 긴 메타데이터가 들어올 때도 영역 안에서만 스크롤됩니다.';
+  const errorUrlText =
+    'https://app.by-zip.com/admin/bug?projectId=42&view=detail&tab=stack&traceId=2f83a-10ab9&lang=ko-KR&feature=bug-fix-24';
+  const userAgentText =
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122 Safari/537.36; foo-bar-extension/3.1.4; viewport=1440x900; long UA sample to trigger overflow scrolling.';
+
+  const openViewer = (title: string, text: string) => setViewer({ title, text });
 
   const editReport = async () => {
     if (!selected || !initialDetail) return;
@@ -473,7 +493,19 @@ export default function BugReportPage() {
                     <td className={styles.ellipsis}>{r.memo}</td>
 
                     {/* 담당자 */}
-                    <td className={styles.assignee}>{r.assignee}</td>
+                    <td className={styles.assignee}>
+                      <span
+                        className={`${styles.assigneeBadge} ${
+                          r.assignee === '이희령'
+                            ? styles.assigneePurple
+                            : r.assignee === '정윤숙'
+                              ? styles.assigneeBlue
+                              : styles.assigneeGreen
+                        }`}
+                      >
+                        {r.assignee}
+                      </span>
+                    </td>
                   </tr>
                 );
               })}
@@ -504,15 +536,15 @@ export default function BugReportPage() {
               <button className={styles.drawerClose} onClick={closeDrawer}>
                 ✕
               </button>
-            </div>
-            <div className={styles.drawerHeaderActions}>
-              <button
-                className={styles.drawerSubmit}
-                disabled={!hasDrawerChanges || isSubmitting}
-                onClick={editReport}
-              >
-                {isSubmitting ? <Spinner /> : '수정 완료'}
-              </button>
+              <div className={styles.drawerHeaderActions}>
+                <button
+                  className={styles.drawerSubmit}
+                  disabled={!hasDrawerChanges || isSubmitting}
+                  onClick={editReport}
+                >
+                  {isSubmitting ? <Spinner /> : '수정 완료'}
+                </button>
+              </div>
             </div>
           <div className={styles.drawerBody}>
             <div className={styles.drawerMeta}>
@@ -600,31 +632,97 @@ export default function BugReportPage() {
 
               {/* 내용 */}
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>내용</h3>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>내용</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('내용', contentText)}
+                    aria-label="내용 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
                 <div className={styles.drawerContentBox}>
                   <div className={styles.rowTitle}>
                     <span className={styles.dot} />
                     <span className={styles.err}>{selected.title}</span>
                   </div>
-                  <p className={styles.drawerParagraph}>
-                    {selected.detail.replace(
-                      '...',
-                      ' or misconfiguration and was unable to complete the request.',
-                    )}
-                  </p>
+                  <p className={styles.drawerParagraph}>{contentText}</p>
                 </div>
               </section>
 
               {/* 발생 영역 */}
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>에러스택</h3>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>에러스택</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('에러스택', errorStackText)}
+                    aria-label="에러스택 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
                 <div className={styles.drawerListBox}>
-                  <div className={styles.drawerParagraph}>
-                    AxiosError: Request failed with status code 500 at settle
-                    (axios/lib/core/settle.js) → IncomingMessage.handleStreamEnd
-                    (axios/lib/adapters/http.js) → handleAction(...). 예시
-                    로그입니다.
-                  </div>
+                  <div className={styles.drawerParagraph}>{errorStackText}</div>
+                </div>
+              </section>
+
+              {/* 메타데이터 */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>메타데이터</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('메타데이터', metadataText)}
+                    aria-label="메타데이터 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <div className={styles.drawerParagraph}>{metadataText}</div>
+                </div>
+              </section>
+
+              {/* 에러 발생 위치 */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>
+                    에러발생위치 URL
+                  </h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('에러발생위치 URL', errorUrlText)}
+                    aria-label="에러발생위치 URL 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <div className={styles.drawerParagraph}>{errorUrlText}</div>
+                </div>
+              </section>
+
+              {/* userAgent */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>userAgent</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('userAgent', userAgentText)}
+                    aria-label="userAgent 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <div className={styles.drawerParagraph}>{userAgentText}</div>
                 </div>
               </section>
 
@@ -646,6 +744,41 @@ export default function BugReportPage() {
         text="버그 리포트가 수정되었습니다."
         onConfirm={() => setAlertOpen(false)}
       />
+      {viewer && (
+        <div
+          className={styles.viewerBackdrop}
+          onClick={() => setViewer(null)}
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className={styles.viewerModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.viewerHeader}>
+              <h4 className={styles.viewerTitle}>{viewer.title}</h4>
+              <button
+                type="button"
+                className={styles.viewerClose}
+                onClick={() => setViewer(null)}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.viewerBody}>{viewer.text}</div>
+            <div className={styles.viewerActions}>
+              <button
+                type="button"
+                className={styles.viewerConfirm}
+                onClick={() => setViewer(null)}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
