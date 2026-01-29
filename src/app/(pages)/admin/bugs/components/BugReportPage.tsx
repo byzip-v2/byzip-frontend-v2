@@ -5,10 +5,10 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
 import {
   updateBugReport,
-  bulkUpdateBugStatus,
   type PaginationMeta,
   type BugReportDataDtoWithMemo,
 } from '../actions';
+import Spinner from '../../../../components/common/Spinner/Spinner';
 
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
@@ -246,17 +246,45 @@ export default function BugReportPage({
     setStatusActionOpen((v) => !v);
   };
 
+  // 선택된 리포트들에 대해 하나씩 PATCH 요청으로 상태를 갱신
   const handleBulkStatusSelect = async (status: BugStatus) => {
+    if (isUpdating) return; // 이미 업데이트 중이면 무시
+    if (!hasSelection) return; // 선택된 항목이 없으면 동작하지 않음
+
+    setIsUpdating(true);
     const apiStatus = mapUiToApiStatus(status);
     const ids = Array.from(selectedRowIds);
+    const errors: string[] = [];
 
-    const result = await bulkUpdateBugStatus(ids, apiStatus);
-    if (result.success) {
-      setStatusActionOpen(false);
-      setSelectedRowIds(new Set());
-      router.refresh(); // 데이터 새로고침
-    } else {
-      alert(result.message);
+    try {
+      // 하나씩 순회하며 PATCH 호출을 수행합니다.
+      for (const id of ids) {
+        try {
+          // updateBugReport는 서버의 PATCH /bug-reports/{id} 를 호출하도록 구현된 함수입니다.
+          const res = await updateBugReport(id, { status: apiStatus });
+          // 각 호출의 성공 여부를 확인하여 실패한 경우 메시지를 수집합니다.
+          if (!res.success) {
+            errors.push(`id:${id} - ${res.message || '업데이트 실패'}`);
+          }
+        } catch (err) {
+          // 네트워크 에러나 예외가 발생한 경우에도 계속 진행하되 에러 내용을 저장합니다.
+          const msg = err instanceof Error ? err.message : String(err);
+          errors.push(`id:${id} - ${msg}`);
+        }
+      }
+
+      // 모든 항목 처리 후 결과에 따라 UI 갱신 또는 에러 알림
+      if (errors.length === 0) {
+        setStatusActionOpen(false);
+        setSelectedRowIds(new Set());
+        router.refresh(); // 데이터 새로고침
+      } else {
+        // 일부 항목 실패: 사용자에게 실패 항목을 알려주고 데이터를 새로고침합니다.
+        alert(`일부 항목 업데이트 실패:\n${errors.join('\n')}`);
+        router.refresh();
+      }
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -361,11 +389,11 @@ export default function BugReportPage({
             <button
               type="button"
               className={styles.statusActionBtn}
-              disabled={!hasSelection}
+              disabled={!hasSelection || isUpdating}
               onClick={handleToggleStatusAction}
               aria-expanded={statusActionOpen}
             >
-              상태변경
+              {isUpdating ? <Spinner /> : '상태변경'}
             </button>
             {statusActionOpen && (
               <div className={styles.statusActionMenu}>
