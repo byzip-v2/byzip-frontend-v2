@@ -23,8 +23,13 @@ interface BugReportClientProps {
 export type BugStatus = 'needed' | 'in-progress' | 'completed' | 'not-bug';
 export type StatusFilter = 'all' | 'needed' | 'in-progress' | 'completed';
 
-export const ASSIGNEES = ['박성환', '이희령', '정윤숙'] as const;
-export type AssigneeName = (typeof ASSIGNEES)[number];
+// 내부에 저장되는 assignee id 목록 및 표시 이름
+export const ASSIGNEES = [
+  { id: 'psh5575', name: '박성환' },
+  { id: 'heereal', name: '이희령' },
+  { id: 'ys3', name: '정윤숙' },
+] as const;
+export type AssigneeId = (typeof ASSIGNEES)[number]['id'];
 
 export const STATUS_ORDER: BugStatus[] = [
   'in-progress',
@@ -104,6 +109,13 @@ export default function BugReportPage({
     assigneeId: string | null;
     memo: string;
   } | null>(null);
+
+  // assignee id -> 한글 이름 매핑 (화면 표시용)
+  const ASSIGNEE_ID_TO_NAME: Record<string, string> = {
+    heereal: '이희령',
+    psh5575: '박성환',
+    ys3: '정윤숙',
+  };
 
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -231,8 +243,8 @@ export default function BugReportPage({
     setStatusOpen(false);
   };
 
-  const handleSelectAssignee = (name: string | null) => {
-    setDetailAssignee(name);
+  const handleSelectAssignee = (id: string | null) => {
+    setDetailAssignee(id);
     setAssigneeOpen(false);
   };
 
@@ -261,7 +273,11 @@ export default function BugReportPage({
       for (const id of ids) {
         try {
           // updateBugReport는 서버의 PATCH /bug-reports/{id} 를 호출하도록 구현된 함수입니다.
-          const res = await updateBugReport(id, { status: apiStatus });
+          const res = await updateBugReport(
+            id,
+            { status: apiStatus },
+            selected?.assigneeId || '',
+          );
           // 각 호출의 성공 여부를 확인하여 실패한 경우 메시지를 수집합니다.
           if (!res.success) {
             errors.push(`id:${id} - ${res.message || '업데이트 실패'}`);
@@ -294,11 +310,18 @@ export default function BugReportPage({
     setIsUpdating(true);
     try {
       const apiStatus = mapUiToApiStatus(detailStatus);
-      const result = await updateBugReport(selected.id, {
-        status: apiStatus,
-        assigneeId: detailAssignee || undefined,
-        memo: detailMemo,
-      });
+      const result = await updateBugReport(
+        selected.id,
+        {
+          status: apiStatus,
+          // "미지정" 선택 시 null을 명시적으로 전달하여 DB에 null로 저장되도록 합니다.
+          assigneeId:
+            detailAssignee === null ? null : detailAssignee || undefined,
+          memo: detailMemo,
+        },
+        // prevAssignee: 기존에 선택되어 있던 assignee id(없으면 빈 문자열)
+        selected?.assigneeId ?? '',
+      );
 
       if (result.success) {
         closeDrawer();
@@ -484,7 +507,9 @@ export default function BugReportPage({
                     </td>
                     <td className={styles.ellipsis}>{r.memo || ''}</td>
                     <td className={styles.assignee}>
-                      {r.assigneeId || '미지정'}
+                      {r.assigneeId
+                        ? (ASSIGNEE_ID_TO_NAME[r.assigneeId] ?? r.assigneeId)
+                        : '미지정'}
                     </td>
                   </tr>
                 );
@@ -617,7 +642,9 @@ export default function BugReportPage({
                             : styles.selectPlaceholder
                         }
                       >
-                        {detailAssignee ?? '담당자 선택'}
+                        {detailAssignee
+                          ? ASSIGNEE_ID_TO_NAME[detailAssignee]
+                          : '담당자 선택'}
                       </span>
                       <span className={styles.selectCaret}>▾</span>
                     </button>
@@ -632,14 +659,14 @@ export default function BugReportPage({
                         >
                           미지정
                         </button>
-                        {ASSIGNEES.map((name) => (
+                        {ASSIGNEES.map(({ id, name }) => (
                           <button
-                            key={name}
+                            key={id}
                             type="button"
                             className={`${styles.selectOption} ${
-                              detailAssignee === name ? styles.active : ''
+                              detailAssignee === id ? styles.active : ''
                             }`}
-                            onClick={() => handleSelectAssignee(name)}
+                            onClick={() => handleSelectAssignee(id)}
                           >
                             {name}
                           </button>
