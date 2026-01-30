@@ -143,6 +143,14 @@ export default function BugReportPage() {
   const [viewer, setViewer] = useState<{ title: string; text: string } | null>(
     null,
   );
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeName | 'all'>(
+    'all',
+  );
+  const [assigneeFilterOpen, setAssigneeFilterOpen] = useState(false);
+  const assigneeFilterRef = useRef<HTMLTableCellElement>(null);
+  const assigneeBtnRef = useRef<HTMLButtonElement>(null);
+  const [assigneeMenuPos, setAssigneeMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const assigneeMenuRef = useRef<HTMLDivElement>(null);
 
   // 검색어 적용된 원본 리스트
   const baseList = useMemo(() => {
@@ -157,13 +165,14 @@ export default function BugReportPage() {
   }, [q]);
 
   // 상태 필터 적용 리스트
-  const list = useMemo(
-    () =>
+  const list = useMemo(() => {
+    const byStatus =
       statusFilter === 'all'
         ? baseList
-        : baseList.filter((r) => r.status === statusFilter),
-    [baseList, statusFilter],
-  );
+        : baseList.filter((r) => r.status === statusFilter);
+    if (assigneeFilter === 'all') return byStatus;
+    return byStatus.filter((r) => r.assignee === assigneeFilter);
+  }, [assigneeFilter, baseList, statusFilter]);
 
   const stats = useMemo(() => {
     const needed = baseList.filter((r) => r.status === 'needed').length;
@@ -274,6 +283,23 @@ export default function BugReportPage() {
       document.body.style.overflow = '';
     };
   }, [selected]);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const insideHeader =
+        assigneeFilterRef.current &&
+        assigneeFilterRef.current.contains(target);
+      const insideMenu =
+        assigneeMenuRef.current && assigneeMenuRef.current.contains(target);
+      if (!insideHeader && !insideMenu) {
+        setAssigneeFilterOpen(false);
+        setAssigneeMenuPos(null);
+      }
+    };
+    document.addEventListener('click', onClickOutside);
+    return () => document.removeEventListener('click', onClickOutside);
+  }, []);
 
   const handleBulkStatusSelect = () => {
     // 퍼블 상태: 선택 후 닫기만 수행
@@ -433,8 +459,30 @@ export default function BugReportPage() {
                 <th style={{ width: 150 }}>발생일</th>
                 <th style={{ width: 200 }}>상태</th>
                 <th style={{ width: 240 }}>메모</th>
-                <th className={styles.assigneeHeader} style={{ width: 140 }}>
-                  담당자
+                <th
+                  className={styles.assigneeHeader}
+                  style={{ width: 140, position: 'relative' }}
+                  ref={assigneeFilterRef}
+                >
+                  <button
+                    type="button"
+                    className={styles.assigneeFilterBtn}
+                    ref={assigneeBtnRef}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const next = !assigneeFilterOpen;
+                      setAssigneeFilterOpen(next);
+                      if (next && assigneeBtnRef.current) {
+                        const rect = assigneeBtnRef.current.getBoundingClientRect();
+                        setAssigneeMenuPos({ x: rect.left, y: rect.bottom });
+                      } else {
+                        setAssigneeMenuPos(null);
+                      }
+                    }}
+                  >
+                    <span>담당자</span>
+                    <span className={styles.assigneeCaret}>▾</span>
+                  </button>
                 </th>
               </tr>
             </thead>
@@ -744,6 +792,46 @@ export default function BugReportPage() {
         text="버그 리포트가 수정되었습니다."
         onConfirm={() => setAlertOpen(false)}
       />
+      {assigneeFilterOpen && assigneeMenuPos && (
+        <div
+          className={styles.assigneeMenuFixed}
+          style={{
+            left: Math.max(8, assigneeMenuPos.x - 16),
+            top: assigneeMenuPos.y + 2,
+          }}
+          ref={assigneeMenuRef}
+        >
+          <button
+            type="button"
+            className={`${styles.assigneeOption} ${
+              assigneeFilter === 'all' ? styles.active : ''
+            }`}
+            onClick={() => {
+              setAssigneeFilter('all');
+              setAssigneeFilterOpen(false);
+              setAssigneeMenuPos(null);
+            }}
+          >
+            전체
+          </button>
+          {ASSIGNEES.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className={`${styles.assigneeOption} ${
+                assigneeFilter === name ? styles.active : ''
+              }`}
+              onClick={() => {
+                setAssigneeFilter(name);
+                setAssigneeFilterOpen(false);
+                setAssigneeMenuPos(null);
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
       {viewer && (
         <div
           className={styles.viewerBackdrop}
