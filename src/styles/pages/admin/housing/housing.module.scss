@@ -161,6 +161,10 @@
 .rowTitle {
   font-weight: 700;
   color: $color-text-primary;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .badge {
@@ -176,17 +180,17 @@
   background: color.adjust($color-badge-success, $lightness: 32%);
   color: color.adjust($color-badge-success, $lightness: -6%);
 }
-.statusBad {
-  background: color.adjust($color-error, $lightness: 34%);
-  color: color.adjust($color-error, $lightness: -12%);
-}
 .statusPending {
-  background: color.adjust($color-primary, $lightness: 32%);
-  color: color.adjust($color-primary, $lightness: -8%);
+  background: #ff5252;
+  color: #ffffff;
+}
+.statusSub {
+  background: #b347ff;
+  color: #ffffff;
 }
 .statusDone {
-  background: #e0e0e0;
-  color: #555;
+  background: #5c6675;
+  color: #ffffff;
 }
 
 .checkCell {
@@ -294,6 +298,18 @@
   color: $color-text-primary;
 }
 
+.drawerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.drawerSectionTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
 .drawerRow {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -303,6 +319,12 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+.toggleInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
 }
 .drawerLabel {
   font-size: 12px;
@@ -316,6 +338,62 @@
   background: $color-surface-subtle;
   font-size: 13px;
   color: $color-text-primary;
+}
+.selectField {
+  position: relative;
+}
+.selectTrigger {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid $color-border;
+  background: $color-white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  color: $color-text-primary;
+}
+.selectValue {
+  font-weight: 600;
+}
+.selectPlaceholder {
+  color: $color-text-secondary;
+}
+.selectCaret {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+.selectMenu {
+  position: absolute;
+  z-index: 905;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $color-white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+.selectOption {
+  width: 100%;
+  padding: 10px 12px;
+  background: $color-white;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: $color-text-primary;
+
+  &:hover {
+    background: $color-gray;
+  }
+
+  &.active {
+    background: $color-primary;
+    color: $color-white;
+  }
 }
 .drawerTextarea {
   width: 100%;

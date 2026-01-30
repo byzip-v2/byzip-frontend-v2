@@ -5,14 +5,16 @@ import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Spinner from '@/app/components/common/Spinner/Spinner';
 import styles from '@/styles/pages/admin/housing/housing.module.scss';
 
-type SaleStatus = '승인가능' | '승인불가' | '승인요청' | '종료';
+type SaleStatus = '청약가능' | '청약예정' | '무순위' | '청약종료';
+type SaleType = '영구임대' | '국민임대' | '행복주택';
+const SALE_TYPE_OPTIONS: SaleType[] = ['영구임대', '국민임대', '행복주택'];
 
 type SaleRow = {
   id: string;
   title: string;
   supplyLocation: string;
   region: string;
-  saleType: string;
+  saleType: SaleType;
   status: SaleStatus;
   registeredAt: string;
   detail: string;
@@ -26,9 +28,9 @@ const SALE_MOCK: SaleRow[] = [
     title: '고양장항지구 S-1블록 공공분양주택 (본청약)',
     supplyLocation: '경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원',
     region: '경기',
-    saleType: '공공분양',
-    status: '승인가능',
-    registeredAt: '2025-03-20',
+    saleType: '영구임대',
+    status: '청약가능',
+    registeredAt: '2025-01-30',
     detail:
       '신청자 모임 공고와 분양 구조 정보가 포함된 예시 텍스트입니다. 길이가 길어도 스크롤 내에서 처리됩니다.',
     contactName: '김담당',
@@ -36,49 +38,53 @@ const SALE_MOCK: SaleRow[] = [
   },
   {
     id: 'sale-2',
-    title: '서울 마포구 재개발 구역 임대주택',
-    supplyLocation: '서울특별시 마포구 연남동 일원',
-    region: '서울',
-    saleType: '공공임대',
-    status: '승인요청',
-    registeredAt: '2025-03-15',
-    detail: '서울 마포구 재개발 구역 임대주택 공고입니다.',
+    title: '고양장항지구 S-1블록 공공분양주택 (본청약)',
+    supplyLocation: '경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원',
+    region: '경기',
+    saleType: '국민임대',
+    status: '청약가능',
+    registeredAt: '2025-01-30',
+    detail:
+      '고양장항지구 S-1블록 공공분양주택 (본청약) 안내에 대한 더미 데이터입니다.',
     contactName: '박성환',
     contactPhone: '02-555-1234',
   },
   {
     id: 'sale-3',
-    title: '부산 해운대 공동주택 분양',
-    supplyLocation: '부산 해운대구 좌동',
-    region: '부산',
-    saleType: '민영분양',
-    status: '승인불가',
-    registeredAt: '2025-03-12',
-    detail: '부산 해운대 공동주택 분양 안내입니다.',
+    title: '고양장항지구 S-1블록 공공분양주택 (본청약)',
+    supplyLocation: '경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원',
+    region: '경기',
+    saleType: '행복주택',
+    status: '청약예정',
+    registeredAt: '2025-01-30',
+    detail:
+      '고양장항지구 S-1블록 공공분양주택 (본청약) 안내에 대한 더미 데이터입니다.',
     contactName: '이희령',
     contactPhone: '051-222-3333',
   },
   {
     id: 'sale-4',
-    title: '성남 판교 테크노밸리 오피스텔',
-    supplyLocation: '경기도 성남시 수정구 판교 일원',
+    title: '고양장항지구 S-1블록 공공분양주택 (본청약)',
+    supplyLocation: '경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원',
     region: '경기',
-    saleType: '오피스텔',
-    status: '승인가능',
-    registeredAt: '2025-03-10',
-    detail: '판교 테크노밸리 오피스텔 분양 공고입니다.',
+    saleType: '영구임대',
+    status: '무순위',
+    registeredAt: '2025-01-30',
+    detail:
+      '고양장항지구 S-1블록 공공분양주택 (본청약) 안내에 대한 더미 데이터입니다.',
     contactName: '정윤숙',
     contactPhone: '031-000-1234',
   },
   {
     id: 'sale-5',
-    title: '대전 둔산동 공공분양주택',
-    supplyLocation: '대전광역시 서구 둔산동',
-    region: '대전',
-    saleType: '공공분양',
-    status: '종료',
-    registeredAt: '2025-03-01',
-    detail: '대전 둔산동 공공분양주택 공고입니다.',
+    title: '고양장항지구 S-1블록 공공분양주택 (본청약)',
+    supplyLocation: '경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원',
+    region: '경기',
+    saleType: '영구임대',
+    status: '청약종료',
+    registeredAt: '2025-01-30',
+    detail:
+      '고양장항지구 S-1블록 공공분양주택 (본청약) 안내에 대한 더미 데이터입니다.',
     contactName: '조연락',
     contactPhone: '042-987-6543',
   },
@@ -94,6 +100,8 @@ export default function SaleManagePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [toggleEnded, setToggleEnded] = useState(false);
   const [toggleHidden, setToggleHidden] = useState(false);
+  const [saleTypeOpen, setSaleTypeOpen] = useState(false);
+  const [drawerSaleType, setDrawerSaleType] = useState<SaleType>('영구임대');
 
   const list = useMemo(() => {
     const keyword = q.trim().toLowerCase();
@@ -143,18 +151,20 @@ export default function SaleManagePage() {
 
   const handleRowClick = (row: SaleRow) => {
     setSelected(row);
+    setDrawerSaleType(row.saleType);
+    setSaleTypeOpen(false);
   };
 
   const closeDrawer = () => setSelected(null);
 
   const statusClass = (status: SaleStatus) => {
     switch (status) {
-      case '승인가능':
+      case '청약가능':
         return styles.statusOk;
-      case '승인불가':
-        return styles.statusBad;
-      case '승인요청':
+      case '청약예정':
         return styles.statusPending;
+      case '무순위':
+        return styles.statusSub;
       default:
         return styles.statusDone;
     }
@@ -225,12 +235,12 @@ export default function SaleManagePage() {
                   onChange={(e) => handleToggleAll(e.target.checked)}
                 />
               </th>
-              <th style={{ width: 420 }}>분양공고명</th>
-              <th style={{ width: 220 }}>공급 위치</th>
-              <th style={{ width: 120 }}>지역</th>
+              <th style={{ width: 280 }}>분양공고명</th>
+              <th style={{ width: 360 }}>공급 위치</th>
+              <th style={{ width: 140 }}>모집 공고일</th>
+              <th style={{ width: 110 }}>지역</th>
               <th style={{ width: 140 }}>분양유형</th>
-              <th style={{ width: 140 }}>등록일</th>
-              <th style={{ width: 120 }}>상태</th>
+              <th style={{ width: 110 }}>상태</th>
             </tr>
           </thead>
           <tbody>
@@ -254,9 +264,9 @@ export default function SaleManagePage() {
                     <div className={styles.rowTitle}>{row.title}</div>
                   </td>
                   <td className={styles.ellipsis}>{row.supplyLocation}</td>
+                  <td>{row.registeredAt}</td>
                   <td>{row.region}</td>
                   <td>{row.saleType}</td>
-                  <td>{row.registeredAt}</td>
                   <td>
                     <span className={`${styles.badge} ${statusClass(row.status)}`}>
                       {row.status}
@@ -303,104 +313,126 @@ export default function SaleManagePage() {
 
               <div className={styles.drawerRow}>
                 <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>노출 상태</label>
-                  <label className={styles.toggle}>
-                    <input type="checkbox" defaultChecked />
-                    <span>노출</span>
-                  </label>
+                  <label className={styles.drawerLabel}>분양형태</label>
+                  <div className={styles.selectField}>
+                    <button
+                      type="button"
+                      className={styles.selectTrigger}
+                      onClick={() => setSaleTypeOpen((v) => !v)}
+                      aria-expanded={saleTypeOpen}
+                    >
+                      <span className={styles.selectValue}>{drawerSaleType}</span>
+                      <span className={styles.selectCaret}>▾</span>
+                    </button>
+                    {saleTypeOpen && (
+                      <div className={styles.selectMenu}>
+                        {SALE_TYPE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            className={`${styles.selectOption} ${
+                              drawerSaleType === opt ? styles.active : ''
+                            }`}
+                            onClick={() => {
+                              setDrawerSaleType(opt);
+                              setSaleTypeOpen(false);
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>분양유형</label>
-                  <input
-                    className={styles.readonlyInput}
-                    value={selected.saleType}
-                    readOnly
-                  />
+                  <label className={styles.drawerLabel}>노출여부</label>
+                  <div className={styles.toggleInline}>
+                    <label className={styles.toggle}>
+                      <input type="checkbox" defaultChecked />
+                      <span className={styles.toggleSwitch} aria-hidden />
+                    </label>
+                  </div>
                 </div>
               </div>
 
-              <div className={styles.drawerRow}>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>입주자 모집공고 주요정보</label>
-                  <textarea
-                    className={styles.drawerTextarea}
-                    value={selected.detail}
-                    readOnly
-                  />
+              <section className={styles.drawerSection}>
+                <h3 className={styles.drawerSectionTitle}>입주자 모집공고 주요정보</h3>
+                <div className={styles.drawerRow}>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>공고위치</label>
+                    <textarea
+                      className={styles.drawerTextarea}
+                      value="경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원"
+                      readOnly
+                    />
+                  </div>
                 </div>
-              </div>
+                <div className={styles.drawerRow}>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>공급규모</label>
+                    <input className={styles.readonlyInput} value="341세대" readOnly />
+                  </div>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>관련문의</label>
+                    <input
+                      className={styles.readonlyInput}
+                      value="사업주체 또는 분양사무실로 문의"
+                      readOnly
+                    />
+                  </div>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>문의처</label>
+                    <input className={styles.readonlyInput} value="1600-1004" readOnly />
+                  </div>
+                </div>
+              </section>
 
-              <div className={styles.drawerRow}>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>모집구분</label>
-                  <input
-                    className={styles.readonlyInput}
-                    value="국민주택"
-                    readOnly
-                  />
+              <section className={styles.drawerSection}>
+                <h3 className={styles.drawerSectionTitle}>공급일정</h3>
+                <div className={styles.drawerRow}>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>모집 공고일</label>
+                    <input
+                      className={styles.readonlyInput}
+                      value="2025-01-30"
+                      readOnly
+                    />
+                  </div>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>당첨자 발표일</label>
+                    <input
+                      className={styles.readonlyInput}
+                      value="2025-01-30"
+                      readOnly
+                    />
+                  </div>
                 </div>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>모집대상</label>
-                  <input
-                    className={styles.readonlyInput}
-                    value="신혼부부"
-                    readOnly
-                  />
+                <div className={styles.drawerRow}>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>서류 접수 기간</label>
+                    <input
+                      className={styles.readonlyInput}
+                      value="2024-10-14 ~ 2025-09-30"
+                      readOnly
+                    />
+                  </div>
                 </div>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>공급형태</label>
-                  <input
-                    className={styles.readonlyInput}
-                    value="공공분양"
-                    readOnly
-                  />
-                </div>
-              </div>
+              </section>
 
-              <div className={styles.drawerRow}>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>공급규모</label>
-                  <input className={styles.readonlyInput} value="34세대" readOnly />
+              <section className={styles.drawerSection}>
+                <h3 className={styles.drawerSectionTitle}>유의 사항</h3>
+                <div className={styles.drawerRow}>
+                  <div className={styles.drawerField}>
+                    <label className={styles.drawerLabel}>모집 공고문</label>
+                    <textarea
+                      className={styles.drawerTextarea}
+                      value="* 삼척호연 모집계약용 흙 45M2 / 삼척지구 모집계약용 59m2로 모집마감 되었습니다. * 임대전용의 임대보증금 및 임대료는 입주전환용주택공급규정(2024.01.09) 변경기준에 따라, 예비입주자 선정시 고지예정된 임대 계약을 체결하는 시점이 당해 주택 입주일 이전일 경우에는 변경된 임대보증금으로 계약하셔야 합니다. ※ 모집공고문에 모든 내용이 포함되어 있으니 반드시 자세히 신청하시길 바랍니다. (첨부된 모집 공고문에는 신청인 본인이 확인하였습니다.) ※ 특히 임대전용주택공급시사업계획 승인업이상이며, 반드시 모집공고 수신자에게 해당 신청접수만의 접수주소를 확인하여 접수해야 주시기 바랍니다. ※ 모집일정 중복시 조기마감 될 수 있습니다."
+                      readOnly
+                    />
+                  </div>
                 </div>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>담당자 연락처</label>
-                  <input
-                    className={styles.readonlyInput}
-                    value={selected.contactPhone}
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <div className={styles.drawerRow}>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>모집기간</label>
-                  <input
-                    className={styles.readonlyInput}
-                    value="2025-03-20 ~ 2025-03-30"
-                    readOnly
-                  />
-                </div>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>지역</label>
-                  <input
-                    className={styles.readonlyInput}
-                    value={selected.region}
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <div className={styles.drawerRow}>
-                <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>유의사항</label>
-                  <textarea
-                    className={styles.drawerTextarea}
-                    value="모집공고 요약 내용이 들어가는 자리입니다. 길어질 경우 스크롤로 확인 가능합니다."
-                    readOnly
-                  />
-                </div>
-              </div>
+              </section>
             </div>
           </aside>
         </>
