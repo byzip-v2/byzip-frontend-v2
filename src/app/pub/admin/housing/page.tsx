@@ -7,7 +7,6 @@ import styles from '@/styles/pages/admin/housing/housing.module.scss';
 
 type SaleStatus = '청약가능' | '청약예정' | '무순위' | '청약종료';
 type SaleType = '영구임대' | '국민임대' | '행복주택';
-const SALE_TYPE_OPTIONS: SaleType[] = ['영구임대', '국민임대', '행복주택'];
 
 type SaleRow = {
   id: string;
@@ -100,8 +99,6 @@ export default function SaleManagePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [toggleEnded, setToggleEnded] = useState(false);
   const [toggleHidden, setToggleHidden] = useState(false);
-  const [saleTypeOpen, setSaleTypeOpen] = useState(false);
-  const [drawerSaleType, setDrawerSaleType] = useState<SaleType>('영구임대');
 
   const list = useMemo(() => {
     const keyword = q.trim().toLowerCase();
@@ -151,8 +148,6 @@ export default function SaleManagePage() {
 
   const handleRowClick = (row: SaleRow) => {
     setSelected(row);
-    setDrawerSaleType(row.saleType);
-    setSaleTypeOpen(false);
   };
 
   const closeDrawer = () => setSelected(null);
@@ -314,36 +309,11 @@ export default function SaleManagePage() {
               <div className={styles.drawerRow}>
                 <div className={styles.drawerField}>
                   <label className={styles.drawerLabel}>분양형태</label>
-                  <div className={styles.selectField}>
-                    <button
-                      type="button"
-                      className={styles.selectTrigger}
-                      onClick={() => setSaleTypeOpen((v) => !v)}
-                      aria-expanded={saleTypeOpen}
-                    >
-                      <span className={styles.selectValue}>{drawerSaleType}</span>
-                      <span className={styles.selectCaret}>▾</span>
-                    </button>
-                    {saleTypeOpen && (
-                      <div className={styles.selectMenu}>
-                        {SALE_TYPE_OPTIONS.map((opt) => (
-                          <button
-                            key={opt}
-                            type="button"
-                            className={`${styles.selectOption} ${
-                              drawerSaleType === opt ? styles.active : ''
-                            }`}
-                            onClick={() => {
-                              setDrawerSaleType(opt);
-                              setSaleTypeOpen(false);
-                            }}
-                          >
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <input
+                    className={styles.readonlyInput}
+                    value={selected.saleType}
+                    readOnly
+                  />
                 </div>
                 <div className={styles.drawerField}>
                   <label className={styles.drawerLabel}>숨김여부</label>
