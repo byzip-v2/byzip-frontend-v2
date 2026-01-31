@@ -200,7 +200,7 @@ export default function SaleManagePage() {
         </div>
         <div className={styles.searchWrap}>
           <input
-            placeholder="검색어를 입력해 주세요."
+            placeholder="공고명 또는 공급 위치를 입력해 주세요."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
