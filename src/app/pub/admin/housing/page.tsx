@@ -346,7 +346,7 @@ export default function SaleManagePage() {
                   </div>
                 </div>
                 <div className={styles.drawerField}>
-                  <label className={styles.drawerLabel}>노출여부</label>
+                  <label className={styles.drawerLabel}>숨김여부</label>
                   <div className={styles.toggleInline}>
                     <label className={styles.toggle}>
                       <input type="checkbox" defaultChecked />
