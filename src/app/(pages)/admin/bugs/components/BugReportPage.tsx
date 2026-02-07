@@ -10,6 +10,7 @@ import {
   type BugReportDataDtoWithMemo,
 } from '../actions';
 import Spinner from '../../../../components/common/Spinner/Spinner';
+import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
@@ -79,6 +80,7 @@ export default function BugReportPage({
   const [selectedRowIds, setSelectedRowIds] = useState<Set<number>>(new Set());
   const [statusActionOpen, setStatusActionOpen] = useState(false);
   const statusActionRef = useRef<HTMLDivElement>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const [initialDetail, setInitialDetail] = useState<{
     status: BugReportStatus;
@@ -141,7 +143,13 @@ export default function BugReportPage({
 
   // 검색 실행
   const handleSearch = () => {
-    updateUrl({ q, page: 1 });
+    setIsSearching(true);
+    try {
+      // API 호출
+      updateUrl({ q, page: 1 });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -331,9 +339,7 @@ export default function BugReportPage({
   return (
     <div className={styles.page}>
       {/* 상단 타이틀 */}
-      <div className={styles.head}>
-        <h1 className={styles.title}>버그 리포트</h1>
-      </div>
+      <AdminPageHeader title="버그 리포트" />
 
       {/* 통계 카드 (서버 상태값 open / in_progress / resolved 로 필터) */}
       <section className={styles.stats}>
@@ -392,7 +398,10 @@ export default function BugReportPage({
             onChange={(e) => setQ(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <button onClick={handleSearch}>검색</button>
+          <button onClick={handleSearch} disabled={isSearching}>
+            {' '}
+            {isSearching ? <Spinner /> : '검색'}
+          </button>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
