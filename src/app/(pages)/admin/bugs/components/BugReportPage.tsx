@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { BugReportStatus } from 'byzip-v2-sdk';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
 import {
   updateBugReport,
@@ -20,8 +21,8 @@ interface BugReportClientProps {
   };
 }
 
-export type BugStatus = 'needed' | 'in-progress' | 'completed' | 'not-bug';
-export type StatusFilter = 'all' | 'needed' | 'in-progress' | 'completed';
+/** 서버(byzip-sdk)와 동일한 상태값. 기본값 open */
+export type StatusFilter = BugReportStatus;
 
 // 내부에 저장되는 assignee id 목록 및 표시 이름
 export const ASSIGNEES = [
@@ -31,48 +32,20 @@ export const ASSIGNEES = [
 ] as const;
 export type AssigneeId = (typeof ASSIGNEES)[number]['id'];
 
-export const STATUS_ORDER: BugStatus[] = [
-  'in-progress',
-  'completed',
-  'needed',
-  'not-bug',
+/** 드롭다운/서랍에서 표시할 상태 순서 (서버 enum 값 그대로 사용) */
+export const STATUS_ORDER: BugReportStatus[] = [
+  BugReportStatus.OPEN,
+  BugReportStatus.IN_PROGRESS,
+  BugReportStatus.RESOLVED,
+  BugReportStatus.CLOSED,
 ];
 
-export const STATUS_LABEL: Record<BugStatus, string> = {
-  'in-progress': '해결중',
-  completed: '해결완료',
-  needed: '해결필요',
-  'not-bug': '버그아님',
-};
-
-// API 상태 -> UI 상태 매핑
-export const mapApiToUiStatus = (apiStatus: string): BugStatus => {
-  switch (apiStatus) {
-    case 'open':
-      return 'needed';
-    case 'in_progress':
-      return 'in-progress';
-    case 'resolved':
-      return 'completed';
-    case 'closed':
-      return 'not-bug';
-    default:
-      return 'needed';
-  }
-};
-
-// UI 상태 -> API 상태 매핑
-export const mapUiToApiStatus = (uiStatus: BugStatus): string => {
-  switch (uiStatus) {
-    case 'needed':
-      return 'open';
-    case 'in-progress':
-      return 'in_progress';
-    case 'completed':
-      return 'resolved';
-    case 'not-bug':
-      return 'closed';
-  }
+/** 서버 상태값 → 한글 라벨 (UI 표시용) */
+export const STATUS_LABEL: Record<BugReportStatus, string> = {
+  [BugReportStatus.OPEN]: '해결필요',
+  [BugReportStatus.IN_PROGRESS]: '해결중',
+  [BugReportStatus.RESOLVED]: '해결완료',
+  [BugReportStatus.CLOSED]: '버그아님',
 };
 
 export default function BugReportPage({
@@ -94,7 +67,10 @@ export default function BugReportPage({
   const [selected, setSelected] = useState<BugReportDataDtoWithMemo | null>(
     null,
   );
-  const [detailStatus, setDetailStatus] = useState<BugStatus>('needed');
+  /** 서버와 동일한 BugReportStatus 사용 */
+  const [detailStatus, setDetailStatus] = useState<BugReportStatus>(
+    BugReportStatus.OPEN,
+  );
   const [detailAssignee, setDetailAssignee] = useState<string | null>(null);
   const [detailMemo, setDetailMemo] = useState('');
 
@@ -105,7 +81,7 @@ export default function BugReportPage({
   const statusActionRef = useRef<HTMLDivElement>(null);
 
   const [initialDetail, setInitialDetail] = useState<{
-    status: BugStatus;
+    status: BugReportStatus;
     assigneeId: string | null;
     memo: string;
   } | null>(null);
@@ -119,13 +95,14 @@ export default function BugReportPage({
 
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const statusFilter = (searchParams.status as StatusFilter) || 'all';
+  /** 선택된 상태 필터. URL에 없으면 기본값 open */
+  const statusFilter: StatusFilter =
+    (searchParams.status as BugReportStatus) || BugReportStatus.OPEN;
 
-  // 데이터 가공
+  // 데이터 가공 (서버 status 그대로 사용, 포맷된 날짜만 추가)
   const processedBugs = useMemo(() => {
     return initialBugs.map((bug) => ({
       ...bug,
-      uiStatus: mapApiToUiStatus(bug.status),
       formattedDate: new Date(bug.createdAt)
         .toLocaleString('ko-KR', {
           year: 'numeric',
@@ -145,7 +122,7 @@ export default function BugReportPage({
     (updates: Record<string, string | number | undefined>) => {
       const params = new URLSearchParams(searchParamsHook.toString());
       Object.entries(updates).forEach(([key, value]) => {
-        if (value === undefined || value === '' || value === 'all') {
+        if (value === undefined || value === '') {
           params.delete(key);
         } else {
           params.set(key, String(value));
@@ -222,13 +199,17 @@ export default function BugReportPage({
 
   // 행 클릭 시 서랍 오픈
   const handleRowClick = (bug: BugReportDataDtoWithMemo) => {
-    const uiStatus = mapApiToUiStatus(bug.status);
+    const status = Object.values(BugReportStatus).includes(
+      bug.status as BugReportStatus,
+    )
+      ? (bug.status as BugReportStatus)
+      : BugReportStatus.OPEN;
     setSelected(bug);
-    setDetailStatus(uiStatus);
+    setDetailStatus(status);
     setDetailAssignee(bug.assigneeId || null);
     setDetailMemo(bug.memo || '');
     setInitialDetail({
-      status: uiStatus,
+      status,
       assigneeId: bug.assigneeId || null,
       memo: bug.memo || '',
     });
@@ -238,7 +219,7 @@ export default function BugReportPage({
 
   const closeDrawer = () => setSelected(null);
 
-  const handleSelectStatus = (status: BugStatus) => {
+  const handleSelectStatus = (status: BugReportStatus) => {
     setDetailStatus(status);
     setStatusOpen(false);
   };
@@ -248,8 +229,10 @@ export default function BugReportPage({
     setAssigneeOpen(false);
   };
 
-  const toggleFilter = (next: StatusFilter) => {
-    const newStatus = statusFilter === next ? 'all' : next;
+  /** 같은 카드 재클릭 시 기본값(open)으로, 아니면 해당 상태로 필터 */
+  const toggleFilter = (next: BugReportStatus) => {
+    const newStatus: StatusFilter =
+      statusFilter === next ? BugReportStatus.OPEN : next;
     updateUrl({ status: newStatus, page: 1 });
   };
 
@@ -258,13 +241,12 @@ export default function BugReportPage({
     setStatusActionOpen((v) => !v);
   };
 
-  // 선택된 리포트들에 대해 하나씩 PATCH 요청으로 상태를 갱신
-  const handleBulkStatusSelect = async (status: BugStatus) => {
+  // 선택된 리포트들에 대해 하나씩 PATCH 요청으로 상태를 갱신 (서버 상태값 그대로 전달)
+  const handleBulkStatusSelect = async (status: BugReportStatus) => {
     if (isUpdating) return; // 이미 업데이트 중이면 무시
     if (!hasSelection) return; // 선택된 항목이 없으면 동작하지 않음
 
     setIsUpdating(true);
-    const apiStatus = mapUiToApiStatus(status);
     const ids = Array.from(selectedRowIds);
     const errors: string[] = [];
 
@@ -275,7 +257,7 @@ export default function BugReportPage({
           // updateBugReport는 서버의 PATCH /bug-reports/{id} 를 호출하도록 구현된 함수입니다.
           const res = await updateBugReport(
             id,
-            { status: apiStatus },
+            { status },
             selected?.assigneeId || '',
           );
           // 각 호출의 성공 여부를 확인하여 실패한 경우 메시지를 수집합니다.
@@ -309,11 +291,10 @@ export default function BugReportPage({
 
     setIsUpdating(true);
     try {
-      const apiStatus = mapUiToApiStatus(detailStatus);
       const result = await updateBugReport(
         selected.id,
         {
-          status: apiStatus,
+          status: detailStatus,
           // "미지정" 선택 시 null을 명시적으로 전달하여 DB에 null로 저장되도록 합니다.
           assigneeId:
             detailAssignee === null ? null : detailAssignee || undefined,
@@ -354,30 +335,34 @@ export default function BugReportPage({
         <h1 className={styles.title}>버그 리포트</h1>
       </div>
 
-      {/* 통계 카드 */}
+      {/* 통계 카드 (서버 상태값 open / in_progress / resolved 로 필터) */}
       <section className={styles.stats}>
         <button
           type="button"
           className={`${styles.card} ${styles.cardButton} ${styles.yellow} ${
-            statusFilter === 'needed' ? styles.activeCard : ''
+            statusFilter === BugReportStatus.OPEN ? styles.activeCard : ''
           }`}
-          onClick={() => toggleFilter('needed')}
+          onClick={() => toggleFilter(BugReportStatus.OPEN)}
         >
           <div className={styles.cardLabel}>해결 필요</div>
           <div className={styles.cardNum}>
-            {statusFilter === 'needed' && initialMeta ? initialMeta.total : '-'}
+            {statusFilter === BugReportStatus.OPEN && initialMeta
+              ? initialMeta.total
+              : '-'}
           </div>
         </button>
         <button
           type="button"
           className={`${styles.card} ${styles.cardButton} ${styles.mint} ${
-            statusFilter === 'in-progress' ? styles.activeCard : ''
+            statusFilter === BugReportStatus.IN_PROGRESS
+              ? styles.activeCard
+              : ''
           }`}
-          onClick={() => toggleFilter('in-progress')}
+          onClick={() => toggleFilter(BugReportStatus.IN_PROGRESS)}
         >
           <div className={styles.cardLabel}>해결중인 버그</div>
           <div className={styles.cardNum}>
-            {statusFilter === 'in-progress' && initialMeta
+            {statusFilter === BugReportStatus.IN_PROGRESS && initialMeta
               ? initialMeta.total
               : '-'}
           </div>
@@ -385,13 +370,13 @@ export default function BugReportPage({
         <button
           type="button"
           className={`${styles.card} ${styles.cardButton} ${styles.purple} ${
-            statusFilter === 'completed' ? styles.activeCard : ''
+            statusFilter === BugReportStatus.RESOLVED ? styles.activeCard : ''
           }`}
-          onClick={() => toggleFilter('completed')}
+          onClick={() => toggleFilter(BugReportStatus.RESOLVED)}
         >
           <div className={styles.cardLabel}>해결완료</div>
           <div className={styles.cardNum}>
-            {statusFilter === 'completed' && initialMeta
+            {statusFilter === BugReportStatus.RESOLVED && initialMeta
               ? initialMeta.total
               : '-'}
           </div>
@@ -493,16 +478,16 @@ export default function BugReportPage({
                     <td>
                       <span
                         className={`${styles.badge} ${
-                          r.uiStatus === 'completed'
+                          r.status === BugReportStatus.RESOLVED
                             ? styles.statusDone
-                            : r.uiStatus === 'in-progress'
+                            : r.status === BugReportStatus.IN_PROGRESS
                               ? styles.statusProgress
-                              : r.uiStatus === 'needed'
+                              : r.status === BugReportStatus.OPEN
                                 ? styles.statusNeeded
                                 : styles.statusNotBug
                         }`}
                       >
-                        {STATUS_LABEL[r.uiStatus]}
+                        {STATUS_LABEL[r.status as BugReportStatus]}
                       </span>
                     </td>
                     <td className={styles.ellipsis}>{r.memo || ''}</td>

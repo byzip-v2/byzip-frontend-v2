@@ -1,10 +1,8 @@
 'use server';
 
+import { BugReportStatus } from 'byzip-v2-sdk';
 import { getBugReports, type GetBugReportsParams } from './actions';
-import BugReportPage, {
-  BugStatus,
-  mapUiToApiStatus,
-} from './components/BugReportPage';
+import BugReportPage from './components/BugReportPage';
 
 interface BugReportPageProps {
   searchParams: Promise<{
@@ -27,9 +25,8 @@ export default async function Page({ searchParams }: BugReportPageProps) {
     sortOrder: 'DESC',
   };
 
-  if (status && status !== 'all') {
-    apiParams.status = mapUiToApiStatus(status as BugStatus);
-  }
+  // 필터는 항상 있음. URL에 없으면 기본값 open
+  apiParams.status = status || BugReportStatus.OPEN;
 
   // 서버사이드 데이터 페칭
   const result = await getBugReports(apiParams);
