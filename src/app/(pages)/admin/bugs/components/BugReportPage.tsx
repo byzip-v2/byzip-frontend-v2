@@ -17,7 +17,8 @@ interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
   initialMeta?: PaginationMeta;
   searchParams: {
-    q?: string;
+    search?: string;
+    assigneeId?: string;
     status?: string;
     page?: string;
   };
@@ -59,12 +60,13 @@ export default function BugReportPage({
   const pathname = usePathname();
   const searchParamsHook = useSearchParams();
 
-  const [q, setQ] = useState(searchParams.q || '');
+  // 검색 입력값 (URL의 search 파라미터와 동기화)
+  const [q, setQ] = useState(searchParams.search || '');
 
-  // URL 파라미터 변경 시 검색창 상태 동기화
+  // URL의 search 파라미터가 바뀌면 검색창 입력값 동기화
   useEffect(() => {
-    setQ(searchParams.q || '');
-  }, [searchParams.q]);
+    setQ(searchParams.search || '');
+  }, [searchParams.search]);
 
   const [selected, setSelected] = useState<BugReportDataDtoWithMemo | null>(
     null,
@@ -82,6 +84,33 @@ export default function BugReportPage({
   const [statusActionOpen, setStatusActionOpen] = useState(false);
   const statusActionRef = useRef<HTMLDivElement>(null);
   const [isSearching, setIsSearching] = useState(false);
+
+  // 담당자 필터 (URL의 assigneeId와 연동, API 호출 시 assigneeId param으로 전달)
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeId | 'all'>(
+    () =>
+      searchParams.assigneeId &&
+      ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
+        ? (searchParams.assigneeId as AssigneeId)
+        : 'all',
+  );
+
+  // URL의 assigneeId가 바뀌면 담당자 필터 상태 동기화 (예: 뒤로가기 시)
+  useEffect(() => {
+    setAssigneeFilter(
+      searchParams.assigneeId &&
+        ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
+        ? (searchParams.assigneeId as AssigneeId)
+        : 'all',
+    );
+  }, [searchParams.assigneeId]);
+  const [assigneeFilterOpen, setAssigneeFilterOpen] = useState(false);
+  const assigneeFilterRef = useRef<HTMLTableCellElement>(null);
+  const assigneeBtnRef = useRef<HTMLButtonElement>(null);
+  const [assigneeMenuPos, setAssigneeMenuPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const assigneeMenuRef = useRef<HTMLDivElement>(null);
 
   // 버그리포트 항목별 상세 내용 보여주는 창
   const [viewer, setViewer] = useState<{ title: string; text: string } | null>(
@@ -151,12 +180,11 @@ export default function BugReportPage({
     setSelected(null);
   }, [searchParams.page]);
 
-  // 검색 실행
+  // 검색 실행: URL에 search 파라미터로 반영 → 페이지 리렌더 시 API(getBugReports)가 search로 조회
   const handleSearch = () => {
     setIsSearching(true);
     try {
-      // API 호출
-      updateUrl({ q, page: 1 });
+      updateUrl({ search: q || undefined, page: 1 });
     } finally {
       setIsSearching(false);
     }
@@ -351,8 +379,8 @@ export default function BugReportPage({
       detailAssignee !== initialDetail.assigneeId ||
       detailMemo !== initialDetail.memo);
 
+  // 서랍이 열려 있을 때 배경 스크롤 방지
   useEffect(() => {
-    // 서랍이 열려 있을 때 배경 스크롤 방지
     if (selected) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -362,6 +390,23 @@ export default function BugReportPage({
       document.body.style.overflow = '';
     };
   }, [selected]);
+
+  // 담당자 필터링 드롭다운 바깥 클릭 시 닫기
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const insideHeader =
+        assigneeFilterRef.current && assigneeFilterRef.current.contains(target);
+      const insideMenu =
+        assigneeMenuRef.current && assigneeMenuRef.current.contains(target);
+      if (!insideHeader && !insideMenu) {
+        setAssigneeFilterOpen(false);
+        setAssigneeMenuPos(null);
+      }
+    };
+    document.addEventListener('click', onClickOutside);
+    return () => document.removeEventListener('click', onClickOutside);
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -425,8 +470,12 @@ export default function BugReportPage({
             onChange={(e) => setQ(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <button onClick={handleSearch} disabled={isSearching}>
-            {' '}
+          <button
+            type="button"
+            className={styles.searchBtn}
+            onClick={handleSearch}
+            disabled={isSearching}
+          >
             {isSearching ? <Spinner /> : '검색'}
           </button>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
@@ -479,8 +528,31 @@ export default function BugReportPage({
                 <th style={{ width: 150 }}>발생일</th>
                 <th style={{ width: 200 }}>상태</th>
                 <th style={{ width: 240 }}>메모</th>
-                <th className={styles.assigneeHeader} style={{ width: 140 }}>
-                  담당자
+                <th
+                  className={styles.assigneeHeader}
+                  style={{ width: 140, position: 'relative' }}
+                  ref={assigneeFilterRef}
+                >
+                  <button
+                    type="button"
+                    className={styles.assigneeFilterBtn}
+                    ref={assigneeBtnRef}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const next = !assigneeFilterOpen;
+                      setAssigneeFilterOpen(next);
+                      if (next && assigneeBtnRef.current) {
+                        const rect =
+                          assigneeBtnRef.current.getBoundingClientRect();
+                        setAssigneeMenuPos({ x: rect.left, y: rect.bottom });
+                      } else {
+                        setAssigneeMenuPos(null);
+                      }
+                    }}
+                  >
+                    <span>담당자</span>
+                    <span className={styles.assigneeCaret}>▾</span>
+                  </button>
                 </th>
               </tr>
             </thead>
@@ -528,9 +600,26 @@ export default function BugReportPage({
                     </td>
                     <td className={styles.ellipsis}>{r.memo || ''}</td>
                     <td className={styles.assignee}>
-                      {r.assigneeId
-                        ? (ASSIGNEE_ID_TO_NAME[r.assigneeId] ?? r.assigneeId)
-                        : '미지정'}
+                      {(() => {
+                        const displayName = r.assigneeId
+                          ? (ASSIGNEE_ID_TO_NAME[r.assigneeId] ?? r.assigneeId)
+                          : '미지정';
+                        const colorClass =
+                          displayName === '미지정'
+                            ? styles.assigneeGray
+                            : displayName === '이희령'
+                              ? styles.assigneePurple
+                              : displayName === '정윤숙'
+                                ? styles.assigneeBlue
+                                : styles.assigneeGreen;
+                        return (
+                          <span
+                            className={`${styles.assigneeBadge} ${colorClass}`}
+                          >
+                            {displayName}
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );
@@ -836,11 +925,52 @@ export default function BugReportPage({
           </aside>
         </>
       )}
-      <Alert
-        open={alertOpen}
-        text="버그 리포트 수정에 실패했습니다. 다시 시도해 주세요."
-        onConfirm={() => setAlertOpen(false)}
-      />
+      {/* 담당자 필터링 드롭다운 */}
+      {assigneeFilterOpen && assigneeMenuPos && (
+        <div
+          className={styles.assigneeMenuFixed}
+          style={{
+            left: Math.max(8, assigneeMenuPos.x - 16),
+            top: assigneeMenuPos.y + 2,
+          }}
+          ref={assigneeMenuRef}
+        >
+          <button
+            type="button"
+            className={`${styles.assigneeOption} ${
+              assigneeFilter === 'all' ? styles.active : ''
+            }`}
+            onClick={() => {
+              setAssigneeFilter('all');
+              setAssigneeFilterOpen(false);
+              setAssigneeMenuPos(null);
+              // 전체 선택 시 assigneeId 제거 후 1페이지로 이동 → API가 담당자 필터 없이 조회
+              updateUrl({ assigneeId: undefined, page: 1 });
+            }}
+          >
+            전체
+          </button>
+          {ASSIGNEES.map(({ id, name }) => (
+            <button
+              key={id}
+              type="button"
+              className={`${styles.assigneeOption} ${
+                assigneeFilter === id ? styles.active : ''
+              }`}
+              onClick={() => {
+                setAssigneeFilter(id);
+                setAssigneeFilterOpen(false);
+                setAssigneeMenuPos(null);
+                // 담당자 선택 시 assigneeId로 URL 갱신 → 페이지 리렌더 시 API에 assigneeId param 전달
+                updateUrl({ assigneeId: id, page: 1 });
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* 사이드바 항목 상세보기 뷰어 */}
       {viewer && (
         <div
           className={styles.viewerBackdrop}
@@ -876,6 +1006,11 @@ export default function BugReportPage({
           </div>
         </div>
       )}
+      <Alert
+        open={alertOpen}
+        text="버그 리포트 수정에 실패했습니다. 다시 시도해 주세요."
+        onConfirm={() => setAlertOpen(false)}
+      />
     </div>
   );
 }
