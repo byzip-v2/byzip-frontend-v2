@@ -11,6 +11,7 @@ import {
 } from '../actions';
 import Spinner from '../../../../components/common/Spinner/Spinner';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
+import Alert from '@/app/components/common/Alert/Alert';
 
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
@@ -82,6 +83,11 @@ export default function BugReportPage({
   const statusActionRef = useRef<HTMLDivElement>(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  // 버그리포트 항목별 상세 내용 보여주는 창
+  const [viewer, setViewer] = useState<{ title: string; text: string } | null>(
+    null,
+  );
+
   const [initialDetail, setInitialDetail] = useState<{
     status: BugReportStatus;
     assigneeId: string | null;
@@ -96,6 +102,7 @@ export default function BugReportPage({
   };
 
   const [isUpdating, setIsUpdating] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
 
   /** 선택된 상태 필터. URL에 없으면 기본값 open */
   const statusFilter: StatusFilter =
@@ -134,6 +141,9 @@ export default function BugReportPage({
     },
     [router, pathname, searchParamsHook],
   );
+
+  const openViewer = (title: string, text: string | undefined) =>
+    setViewer({ title, text: text || '' });
 
   // 페이지 변경 시 선택 항목 및 서랍 초기화
   useEffect(() => {
@@ -285,10 +295,12 @@ export default function BugReportPage({
         setSelectedRowIds(new Set());
         router.refresh(); // 데이터 새로고침
       } else {
-        // 일부 항목 실패: 사용자에게 실패 항목을 알려주고 데이터를 새로고침합니다.
-        alert(`일부 항목 업데이트 실패:\n${errors.join('\n')}`);
+        setAlertOpen(true);
         router.refresh();
       }
+    } catch (err) {
+      console.error(err);
+      setAlertOpen(true);
     } finally {
       setIsUpdating(false);
     }
@@ -316,8 +328,11 @@ export default function BugReportPage({
         closeDrawer();
         router.refresh(); // 데이터 새로고침
       } else {
-        alert(result.message);
+        setAlertOpen(true);
       }
+    } catch (err) {
+      console.error(err);
+      setAlertOpen(true);
     } finally {
       setIsUpdating(false);
     }
@@ -335,6 +350,18 @@ export default function BugReportPage({
     (detailStatus !== initialDetail.status ||
       detailAssignee !== initialDetail.assigneeId ||
       detailMemo !== initialDetail.memo);
+
+  useEffect(() => {
+    // 서랍이 열려 있을 때 배경 스크롤 방지
+    if (selected) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selected]);
 
   return (
     <div className={styles.page}>
@@ -569,11 +596,20 @@ export default function BugReportPage({
         <>
           <div className={styles.drawerBackdrop} onClick={closeDrawer} />
           <aside className={styles.drawer}>
+            {/* X 버튼(왼쪽)과 수정 완료 버튼(오른쪽)을 한 줄에 배치 */}
             <div className={styles.drawerHeader}>
               <button className={styles.drawerClose} onClick={closeDrawer}>
                 ✕
               </button>
+              <button
+                className={styles.drawerSubmit}
+                disabled={!hasDrawerChanges || isUpdating}
+                onClick={handleUpdate}
+              >
+                {isUpdating ? <Spinner /> : '수정 완료'}
+              </button>
             </div>
+
             <div className={styles.drawerBody}>
               <div className={styles.drawerMeta}>
                 <div className={styles.drawerLabel}>발생일</div>
@@ -672,7 +708,17 @@ export default function BugReportPage({
               </div>
 
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>내용</h3>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>내용</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('내용', selected.errorMessage)}
+                    aria-label="내용 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
                 <div className={styles.drawerContentBox}>
                   <div className={styles.rowTitle}>
                     <span className={styles.dot} />
@@ -684,8 +730,19 @@ export default function BugReportPage({
                 </div>
               </section>
 
+              {/* 에러스택 */}
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>에러 스택</h3>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>에러스택</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('에러스택', selected.errorStack)}
+                    aria-label="에러스택 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
                 <div className={styles.drawerListBox}>
                   <div
                     className={styles.drawerParagraph}
@@ -700,18 +757,72 @@ export default function BugReportPage({
                 </div>
               </section>
 
-              {selected.metadata &&
-                Object.keys(selected.metadata).length > 0 && (
-                  <section className={styles.drawerSection}>
-                    <h3 className={styles.drawerSectionTitle}>메타데이터</h3>
-                    <div className={styles.drawerListBox}>
-                      <pre style={{ fontSize: '11px', overflowX: 'auto' }}>
-                        {JSON.stringify(selected.metadata, null, 2)}
-                      </pre>
-                    </div>
-                  </section>
-                )}
+              {/* 메타데이터 */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>메타데이터</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() =>
+                      openViewer(
+                        '메타데이터',
+                        JSON.stringify(selected.metadata, null, 2),
+                      )
+                    }
+                    aria-label="메타데이터 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <pre style={{ fontSize: '11px', overflowX: 'auto' }}>
+                    {JSON.stringify(selected.metadata, null, 2)}
+                  </pre>
+                </div>
+              </section>
 
+              {/* 에러 발생 위치 */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>
+                    에러발생위치 URL
+                  </h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('에러발생위치 URL', selected.url)}
+                    aria-label="에러발생위치 URL 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <div className={styles.drawerParagraph}>{selected.url}</div>
+                </div>
+              </section>
+
+              {/* userAgent */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>userAgent</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('userAgent', selected.userAgent)}
+                    aria-label="userAgent 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <div className={styles.drawerParagraph}>
+                    {selected.userAgent}
+                  </div>
+                </div>
+              </section>
+
+              {/* 메모 */}
               <section className={styles.drawerSection}>
                 <h3 className={styles.drawerSectionTitle}>메모</h3>
                 <textarea
@@ -721,19 +832,49 @@ export default function BugReportPage({
                   placeholder="메모를 입력해 주세요."
                 />
               </section>
-
-              <div className={styles.drawerFooter}>
-                <button
-                  className={styles.drawerSubmit}
-                  disabled={!hasDrawerChanges || isUpdating}
-                  onClick={handleUpdate}
-                >
-                  {isUpdating ? '수정 중...' : '수정 완료'}
-                </button>
-              </div>
             </div>
           </aside>
         </>
+      )}
+      <Alert
+        open={alertOpen}
+        text="버그 리포트 수정에 실패했습니다. 다시 시도해 주세요."
+        onConfirm={() => setAlertOpen(false)}
+      />
+      {viewer && (
+        <div
+          className={styles.viewerBackdrop}
+          onClick={() => setViewer(null)}
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className={styles.viewerModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.viewerHeader}>
+              <h4 className={styles.viewerTitle}>{viewer.title}</h4>
+              <button
+                type="button"
+                className={styles.viewerClose}
+                onClick={() => setViewer(null)}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.viewerBody}>{viewer.text}</div>
+            <div className={styles.viewerActions}>
+              <button
+                type="button"
+                className={styles.viewerConfirm}
+                onClick={() => setViewer(null)}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
