@@ -166,7 +166,7 @@ export default function SaleManagePage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div>
       <AdminPageHeader title="분양공고 관리" />
 
       <div className={styles.toolbar}>

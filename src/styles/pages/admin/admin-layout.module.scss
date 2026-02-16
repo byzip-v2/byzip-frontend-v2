@@ -181,17 +181,16 @@
 // 메인 콘텐츠
 .main {
   flex: 1;
-  padding: 0;
   margin-left: 240px;
-  overflow-x: auto;
-  overflow-y: auto;
+  overflow: visible;
   min-width: 1680px;
-  height: 100vh;
+  min-height: 100vh;
   background-color: $color-white;
 }
 
 .mainContent {
   min-width: 1680px;
-  min-height: 100%;
+  min-height: 100vh;
+  padding: 24px;
   background-color: $color-white;
 }

@@ -364,7 +364,7 @@ export default function BugReportPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div>
       <AdminPageHeader title="버그 리포트" />
 
       {/* 통계 카드 */}

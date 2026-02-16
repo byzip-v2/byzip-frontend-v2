@@ -1,12 +1,6 @@
 @use '../../../_variables.scss' as *;
 @use 'sass:color';
 
-.page {
-  padding: 24px;
-  background: $color-white;
-  min-height: 100vh;
-  font-family: $font-family-base;
-}
 
 .toolbar {
   display: flex;

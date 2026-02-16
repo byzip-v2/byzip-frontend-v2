@@ -1,12 +1,6 @@
 @use '../../../_variables.scss' as *;
 @use 'sass:color';
 
-.page {
-  padding: 24px;
-  background: $color-white;
-  min-height: 100vh;
-  font-family: $font-family-base;
-}
 
 .head {
   padding: 16px 8px 0 8px;

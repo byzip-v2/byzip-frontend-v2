@@ -54,7 +54,7 @@ export default function GeoPage() {
   };
 
   return (
-    <div className={styles.geoPage}>
+    <div>
       <AdminPageHeader title="좌표 관리" />
       <div className={styles.pageContent}>
         {/* 지도 영역 */}
