@@ -156,3 +156,127 @@ export const notifySlackBugReport = async (
     console.warn('🔍 [Slack Notifier] Slack 알림 전송 실패:', error);
   }
 };
+
+/**
+ * 담당자 변경 알림을 Slack으로 전송합니다.
+ *
+ * @param params.bugId - 버그 리포트 ID
+ * @param params.title - 버그 제목
+ * @param params.prevAssignee - 이전 담당자 (nullable)
+ * @param params.nextAssignee - 변경된 담당자 (nullable)
+ * @param params.occurredAt - 버그 발생일(ISO 문자열 또는 포맷된 문자열)
+ * @param params.status - API 상태 문자열 (예: open, in_progress, resolved, closed)
+ */
+export const notifySlackAssigneeChange = async (params: {
+  bugId: number;
+  title?: string;
+  nextAssignee?: string | null;
+  occurredAt: string | null;
+}): Promise<void> => {
+  const webhookUrl = process.env.SLACK_ASSIGNEE_NOTIFIER_WEBHOOK_URL;
+
+  // // 로컬 개발 환경에서는 전송하지 않음
+  // if (process.env.NEXT_PUBLIC_BASE_URL === 'http://localhost:3000') return;
+
+  if (!webhookUrl) {
+    console.warn(
+      '🔍 [Slack Notifier] SLACK_ASSIGNEE_NOTIFIER_WEBHOOK_URL이 설정되지 않았습니다.',
+    );
+    return;
+  }
+
+  try {
+    const { bugId, title, nextAssignee, occurredAt } = params;
+
+    // assignee id -> slack user id (멘션용)
+    const SLACK_ID_MAP: Record<string, string> = {
+      heereal: 'U04HJ6DT0HW',
+      psh5575: 'U04GWUFE7C4',
+      ys3: 'U04GUFB9SR0',
+    };
+
+    // occurredAt은 ISO 문자열로 들어옵니다(e.g. '2026-01-29T12:33:16.047Z').
+    let occurredText = '-';
+    if (occurredAt) {
+      const d = new Date(occurredAt);
+      if (!isNaN(d.getTime())) {
+        occurredText = new Intl.DateTimeFormat('ko-KR', {
+          timeZone: 'Asia/Seoul',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        })
+          .format(d)
+          .replace(/\./g, '.')
+          .replace(/\s/g, ' ')
+          .replace(/:$/, '');
+      }
+    }
+
+    const slackId = nextAssignee ? SLACK_ID_MAP[nextAssignee] : undefined;
+    const nextAssigneeText = `<@${slackId}>`;
+
+    const payload = {
+      text: `👤 담당자 변경: ${nextAssigneeText} (${title ?? '제목 없음'})`,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '👤 버그 담당자 변경 알림',
+            emoji: true,
+          },
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*버그 내용 (ID: ${bugId})*\n${title ?? '제목 없음'}`,
+            },
+          ],
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*버그 발생일*\n${occurredText}`,
+          },
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*변경 담당자*\n${nextAssigneeText}`,
+          },
+        },
+        {
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: '버그 확인하기',
+                emoji: true,
+              },
+              style: 'primary',
+              url: `https://dev.by-zip.com/admin/bugs`,
+            },
+          ],
+        },
+      ],
+    };
+
+    await axios.post(webhookUrl, payload, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 5000,
+    });
+  } catch (err) {
+    console.warn('🔍 [Slack Notifier] 담당자 변경 알림 전송 실패:', err);
+  }
+};

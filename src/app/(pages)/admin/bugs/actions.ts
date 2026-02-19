@@ -5,6 +5,7 @@ import type { ActionResult } from '@/app/libs/types/api';
 import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
 import { BugReportDataDto, BugReportErrorType } from 'byzip-v2-sdk';
 import axios from 'axios';
+import { notifySlackAssigneeChange } from '@/app/libs/utils/notifySlack';
 
 /**
  * 버그 리포트 목록 조회를 위한 쿼리 파라미터 타입
@@ -116,7 +117,7 @@ export async function getBugReports(
  */
 export interface UpdateBugReportDto {
   status?: string;
-  assigneeId?: string;
+  assigneeId?: string | null;
   memo?: string;
   severity?: string;
 }
@@ -131,6 +132,7 @@ export interface UpdateBugReportDto {
 export async function updateBugReport(
   id: number,
   data: UpdateBugReportDto,
+  prevAssignee: string,
 ): Promise<ActionResult<BugReportDataDtoWithMemo>> {
   try {
     const response = await serverApiWithToken.patch<{
@@ -145,6 +147,26 @@ export async function updateBugReport(
         message:
           response.data.message || '버그 리포트를 업데이트하는데 실패했습니다.',
       };
+    }
+
+    // 담당자 변경이 발생한 경우 Slack 알림을 전송합니다.
+    try {
+      const newAssignee = response.data.data.assigneeId ?? null;
+      // prevAssignee 파라미터는 클라이언트에서 빈 문자열('')으로 전달할 수 있으므로 null로 정규화합니다.
+      const prevNorm = prevAssignee === '' ? null : prevAssignee;
+
+      // "미지정"(null)로 변경한 경우에는 알림을 보내지 않습니다.
+      if (newAssignee !== null && prevNorm !== newAssignee) {
+        await notifySlackAssigneeChange({
+          bugId: id,
+          title: response.data.data.title,
+          nextAssignee: newAssignee,
+          occurredAt: String(response.data.data.createdAt),
+        });
+      }
+    } catch (e) {
+      // 알림 실패는 전체 작업 실패로 간주하지 않음
+      console.warn('[updateBugReport] 담당자 변경 알림 전송 중 오류:', e);
     }
 
     return {

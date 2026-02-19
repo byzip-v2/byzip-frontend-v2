@@ -450,7 +450,6 @@ export const createServerApi = (options: {
         try {
           console.log('🔍 [Server API] 요청 인터셉터 실행');
           let accessToken = await getAccessToken();
-          console.log('🔍 [Server API] 토큰:', accessToken);
 
           // accessToken이 없는 경우 리프레시 토큰으로 갱신 시도
           if (!accessToken) {

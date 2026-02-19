@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 
 const NAV = [
   { href: '/pub/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/pub/admin/notice', icon: Folder, label: '분양공고 관리' },
+  { href: '/pub/admin/housing', icon: Folder, label: '분양공고 관리' },
   { href: '/pub/admin/geo', icon: Users, label: '좌표 관리' },
   { href: '/pub/admin/bug', icon: BarChart3, label: '버그리포트' },
 ];

@@ -108,7 +108,7 @@
   text-decoration: none;
   transition: all 0.2s ease;
   border-radius: 10px;
-  margin-right: 16px;
+  margin-right: 20px;
 
   &:hover {
     background-color: $color-gray;
@@ -129,12 +129,11 @@
 
 // 사용자 정보
 .userInfo {
-  padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
   background-color: $color-white;
-  margin: 16px;
+  margin: 20px;
   position: relative;
 }
 

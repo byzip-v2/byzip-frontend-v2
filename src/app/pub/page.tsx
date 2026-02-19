@@ -8,6 +8,7 @@ const pubSections = [
             {name: '로그인', path: '/pub/login', note: 'v.1.0_250705', status: '완료'},
             {name: '좌표관리', path: '/pub/admin/geo', note: 'v.1.0_251102', status: '완료'},
             {name: '버그리포트', path: '/pub/admin/bug', note: 'v.1.0_251206', status: '완료'},
+            {name: '분양공고 관리', path: '/pub/admin/housing', note: 'v.1.0_260130', status: '완료'},
         ],
     },
     {
