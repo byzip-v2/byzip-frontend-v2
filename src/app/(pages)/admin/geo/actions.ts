@@ -43,7 +43,7 @@ export async function getMissingCoordinates(): Promise<
       actionName: 'getMissingCoordinates',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -66,6 +66,7 @@ export async function getMissingCoordinates(): Promise<
 export interface UpdateHousingSupplyCoordsDto {
   latitude: number;
   longitude: number;
+  hssplyAdres?: string;
 }
 
 /**
@@ -102,7 +103,7 @@ export async function updateHousingSupplyCoords(
       actionName: 'updateHousingSupplyCoords',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
