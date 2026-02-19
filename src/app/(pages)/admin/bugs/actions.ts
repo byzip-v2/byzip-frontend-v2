@@ -28,7 +28,19 @@ export interface BugReportDataDtoWithMemo extends BugReportDataDto {
 }
 
 /**
+ * 각 상태별 버그 리포트 카운트 타입
+ * API 응답의 meta.statusCounts 에 포함되는 구조와 일치합니다.
+ */
+export interface StatusCounts {
+  open: number;
+  in_progress: number;
+  resolved: number;
+  closed: number;
+}
+
+/**
  * 페이지네이션 메타 데이터 타입
+ * statusCounts 는 전체 상태별 카운트를 담으며, 현재 필터와 무관하게 항상 반환됩니다.
  */
 export interface PaginationMeta {
   page: number;
@@ -36,6 +48,8 @@ export interface PaginationMeta {
   total: number;
   totalPages: number;
   itemCount: number;
+  /** 상태별 버그 리포트 수 (open / in_progress / resolved / closed) */
+  statusCounts?: StatusCounts;
 }
 
 /**
@@ -94,7 +108,7 @@ export async function getBugReports(
       actionName: 'getBugReports',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -182,7 +196,7 @@ export async function updateBugReport(
       actionName: 'updateBugReport',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -236,7 +250,7 @@ export async function bulkUpdateBugStatus(
       actionName: 'bulkUpdateBugStatus',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {

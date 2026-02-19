@@ -47,6 +47,7 @@ export default async function Page({ searchParams }: BugReportPageProps) {
       initialBugs={result.data || []}
       initialMeta={result.meta}
       searchParams={params}
+      statusCounts={result.meta?.statusCounts}
     />
   );
 }
