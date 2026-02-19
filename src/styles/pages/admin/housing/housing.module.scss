@@ -113,6 +113,21 @@
   }
 }
 
+.searchBtn {
+  background-color: $color-primary;
+  color: $color-white;
+  min-width: 96px;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    background: color.adjust($color-primary, $lightness: 10%);
+    color: $color-white;
+  }
+}
+
 .subAction {
   background: $color-gray;
   color: $color-text-primary;
