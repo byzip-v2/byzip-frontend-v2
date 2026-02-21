@@ -7,6 +7,9 @@ import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateHousingSupplyCoords } from '../actions';
 import { useToast } from '@/app/libs/hooks/useToast';
+import Spinner from '@/app/components/common/Spinner/Spinner';
+import { RotateCcw } from 'lucide-react';
+import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 
 interface GeoClientProps {
   initialData: HousingSupplyDataDto[];
@@ -18,6 +21,9 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   const infowindowRef = useRef<naver.maps.InfoWindow | null>(null);
   const markerRef = useRef<naver.maps.Marker | null>(null);
   const selectedDataRef = useRef<HousingSupplyDataDto | null>(null);
+
+  const [isSearching, setIsSearching] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const [searchAddress, setSearchAddress] = useState<string>('');
   const [tableData, setTableData] =
@@ -118,38 +124,42 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   };
 
   // 주소 검색 시 좌표로 변환
-
   const searchAddressToCoordinate = (address: string) => {
     if (!address.trim() || !checkNaverMapsLoaded()) return;
+    setIsSearching(true);
 
-    naver.maps.Service.geocode({ query: address }, (status, response) => {
-      if (
-        status === naver.maps.Service.Status.ERROR ||
-        response.v2.meta.totalCount === 0
-      ) {
-        showToast('주소를 찾을 수 없습니다.', 'error');
-        return;
-      }
+    try {
+      naver.maps.Service.geocode({ query: address }, (status, response) => {
+        if (
+          status === naver.maps.Service.Status.ERROR ||
+          response.v2.meta.totalCount === 0
+        ) {
+          showToast('주소를 찾을 수 없습니다.', 'error');
+          return;
+        }
 
-      const item = response.v2.addresses[0];
-      const point = new naver.maps.LatLng(
-        parseFloat(item.y),
-        parseFloat(item.x),
-      );
-      mapRef.current?.setCenter(point);
-      setMarkerPosition(point);
+        const item = response.v2.addresses[0];
+        const point = new naver.maps.LatLng(
+          parseFloat(item.y),
+          parseFloat(item.x),
+        );
+        mapRef.current?.setCenter(point);
+        setMarkerPosition(point);
 
-      // JSX 컴포넌트를 HTML 문자열로 변환
-      infowindowRef.current?.setContent(
-        createInfoWindowContent({
-          title: selectedDataRef.current?.houseName,
-          roadAddress: item.roadAddress,
-          jibunAddress: item.jibunAddress,
-          coords: { lat: parseFloat(item.y), lng: parseFloat(item.x) },
-        }),
-      );
-      infowindowRef.current?.open(mapRef.current!, point);
-    });
+        // JSX 컴포넌트를 HTML 문자열로 변환
+        infowindowRef.current?.setContent(
+          createInfoWindowContent({
+            title: selectedDataRef.current?.houseName,
+            roadAddress: item.roadAddress,
+            jibunAddress: item.jibunAddress,
+            coords: { lat: parseFloat(item.y), lng: parseFloat(item.x) },
+          }),
+        );
+        infowindowRef.current?.open(mapRef.current!, point);
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // 지도 클릭 시 해당 위치 좌표로 변환
@@ -236,6 +246,33 @@ export default function GeoPage({ initialData }: GeoClientProps) {
     }
   };
 
+  /**
+   * 지도 입력값과 선택된 공고를 초기화합니다.
+   * - 검색 입력창(searchAddress) 비우기
+   * - 선택된 공고 ref(selectedDataRef) 해제
+   * - 인포윈도우 닫기, 마커·지도 중심을 기본 위치로 복귀
+   * isResetting으로 버튼 로딩 상태를 표시합니다.
+   */
+  const handleReset = () => {
+    setIsResetting(true);
+    try {
+      // 지도 입력값 초기화: 주소 검색창 비우기
+      setSearchAddress('');
+      // 선택된 공고 해제 (테이블 행 하이라이트 해제는 다음 리렌더 시 반영)
+      selectedDataRef.current = null;
+      // 인포윈도우 닫기
+      infowindowRef.current?.close();
+      // 지도·마커를 초기 중심으로 복귀
+      if (checkNaverMapsLoaded() && mapRef.current && markerRef.current) {
+        const initialCenter = new naver.maps.LatLng(37.3595316, 127.1052133);
+        mapRef.current.setCenter(initialCenter);
+        markerRef.current.setPosition(initialCenter);
+      }
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <>
       <Script
@@ -247,9 +284,7 @@ export default function GeoPage({ initialData }: GeoClientProps) {
         }
       />
       <div className={styles.geoPage}>
-        <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>좌표 관리</h1>
-        </div>
+        <AdminPageHeader title="좌표 관리" />
         <div className={styles.pageContent}>
           {/* 지도 영역 */}
           <div className={styles.mapSection}>
@@ -268,10 +303,11 @@ export default function GeoPage({ initialData }: GeoClientProps) {
                   }}
                 />
                 <button
-                  className={styles.searchBtn}
+                  className={`${styles.searchBtn} ${isSearching ? styles.searchBtnLoading : ''}`}
                   onClick={() => searchAddressToCoordinate(searchAddress)}
+                  disabled={isSearching}
                 >
-                  좌표 검색
+                  {isSearching ? <Spinner /> : '좌표 검색'}
                 </button>
               </div>
             </div>
@@ -281,9 +317,25 @@ export default function GeoPage({ initialData }: GeoClientProps) {
           </div>
           {/* 데이터 테이블 영역 */}
           <div className={styles.tableSection}>
-            <h2 className={styles.tableTitle}>
-              좌표가 없는 공고 (<span>{tableData.length}</span>개)
-            </h2>
+            <div className={styles.tableHeader}>
+              <h2 className={styles.tableTitle}>
+                좌표가 없는 공고 (<span>5</span>개)
+              </h2>
+              <button
+                type="button"
+                className={styles.resetBtn}
+                onClick={handleReset}
+                disabled={isResetting}
+              >
+                {isResetting ? (
+                  <Spinner />
+                ) : (
+                  <>
+                    <RotateCcw size={15} /> 초기화
+                  </>
+                )}
+              </button>
+            </div>
             <div className={styles.tableContainer}>
               <table className={styles.dataTable}>
                 <thead>

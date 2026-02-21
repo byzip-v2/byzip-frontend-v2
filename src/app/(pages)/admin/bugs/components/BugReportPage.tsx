@@ -2,72 +2,53 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { BugReportStatus } from 'byzip-v2-sdk';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
 import {
   updateBugReport,
-  bulkUpdateBugStatus,
   type PaginationMeta,
   type BugReportDataDtoWithMemo,
 } from '../actions';
+import Spinner from '../../../../components/common/Spinner/Spinner';
+import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
+import Alert from '@/app/components/common/Alert/Alert';
 
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
   initialMeta?: PaginationMeta;
   searchParams: {
-    q?: string;
+    search?: string;
+    assigneeId?: string;
     status?: string;
     page?: string;
   };
 }
 
-export type BugStatus = 'needed' | 'in-progress' | 'completed' | 'not-bug';
-export type StatusFilter = 'all' | 'needed' | 'in-progress' | 'completed';
+/** 서버(byzip-sdk)와 동일한 상태값. 기본값 open */
+export type StatusFilter = BugReportStatus;
 
-export const ASSIGNEES = ['박성환', '이희령', '정윤숙'] as const;
-export type AssigneeName = (typeof ASSIGNEES)[number];
+// 내부에 저장되는 assignee id 목록 및 표시 이름
+export const ASSIGNEES = [
+  { id: 'psh5575', name: '박성환' },
+  { id: 'heereal', name: '이희령' },
+  { id: 'ys3', name: '정윤숙' },
+] as const;
+export type AssigneeId = (typeof ASSIGNEES)[number]['id'];
 
-export const STATUS_ORDER: BugStatus[] = [
-  'in-progress',
-  'completed',
-  'needed',
-  'not-bug',
+/** 드롭다운/서랍에서 표시할 상태 순서 (서버 enum 값 그대로 사용) */
+export const STATUS_ORDER: BugReportStatus[] = [
+  BugReportStatus.OPEN,
+  BugReportStatus.IN_PROGRESS,
+  BugReportStatus.RESOLVED,
+  BugReportStatus.CLOSED,
 ];
 
-export const STATUS_LABEL: Record<BugStatus, string> = {
-  'in-progress': '해결중',
-  completed: '해결완료',
-  needed: '해결필요',
-  'not-bug': '버그아님',
-};
-
-// API 상태 -> UI 상태 매핑
-export const mapApiToUiStatus = (apiStatus: string): BugStatus => {
-  switch (apiStatus) {
-    case 'open':
-      return 'needed';
-    case 'in_progress':
-      return 'in-progress';
-    case 'resolved':
-      return 'completed';
-    case 'closed':
-      return 'not-bug';
-    default:
-      return 'needed';
-  }
-};
-
-// UI 상태 -> API 상태 매핑
-export const mapUiToApiStatus = (uiStatus: BugStatus): string => {
-  switch (uiStatus) {
-    case 'needed':
-      return 'open';
-    case 'in-progress':
-      return 'in_progress';
-    case 'completed':
-      return 'resolved';
-    case 'not-bug':
-      return 'closed';
-  }
+/** 서버 상태값 → 한글 라벨 (UI 표시용) */
+export const STATUS_LABEL: Record<BugReportStatus, string> = {
+  [BugReportStatus.OPEN]: '해결필요',
+  [BugReportStatus.IN_PROGRESS]: '해결중',
+  [BugReportStatus.RESOLVED]: '해결완료',
+  [BugReportStatus.CLOSED]: '버그아님',
 };
 
 export default function BugReportPage({
@@ -79,17 +60,21 @@ export default function BugReportPage({
   const pathname = usePathname();
   const searchParamsHook = useSearchParams();
 
-  const [q, setQ] = useState(searchParams.q || '');
+  // 검색 입력값 (URL의 search 파라미터와 동기화)
+  const [q, setQ] = useState(searchParams.search || '');
 
-  // URL 파라미터 변경 시 검색창 상태 동기화
+  // URL의 search 파라미터가 바뀌면 검색창 입력값 동기화
   useEffect(() => {
-    setQ(searchParams.q || '');
-  }, [searchParams.q]);
+    setQ(searchParams.search || '');
+  }, [searchParams.search]);
 
   const [selected, setSelected] = useState<BugReportDataDtoWithMemo | null>(
     null,
   );
-  const [detailStatus, setDetailStatus] = useState<BugStatus>('needed');
+  /** 서버와 동일한 BugReportStatus 사용 */
+  const [detailStatus, setDetailStatus] = useState<BugReportStatus>(
+    BugReportStatus.OPEN,
+  );
   const [detailAssignee, setDetailAssignee] = useState<string | null>(null);
   const [detailMemo, setDetailMemo] = useState('');
 
@@ -98,22 +83,64 @@ export default function BugReportPage({
   const [selectedRowIds, setSelectedRowIds] = useState<Set<number>>(new Set());
   const [statusActionOpen, setStatusActionOpen] = useState(false);
   const statusActionRef = useRef<HTMLDivElement>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // 담당자 필터 (URL의 assigneeId와 연동, API 호출 시 assigneeId param으로 전달)
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeId | 'all'>(
+    () =>
+      searchParams.assigneeId &&
+      ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
+        ? (searchParams.assigneeId as AssigneeId)
+        : 'all',
+  );
+
+  // URL의 assigneeId가 바뀌면 담당자 필터 상태 동기화 (예: 뒤로가기 시)
+  useEffect(() => {
+    setAssigneeFilter(
+      searchParams.assigneeId &&
+        ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
+        ? (searchParams.assigneeId as AssigneeId)
+        : 'all',
+    );
+  }, [searchParams.assigneeId]);
+  const [assigneeFilterOpen, setAssigneeFilterOpen] = useState(false);
+  const assigneeFilterRef = useRef<HTMLTableCellElement>(null);
+  const assigneeBtnRef = useRef<HTMLButtonElement>(null);
+  const [assigneeMenuPos, setAssigneeMenuPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const assigneeMenuRef = useRef<HTMLDivElement>(null);
+
+  // 버그리포트 항목별 상세 내용 보여주는 창
+  const [viewer, setViewer] = useState<{ title: string; text: string } | null>(
+    null,
+  );
 
   const [initialDetail, setInitialDetail] = useState<{
-    status: BugStatus;
+    status: BugReportStatus;
     assigneeId: string | null;
     memo: string;
   } | null>(null);
 
+  // assignee id -> 한글 이름 매핑 (화면 표시용)
+  const ASSIGNEE_ID_TO_NAME: Record<string, string> = {
+    heereal: '이희령',
+    psh5575: '박성환',
+    ys3: '정윤숙',
+  };
+
   const [isUpdating, setIsUpdating] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
 
-  const statusFilter = (searchParams.status as StatusFilter) || 'all';
+  /** 선택된 상태 필터. URL에 없으면 기본값 open */
+  const statusFilter: StatusFilter =
+    (searchParams.status as BugReportStatus) || BugReportStatus.OPEN;
 
-  // 데이터 가공
+  // 데이터 가공 (서버 status 그대로 사용, 포맷된 날짜만 추가)
   const processedBugs = useMemo(() => {
     return initialBugs.map((bug) => ({
       ...bug,
-      uiStatus: mapApiToUiStatus(bug.status),
       formattedDate: new Date(bug.createdAt)
         .toLocaleString('ko-KR', {
           year: 'numeric',
@@ -133,7 +160,7 @@ export default function BugReportPage({
     (updates: Record<string, string | number | undefined>) => {
       const params = new URLSearchParams(searchParamsHook.toString());
       Object.entries(updates).forEach(([key, value]) => {
-        if (value === undefined || value === '' || value === 'all') {
+        if (value === undefined || value === '') {
           params.delete(key);
         } else {
           params.set(key, String(value));
@@ -144,15 +171,23 @@ export default function BugReportPage({
     [router, pathname, searchParamsHook],
   );
 
+  const openViewer = (title: string, text: string | undefined) =>
+    setViewer({ title, text: text || '' });
+
   // 페이지 변경 시 선택 항목 및 서랍 초기화
   useEffect(() => {
     setSelectedRowIds(new Set());
     setSelected(null);
   }, [searchParams.page]);
 
-  // 검색 실행
+  // 검색 실행: URL에 search 파라미터로 반영 → 페이지 리렌더 시 API(getBugReports)가 search로 조회
   const handleSearch = () => {
-    updateUrl({ q, page: 1 });
+    setIsSearching(true);
+    try {
+      updateUrl({ search: q || undefined, page: 1 });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -210,13 +245,17 @@ export default function BugReportPage({
 
   // 행 클릭 시 서랍 오픈
   const handleRowClick = (bug: BugReportDataDtoWithMemo) => {
-    const uiStatus = mapApiToUiStatus(bug.status);
+    const status = Object.values(BugReportStatus).includes(
+      bug.status as BugReportStatus,
+    )
+      ? (bug.status as BugReportStatus)
+      : BugReportStatus.OPEN;
     setSelected(bug);
-    setDetailStatus(uiStatus);
+    setDetailStatus(status);
     setDetailAssignee(bug.assigneeId || null);
     setDetailMemo(bug.memo || '');
     setInitialDetail({
-      status: uiStatus,
+      status,
       assigneeId: bug.assigneeId || null,
       memo: bug.memo || '',
     });
@@ -226,18 +265,20 @@ export default function BugReportPage({
 
   const closeDrawer = () => setSelected(null);
 
-  const handleSelectStatus = (status: BugStatus) => {
+  const handleSelectStatus = (status: BugReportStatus) => {
     setDetailStatus(status);
     setStatusOpen(false);
   };
 
-  const handleSelectAssignee = (name: string | null) => {
-    setDetailAssignee(name);
+  const handleSelectAssignee = (id: string | null) => {
+    setDetailAssignee(id);
     setAssigneeOpen(false);
   };
 
-  const toggleFilter = (next: StatusFilter) => {
-    const newStatus = statusFilter === next ? 'all' : next;
+  /** 같은 카드 재클릭 시 기본값(open)으로, 아니면 해당 상태로 필터 */
+  const toggleFilter = (next: BugReportStatus) => {
+    const newStatus: StatusFilter =
+      statusFilter === next ? BugReportStatus.OPEN : next;
     updateUrl({ status: newStatus, page: 1 });
   };
 
@@ -246,17 +287,50 @@ export default function BugReportPage({
     setStatusActionOpen((v) => !v);
   };
 
-  const handleBulkStatusSelect = async (status: BugStatus) => {
-    const apiStatus = mapUiToApiStatus(status);
-    const ids = Array.from(selectedRowIds);
+  // 선택된 리포트들에 대해 하나씩 PATCH 요청으로 상태를 갱신 (서버 상태값 그대로 전달)
+  const handleBulkStatusSelect = async (status: BugReportStatus) => {
+    if (isUpdating) return; // 이미 업데이트 중이면 무시
+    if (!hasSelection) return; // 선택된 항목이 없으면 동작하지 않음
 
-    const result = await bulkUpdateBugStatus(ids, apiStatus);
-    if (result.success) {
-      setStatusActionOpen(false);
-      setSelectedRowIds(new Set());
-      router.refresh(); // 데이터 새로고침
-    } else {
-      alert(result.message);
+    setIsUpdating(true);
+    const ids = Array.from(selectedRowIds);
+    const errors: string[] = [];
+
+    try {
+      // 하나씩 순회하며 PATCH 호출을 수행합니다.
+      for (const id of ids) {
+        try {
+          // updateBugReport는 서버의 PATCH /bug-reports/{id} 를 호출하도록 구현된 함수입니다.
+          const res = await updateBugReport(
+            id,
+            { status },
+            selected?.assigneeId || '',
+          );
+          // 각 호출의 성공 여부를 확인하여 실패한 경우 메시지를 수집합니다.
+          if (!res.success) {
+            errors.push(`id:${id} - ${res.message || '업데이트 실패'}`);
+          }
+        } catch (err) {
+          // 네트워크 에러나 예외가 발생한 경우에도 계속 진행하되 에러 내용을 저장합니다.
+          const msg = err instanceof Error ? err.message : String(err);
+          errors.push(`id:${id} - ${msg}`);
+        }
+      }
+
+      // 모든 항목 처리 후 결과에 따라 UI 갱신 또는 에러 알림
+      if (errors.length === 0) {
+        setStatusActionOpen(false);
+        setSelectedRowIds(new Set());
+        router.refresh(); // 데이터 새로고침
+      } else {
+        setAlertOpen(true);
+        router.refresh();
+      }
+    } catch (err) {
+      console.error(err);
+      setAlertOpen(true);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -265,19 +339,28 @@ export default function BugReportPage({
 
     setIsUpdating(true);
     try {
-      const apiStatus = mapUiToApiStatus(detailStatus);
-      const result = await updateBugReport(selected.id, {
-        status: apiStatus,
-        assigneeId: detailAssignee || undefined,
-        memo: detailMemo,
-      });
+      const result = await updateBugReport(
+        selected.id,
+        {
+          status: detailStatus,
+          // "미지정" 선택 시 null을 명시적으로 전달하여 DB에 null로 저장되도록 합니다.
+          assigneeId:
+            detailAssignee === null ? null : detailAssignee || undefined,
+          memo: detailMemo,
+        },
+        // prevAssignee: 기존에 선택되어 있던 assignee id(없으면 빈 문자열)
+        selected?.assigneeId ?? '',
+      );
 
       if (result.success) {
         closeDrawer();
         router.refresh(); // 데이터 새로고침
       } else {
-        alert(result.message);
+        setAlertOpen(true);
       }
+    } catch (err) {
+      console.error(err);
+      setAlertOpen(true);
     } finally {
       setIsUpdating(false);
     }
@@ -296,37 +379,68 @@ export default function BugReportPage({
       detailAssignee !== initialDetail.assigneeId ||
       detailMemo !== initialDetail.memo);
 
+  // 서랍이 열려 있을 때 배경 스크롤 방지
+  useEffect(() => {
+    if (selected) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selected]);
+
+  // 담당자 필터링 드롭다운 바깥 클릭 시 닫기
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const insideHeader =
+        assigneeFilterRef.current && assigneeFilterRef.current.contains(target);
+      const insideMenu =
+        assigneeMenuRef.current && assigneeMenuRef.current.contains(target);
+      if (!insideHeader && !insideMenu) {
+        setAssigneeFilterOpen(false);
+        setAssigneeMenuPos(null);
+      }
+    };
+    document.addEventListener('click', onClickOutside);
+    return () => document.removeEventListener('click', onClickOutside);
+  }, []);
+
   return (
     <div className={styles.page}>
       {/* 상단 타이틀 */}
-      <div className={styles.head}>
-        <h1 className={styles.title}>버그 리포트</h1>
-      </div>
+      <AdminPageHeader title="버그 리포트" />
 
-      {/* 통계 카드 */}
+      {/* 통계 카드 (서버 상태값 open / in_progress / resolved 로 필터) */}
       <section className={styles.stats}>
         <button
           type="button"
           className={`${styles.card} ${styles.cardButton} ${styles.yellow} ${
-            statusFilter === 'needed' ? styles.activeCard : ''
+            statusFilter === BugReportStatus.OPEN ? styles.activeCard : ''
           }`}
-          onClick={() => toggleFilter('needed')}
+          onClick={() => toggleFilter(BugReportStatus.OPEN)}
         >
           <div className={styles.cardLabel}>해결 필요</div>
           <div className={styles.cardNum}>
-            {statusFilter === 'needed' && initialMeta ? initialMeta.total : '-'}
+            {statusFilter === BugReportStatus.OPEN && initialMeta
+              ? initialMeta.total
+              : '-'}
           </div>
         </button>
         <button
           type="button"
           className={`${styles.card} ${styles.cardButton} ${styles.mint} ${
-            statusFilter === 'in-progress' ? styles.activeCard : ''
+            statusFilter === BugReportStatus.IN_PROGRESS
+              ? styles.activeCard
+              : ''
           }`}
-          onClick={() => toggleFilter('in-progress')}
+          onClick={() => toggleFilter(BugReportStatus.IN_PROGRESS)}
         >
           <div className={styles.cardLabel}>해결중인 버그</div>
           <div className={styles.cardNum}>
-            {statusFilter === 'in-progress' && initialMeta
+            {statusFilter === BugReportStatus.IN_PROGRESS && initialMeta
               ? initialMeta.total
               : '-'}
           </div>
@@ -334,13 +448,13 @@ export default function BugReportPage({
         <button
           type="button"
           className={`${styles.card} ${styles.cardButton} ${styles.purple} ${
-            statusFilter === 'completed' ? styles.activeCard : ''
+            statusFilter === BugReportStatus.RESOLVED ? styles.activeCard : ''
           }`}
-          onClick={() => toggleFilter('completed')}
+          onClick={() => toggleFilter(BugReportStatus.RESOLVED)}
         >
           <div className={styles.cardLabel}>해결완료</div>
           <div className={styles.cardNum}>
-            {statusFilter === 'completed' && initialMeta
+            {statusFilter === BugReportStatus.RESOLVED && initialMeta
               ? initialMeta.total
               : '-'}
           </div>
@@ -356,16 +470,23 @@ export default function BugReportPage({
             onChange={(e) => setQ(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <button onClick={handleSearch}>검색</button>
+          <button
+            type="button"
+            className={styles.searchBtn}
+            onClick={handleSearch}
+            disabled={isSearching}
+          >
+            {isSearching ? <Spinner /> : '검색'}
+          </button>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
               className={styles.statusActionBtn}
-              disabled={!hasSelection}
+              disabled={!hasSelection || isUpdating}
               onClick={handleToggleStatusAction}
               aria-expanded={statusActionOpen}
             >
-              상태변경
+              {isUpdating ? <Spinner /> : '상태변경'}
             </button>
             {statusActionOpen && (
               <div className={styles.statusActionMenu}>
@@ -407,8 +528,31 @@ export default function BugReportPage({
                 <th style={{ width: 150 }}>발생일</th>
                 <th style={{ width: 200 }}>상태</th>
                 <th style={{ width: 240 }}>메모</th>
-                <th className={styles.assigneeHeader} style={{ width: 140 }}>
-                  담당자
+                <th
+                  className={styles.assigneeHeader}
+                  style={{ width: 140, position: 'relative' }}
+                  ref={assigneeFilterRef}
+                >
+                  <button
+                    type="button"
+                    className={styles.assigneeFilterBtn}
+                    ref={assigneeBtnRef}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const next = !assigneeFilterOpen;
+                      setAssigneeFilterOpen(next);
+                      if (next && assigneeBtnRef.current) {
+                        const rect =
+                          assigneeBtnRef.current.getBoundingClientRect();
+                        setAssigneeMenuPos({ x: rect.left, y: rect.bottom });
+                      } else {
+                        setAssigneeMenuPos(null);
+                      }
+                    }}
+                  >
+                    <span>담당자</span>
+                    <span className={styles.assigneeCaret}>▾</span>
+                  </button>
                 </th>
               </tr>
             </thead>
@@ -442,21 +586,40 @@ export default function BugReportPage({
                     <td>
                       <span
                         className={`${styles.badge} ${
-                          r.uiStatus === 'completed'
+                          r.status === BugReportStatus.RESOLVED
                             ? styles.statusDone
-                            : r.uiStatus === 'in-progress'
+                            : r.status === BugReportStatus.IN_PROGRESS
                               ? styles.statusProgress
-                              : r.uiStatus === 'needed'
+                              : r.status === BugReportStatus.OPEN
                                 ? styles.statusNeeded
                                 : styles.statusNotBug
                         }`}
                       >
-                        {STATUS_LABEL[r.uiStatus]}
+                        {STATUS_LABEL[r.status as BugReportStatus]}
                       </span>
                     </td>
                     <td className={styles.ellipsis}>{r.memo || ''}</td>
                     <td className={styles.assignee}>
-                      {r.assigneeId || '미지정'}
+                      {(() => {
+                        const displayName = r.assigneeId
+                          ? (ASSIGNEE_ID_TO_NAME[r.assigneeId] ?? r.assigneeId)
+                          : '미지정';
+                        const colorClass =
+                          displayName === '미지정'
+                            ? styles.assigneeGray
+                            : displayName === '이희령'
+                              ? styles.assigneePurple
+                              : displayName === '정윤숙'
+                                ? styles.assigneeBlue
+                                : styles.assigneeGreen;
+                        return (
+                          <span
+                            className={`${styles.assigneeBadge} ${colorClass}`}
+                          >
+                            {displayName}
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );
@@ -522,11 +685,20 @@ export default function BugReportPage({
         <>
           <div className={styles.drawerBackdrop} onClick={closeDrawer} />
           <aside className={styles.drawer}>
+            {/* X 버튼(왼쪽)과 수정 완료 버튼(오른쪽)을 한 줄에 배치 */}
             <div className={styles.drawerHeader}>
               <button className={styles.drawerClose} onClick={closeDrawer}>
                 ✕
               </button>
+              <button
+                className={styles.drawerSubmit}
+                disabled={!hasDrawerChanges || isUpdating}
+                onClick={handleUpdate}
+              >
+                {isUpdating ? <Spinner /> : '수정 완료'}
+              </button>
             </div>
+
             <div className={styles.drawerBody}>
               <div className={styles.drawerMeta}>
                 <div className={styles.drawerLabel}>발생일</div>
@@ -589,7 +761,9 @@ export default function BugReportPage({
                             : styles.selectPlaceholder
                         }
                       >
-                        {detailAssignee ?? '담당자 선택'}
+                        {detailAssignee
+                          ? ASSIGNEE_ID_TO_NAME[detailAssignee]
+                          : '담당자 선택'}
                       </span>
                       <span className={styles.selectCaret}>▾</span>
                     </button>
@@ -604,14 +778,14 @@ export default function BugReportPage({
                         >
                           미지정
                         </button>
-                        {ASSIGNEES.map((name) => (
+                        {ASSIGNEES.map(({ id, name }) => (
                           <button
-                            key={name}
+                            key={id}
                             type="button"
                             className={`${styles.selectOption} ${
-                              detailAssignee === name ? styles.active : ''
+                              detailAssignee === id ? styles.active : ''
                             }`}
-                            onClick={() => handleSelectAssignee(name)}
+                            onClick={() => handleSelectAssignee(id)}
                           >
                             {name}
                           </button>
@@ -623,7 +797,17 @@ export default function BugReportPage({
               </div>
 
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>내용</h3>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>내용</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('내용', selected.errorMessage)}
+                    aria-label="내용 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
                 <div className={styles.drawerContentBox}>
                   <div className={styles.rowTitle}>
                     <span className={styles.dot} />
@@ -635,8 +819,19 @@ export default function BugReportPage({
                 </div>
               </section>
 
+              {/* 에러스택 */}
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>에러 스택</h3>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>에러스택</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('에러스택', selected.errorStack)}
+                    aria-label="에러스택 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
                 <div className={styles.drawerListBox}>
                   <div
                     className={styles.drawerParagraph}
@@ -651,18 +846,72 @@ export default function BugReportPage({
                 </div>
               </section>
 
-              {selected.metadata &&
-                Object.keys(selected.metadata).length > 0 && (
-                  <section className={styles.drawerSection}>
-                    <h3 className={styles.drawerSectionTitle}>메타데이터</h3>
-                    <div className={styles.drawerListBox}>
-                      <pre style={{ fontSize: '11px', overflowX: 'auto' }}>
-                        {JSON.stringify(selected.metadata, null, 2)}
-                      </pre>
-                    </div>
-                  </section>
-                )}
+              {/* 메타데이터 */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>메타데이터</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() =>
+                      openViewer(
+                        '메타데이터',
+                        JSON.stringify(selected.metadata, null, 2),
+                      )
+                    }
+                    aria-label="메타데이터 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <pre style={{ fontSize: '11px', overflowX: 'auto' }}>
+                    {JSON.stringify(selected.metadata, null, 2)}
+                  </pre>
+                </div>
+              </section>
 
+              {/* 에러 발생 위치 */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>
+                    에러발생위치 URL
+                  </h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('에러발생위치 URL', selected.url)}
+                    aria-label="에러발생위치 URL 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <div className={styles.drawerParagraph}>{selected.url}</div>
+                </div>
+              </section>
+
+              {/* userAgent */}
+              <section className={styles.drawerSection}>
+                <div className={styles.drawerSectionHeader}>
+                  <h3 className={styles.drawerSectionTitle}>userAgent</h3>
+                  <button
+                    type="button"
+                    className={styles.moreBtn}
+                    onClick={() => openViewer('userAgent', selected.userAgent)}
+                    aria-label="userAgent 자세히 보기"
+                  >
+                    ...
+                  </button>
+                </div>
+                <div className={styles.drawerListBox}>
+                  <div className={styles.drawerParagraph}>
+                    {selected.userAgent}
+                  </div>
+                </div>
+              </section>
+
+              {/* 메모 */}
               <section className={styles.drawerSection}>
                 <h3 className={styles.drawerSectionTitle}>메모</h3>
                 <textarea
@@ -672,20 +921,96 @@ export default function BugReportPage({
                   placeholder="메모를 입력해 주세요."
                 />
               </section>
-
-              <div className={styles.drawerFooter}>
-                <button
-                  className={styles.drawerSubmit}
-                  disabled={!hasDrawerChanges || isUpdating}
-                  onClick={handleUpdate}
-                >
-                  {isUpdating ? '수정 중...' : '수정 완료'}
-                </button>
-              </div>
             </div>
           </aside>
         </>
       )}
+      {/* 담당자 필터링 드롭다운 */}
+      {assigneeFilterOpen && assigneeMenuPos && (
+        <div
+          className={styles.assigneeMenuFixed}
+          style={{
+            left: Math.max(8, assigneeMenuPos.x - 16),
+            top: assigneeMenuPos.y + 2,
+          }}
+          ref={assigneeMenuRef}
+        >
+          <button
+            type="button"
+            className={`${styles.assigneeOption} ${
+              assigneeFilter === 'all' ? styles.active : ''
+            }`}
+            onClick={() => {
+              setAssigneeFilter('all');
+              setAssigneeFilterOpen(false);
+              setAssigneeMenuPos(null);
+              // 전체 선택 시 assigneeId 제거 후 1페이지로 이동 → API가 담당자 필터 없이 조회
+              updateUrl({ assigneeId: undefined, page: 1 });
+            }}
+          >
+            전체
+          </button>
+          {ASSIGNEES.map(({ id, name }) => (
+            <button
+              key={id}
+              type="button"
+              className={`${styles.assigneeOption} ${
+                assigneeFilter === id ? styles.active : ''
+              }`}
+              onClick={() => {
+                setAssigneeFilter(id);
+                setAssigneeFilterOpen(false);
+                setAssigneeMenuPos(null);
+                // 담당자 선택 시 assigneeId로 URL 갱신 → 페이지 리렌더 시 API에 assigneeId param 전달
+                updateUrl({ assigneeId: id, page: 1 });
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* 사이드바 항목 상세보기 뷰어 */}
+      {viewer && (
+        <div
+          className={styles.viewerBackdrop}
+          onClick={() => setViewer(null)}
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className={styles.viewerModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.viewerHeader}>
+              <h4 className={styles.viewerTitle}>{viewer.title}</h4>
+              <button
+                type="button"
+                className={styles.viewerClose}
+                onClick={() => setViewer(null)}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.viewerBody}>{viewer.text}</div>
+            <div className={styles.viewerActions}>
+              <button
+                type="button"
+                className={styles.viewerConfirm}
+                onClick={() => setViewer(null)}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <Alert
+        open={alertOpen}
+        text="버그 리포트 수정에 실패했습니다. 다시 시도해 주세요."
+        onConfirm={() => setAlertOpen(false)}
+      />
     </div>
   );
 }

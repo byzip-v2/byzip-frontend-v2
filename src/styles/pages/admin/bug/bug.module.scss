@@ -130,6 +130,18 @@
       color: $color-text-secondary;
     }
   }
+  .searchBtn {
+    background-color: $color-primary;
+    color: $color-white;
+    min-width: 96px;
+    &:hover:not(:disabled) {
+      background: color.adjust($color-primary, $lightness: -10%);
+    }
+    &:disabled {
+      background: color.adjust($color-primary, $lightness: 10%);
+      color: $color-white;
+    }
+  }
 }
 .statusDropdownWrap {
   position: relative;
@@ -440,6 +452,11 @@
   background: color.adjust($color-badge-success, $lightness: 45%);
   color: color.adjust($color-badge-success, $lightness: -8%);
 }
+/* 담당자 '미지정' 전용 회색 칩 */
+.assigneeGray {
+  background: $color-gray;
+  color: $color-text-secondary;
+}
 
 .ellipsis {
   max-width: 240px;
@@ -526,7 +543,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 .drawerHeaderActions {
   display: flex;
