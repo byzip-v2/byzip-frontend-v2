@@ -3,7 +3,13 @@
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import styles from '@/styles/pages/admin/dashboard.module.scss';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 
 type BugReport = {
   id: string;
@@ -127,6 +133,13 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [visitorRange, setVisitorRange] = useState<VisitorRange>(14);
   const [rangeOpen, setRangeOpen] = useState(false);
+  const [osTooltip, setOsTooltip] = useState<{
+    label: string;
+    value: number;
+    percent: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const rangeRef = useRef<HTMLDivElement>(null);
 
   const visitorChartData = useMemo(() => {
@@ -154,7 +167,58 @@ export default function AdminDashboardPage() {
   );
   const maxVisitor = Math.max(...visitorChartData.map((item) => item.value), 1);
   const osTotal = OS_SHARE.reduce((sum, item) => sum + item.value, 0);
+  const osSegments = useMemo(() => {
+    if (!osTotal) return [];
+
+    let cursor = 0;
+    return OS_SHARE.map((item) => {
+      const startDeg = cursor;
+      cursor += (item.value / osTotal) * 360;
+      return {
+        ...item,
+        startDeg,
+        endDeg: cursor,
+      };
+    });
+  }, [osTotal]);
   const donutGradient = getConicGradient(OS_SHARE);
+
+  const handleDonutMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+    if (!osSegments.length) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const localX = event.clientX - rect.left;
+    const localY = event.clientY - rect.top;
+    const center = rect.width / 2;
+    const dx = localX - center;
+    const dy = localY - center;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    const outerRadius = rect.width / 2;
+    const innerRadius = outerRadius * (72 / 128);
+    if (distance > outerRadius || distance < innerRadius) {
+      setOsTooltip(null);
+      return;
+    }
+
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    const angleFromTop = (angle + 90 + 360) % 360;
+
+    const segment =
+      osSegments.find(
+        (item) =>
+          angleFromTop >= item.startDeg && angleFromTop < item.endDeg,
+      ) ?? osSegments[osSegments.length - 1];
+
+    const percent = Math.round((segment.value / osTotal) * 100);
+    setOsTooltip({
+      label: segment.label,
+      value: segment.value,
+      percent,
+      x: localX,
+      y: localY,
+    });
+  };
 
   useEffect(() => {
     if (!rangeOpen) return;
@@ -332,15 +396,27 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className={styles.osContent}>
-              <div
-                className={styles.donut}
-                style={{ backgroundImage: donutGradient }}
-                role="img"
-                aria-label="방문자 OS 비율 차트"
-              >
-                <div className={styles.donutHole}>
-                  <strong>{osTotal}</strong>
+              <div className={styles.donutWrap}>
+                <div
+                  className={styles.donut}
+                  style={{ backgroundImage: donutGradient }}
+                  role="img"
+                  aria-label="방문자 OS 비율 차트"
+                  onMouseMove={handleDonutMouseMove}
+                  onMouseLeave={() => setOsTooltip(null)}
+                >
+                  <div className={styles.donutHole}>
+                    <strong>{osTotal}</strong>
+                  </div>
                 </div>
+                {osTooltip && (
+                  <div
+                    className={styles.donutTooltip}
+                    style={{ left: `${osTooltip.x}px`, top: `${osTooltip.y}px` }}
+                  >
+                    {osTooltip.percent}%
+                  </div>
+                )}
               </div>
 
               <ul className={styles.osLegend}>

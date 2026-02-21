@@ -92,7 +92,7 @@
 }
 
 .panelHeaderBlock {
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 
 .panelTitle {
@@ -369,7 +369,15 @@
 .osContent {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 20px;
+}
+
+.donutWrap {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  flex-shrink: 0;
 }
 
 .donut {
@@ -379,6 +387,20 @@
   background-image: conic-gradient(#3270ff 0 22%, #22c55e 22% 60%, #f2d544 60% 100%);
   display: grid;
   place-items: center;
+}
+
+.donutTooltip {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  pointer-events: none;
+  background: rgba(30, 30, 30, 0.92);
+  color: $color-white;
+  font-size: 11px;
+  line-height: 1;
+  padding: 7px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 4;
 }
 
 .donutHole {
