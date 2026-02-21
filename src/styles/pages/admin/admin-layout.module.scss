@@ -7,7 +7,8 @@
   background-color: $color-white;
   font-family: $font-family-base;
   min-width: 1920px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 // 헤더 스타일 (제거 - 사이드바에 통합)
@@ -19,7 +20,7 @@
 .adminBody {
   display: flex;
   width: 100%;
-  height: 100vh;
+  height: 100%;
 }
 
 // 사이드바 스타일
@@ -182,15 +183,16 @@
 .main {
   flex: 1;
   margin-left: 240px;
-  overflow: visible;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-width: 1680px;
-  min-height: 100vh;
   background-color: $color-white;
 }
 
 .mainContent {
   min-width: 1680px;
-  min-height: 100vh;
+  min-height: 100%;
   padding: 24px;
   background-color: $color-white;
 }
