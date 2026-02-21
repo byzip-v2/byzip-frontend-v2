@@ -470,23 +470,18 @@ export default function BugReportPage({
             onChange={(e) => setQ(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <button
-            type="button"
-            className={styles.searchBtn}
-            onClick={handleSearch}
-            disabled={isSearching}
-          >
+          <button type="button" onClick={handleSearch} disabled={isSearching}>
             {isSearching ? <Spinner /> : '검색'}
           </button>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
               className={styles.statusActionBtn}
-              disabled={!hasSelection || isUpdating}
+              disabled={!hasSelection}
               onClick={handleToggleStatusAction}
               aria-expanded={statusActionOpen}
             >
-              {isUpdating ? <Spinner /> : '상태변경'}
+              상태변경
             </button>
             {statusActionOpen && (
               <div className={styles.statusActionMenu}>
