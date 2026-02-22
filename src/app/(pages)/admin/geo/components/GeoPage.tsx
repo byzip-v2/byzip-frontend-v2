@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { updateHousingSupplyCoords } from '../actions';
 import { useToast } from '@/app/libs/hooks/useToast';
 import Spinner from '@/app/components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import { RotateCcw } from 'lucide-react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 
@@ -137,39 +138,46 @@ export default function GeoPage({ initialData }: GeoClientProps) {
 
   // 주소 검색 시 좌표로 변환
   const searchAddressToCoordinate = (address: string) => {
-    if (!address.trim() || !checkNaverMapsLoaded()) return;
+    if (!address.trim() || !checkNaverMapsLoaded() || isSearching) return;
     setIsSearching(true);
 
     try {
       naver.maps.Service.geocode({ query: address }, (status, response) => {
-        if (
-          status === naver.maps.Service.Status.ERROR ||
-          response.v2.meta.totalCount === 0
-        ) {
-          showToast('주소를 찾을 수 없습니다.', 'error');
-          return;
+        try {
+          if (
+            status === naver.maps.Service.Status.ERROR ||
+            !response?.v2 ||
+            response.v2.meta.totalCount === 0
+          ) {
+            showToast('주소를 찾을 수 없습니다.', 'error');
+            return;
+          }
+
+          const item = response.v2.addresses[0];
+          const point = new naver.maps.LatLng(
+            parseFloat(item.y),
+            parseFloat(item.x),
+          );
+          mapRef.current?.setCenter(point);
+          setMarkerPosition(point);
+
+          // JSX 컴포넌트를 HTML 문자열로 변환
+          infowindowRef.current?.setContent(
+            createInfoWindowContent({
+              title: selectedDataRef.current?.houseName,
+              roadAddress: item.roadAddress,
+              jibunAddress: item.jibunAddress,
+              coords: { lat: parseFloat(item.y), lng: parseFloat(item.x) },
+            }),
+          );
+          infowindowRef.current?.open(mapRef.current!, point);
+        } finally {
+          setIsSearching(false);
         }
-
-        const item = response.v2.addresses[0];
-        const point = new naver.maps.LatLng(
-          parseFloat(item.y),
-          parseFloat(item.x),
-        );
-        mapRef.current?.setCenter(point);
-        setMarkerPosition(point);
-
-        // JSX 컴포넌트를 HTML 문자열로 변환
-        infowindowRef.current?.setContent(
-          createInfoWindowContent({
-            title: selectedDataRef.current?.houseName,
-            roadAddress: item.roadAddress,
-            jibunAddress: item.jibunAddress,
-            coords: { lat: parseFloat(item.y), lng: parseFloat(item.x) },
-          }),
-        );
-        infowindowRef.current?.open(mapRef.current!, point);
       });
-    } finally {
+    } catch (error) {
+      console.error(error);
+      showToast('주소 검색 중 오류가 발생했습니다.', 'error');
       setIsSearching(false);
     }
   };
@@ -274,6 +282,7 @@ export default function GeoPage({ initialData }: GeoClientProps) {
    * isResetting으로 버튼 로딩 상태를 표시합니다.
    */
   const handleReset = () => {
+    if (isResetting) return;
     setIsResetting(true);
     try {
       // 지도 입력값 초기화: 주소 검색창 비우기
@@ -322,13 +331,12 @@ export default function GeoPage({ initialData }: GeoClientProps) {
                     }
                   }}
                 />
-                <button
-                  className={`${styles.searchBtn} ${isSearching ? styles.searchBtnLoading : ''}`}
+                <PrimaryButton
                   onClick={() => searchAddressToCoordinate(searchAddress)}
-                  disabled={isSearching}
+                  isLoading={isSearching}
                 >
-                  {isSearching ? <Spinner /> : '좌표 검색'}
-                </button>
+                  좌표 검색
+                </PrimaryButton>
               </div>
             </div>
 
@@ -376,8 +384,16 @@ export default function GeoPage({ initialData }: GeoClientProps) {
                           : ''
                       }
                     >
-                      <td>{data.houseName}</td>
-                      <td>{data.hssplyAdres}</td>
+                      <td>
+                        <div className={styles.cellEllipsis}>
+                          {data.houseName || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.cellEllipsis}>
+                          {data.hssplyAdres || '-'}
+                        </div>
+                      </td>
                       <td>
                         <a
                           href={data.pblancUrl}

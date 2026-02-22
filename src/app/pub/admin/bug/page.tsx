@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Spinner from '@/app/components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import Alert from '@/app/components/common/Alert/Alert';
 import styles from '@/styles/pages/admin/bug/bug.module.scss';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
@@ -115,6 +116,15 @@ const STATUS_LABEL: Record<BugStatus, string> = {
   'not-bug': '버그아님',
 };
 
+type PaginationItem = number | 'ellipsis';
+
+const getPageItems = (totalPages: number): PaginationItem[] => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  return [1, 2, 'ellipsis', totalPages];
+};
+
 export default function BugReportPage() {
   const [q, setQ] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -151,6 +161,7 @@ export default function BugReportPage() {
   const assigneeBtnRef = useRef<HTMLButtonElement>(null);
   const [assigneeMenuPos, setAssigneeMenuPos] = useState<{ x: number; y: number } | null>(null);
   const assigneeMenuRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // 검색어 적용된 원본 리스트
   const baseList = useMemo(() => {
@@ -182,6 +193,13 @@ export default function BugReportPage() {
     const completed = baseList.filter((r) => r.status === 'completed').length;
     return { needed, inProgress, completed, total: baseList.length };
   }, [baseList]);
+  const totalPages = Math.max(1, list.length);
+  const pageItems = useMemo(() => getPageItems(totalPages), [totalPages]);
+  const visiblePages = useMemo(
+    () => pageItems.filter((item): item is number => typeof item === 'number'),
+    [pageItems],
+  );
+  const currentPageIndex = Math.max(visiblePages.indexOf(currentPage), 0);
 
   // 현재 테이블에 보이는 행 키
   const visibleRowKeys = useMemo(
@@ -285,6 +303,12 @@ export default function BugReportPage() {
   }, [selected]);
 
   useEffect(() => {
+    if (!visiblePages.includes(currentPage)) {
+      setCurrentPage(visiblePages[0] ?? 1);
+    }
+  }, [currentPage, visiblePages]);
+
+  useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       const insideHeader =
@@ -364,7 +388,7 @@ export default function BugReportPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div>
       <AdminPageHeader title="버그 리포트" />
 
       {/* 통계 카드 */}
@@ -408,9 +432,9 @@ export default function BugReportPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
-          <button onClick={handleSearch} disabled={isSearching}>
-            {isSearching ? <Spinner /> : '검색'}
-          </button>
+          <PrimaryButton onClick={handleSearch} isLoading={isSearching}>
+            검색
+          </PrimaryButton>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
@@ -448,20 +472,19 @@ export default function BugReportPage() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: 60 }}>
+                <th>
                   <input
                     type="checkbox"
                     checked={allVisibleSelected}
                     onChange={(e) => handleToggleAllVisible(e.target.checked)}
                   />
                 </th>
-                <th style={{ width: 400 }}>내용</th>
-                <th style={{ width: 150 }}>발생일</th>
-                <th style={{ width: 200 }}>상태</th>
-                <th style={{ width: 240 }}>메모</th>
+                <th>내용</th>
+                <th>발생일</th>
+                <th>상태</th>
+                <th>메모</th>
                 <th
                   className={styles.assigneeHeader}
-                  style={{ width: 140, position: 'relative' }}
                   ref={assigneeFilterRef}
                 >
                   <button
@@ -538,7 +561,9 @@ export default function BugReportPage() {
                     </td>
 
                     {/* 메모 */}
-                    <td className={styles.ellipsis}>{r.memo}</td>
+                    <td>
+                      <div className={styles.ellipsis}>{r.memo}</div>
+                    </td>
 
                     {/* 담당자 */}
                     <td className={styles.assignee}>
@@ -563,16 +588,45 @@ export default function BugReportPage() {
 
         {/* 페이지네이션 (퍼블용 더미) */}
         <div className={styles.paging}>
-          <button className={styles.arrow}>{'<'}</button>
-          {[1, 2, 3, 4, 10, 11].map((n, idx) => (
-            <button
-              key={idx}
-              className={`${styles.pageBtn} ${n === 1 ? styles.active : ''}`}
-            >
-              {n}
-            </button>
-          ))}
-          <button className={styles.arrow}>{'>'}</button>
+          <button
+            className={styles.arrow}
+            disabled={currentPageIndex === 0}
+            onClick={() =>
+              setCurrentPage(
+                visiblePages[Math.max(currentPageIndex - 1, 0)] ?? 1,
+              )
+            }
+          >
+            {'<'}
+          </button>
+          {pageItems.map((item, idx) =>
+            item === 'ellipsis' ? (
+              <span key={`dots-${idx}`} className={styles.pageDots}>
+                ...
+              </span>
+            ) : (
+              <button
+                key={item}
+                className={`${styles.pageBtn} ${item === currentPage ? styles.active : ''}`}
+                onClick={() => setCurrentPage(item)}
+              >
+                {item}
+              </button>
+            ),
+          )}
+          <button
+            className={styles.arrow}
+            disabled={currentPageIndex === visiblePages.length - 1}
+            onClick={() =>
+              setCurrentPage(
+                visiblePages[
+                  Math.min(currentPageIndex + 1, visiblePages.length - 1)
+                ] ?? currentPage,
+              )
+            }
+          >
+            {'>'}
+          </button>
         </div>
       </section>
       {/* 오른쪽 디테일 서랍 */}

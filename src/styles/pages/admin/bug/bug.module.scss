@@ -1,12 +1,6 @@
 @use '../../../_variables.scss' as *;
 @use 'sass:color';
 
-.page {
-  padding: 24px;
-  background: $color-white;
-  min-height: 100vh;
-  font-family: $font-family-base;
-}
 
 .head {
   padding: 16px 8px 0 8px;
@@ -105,7 +99,7 @@
   gap: 8px;
   input {
     width: 260px;
-    padding: 10px 12px;
+    padding: 8px 16px;
     border: 1px solid $color-border;
     border-radius: 8px;
     font-size: 14px;
@@ -116,7 +110,7 @@
   }
   button {
     padding: 10px 14px;
-    min-width: auto;
+    min-width: 96px;
     border: 0;
     border-radius: 8px;
     background: transparent;
@@ -161,6 +155,9 @@
   font-weight: 600;
   cursor: pointer;
   min-width: 96px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   &:not(:disabled) {
     background: $color-primary;
@@ -234,6 +231,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 13px;
   overflow: visible;
   position: relative;
@@ -266,6 +264,36 @@
   th,
   td {
     text-align: center;
+  }
+
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 5%;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 34%;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: 13%;
+  }
+
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 17%;
+  }
+
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 20%;
+  }
+
+  th:nth-child(6),
+  td:nth-child(6) {
+    width: 11%;
   }
 
   // 텍스트 폭이 넓은 컬럼만 좌측 정렬로 통일
@@ -309,7 +337,8 @@
   align-items: center;
   gap: 4px;
   margin-bottom: 1px;
-  max-width: 400px;
+  width: 100%;
+  min-width: 0;
 }
 
 .err {
@@ -328,7 +357,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 400px;
+  width: 100%;
+  min-width: 0;
 }
 
 .checkCell {
@@ -341,6 +371,7 @@
 
 .assigneeHeader {
   text-align: center;
+  position: relative;
 }
 .assigneeFilterBtn {
   border: 0;
@@ -465,7 +496,9 @@
 }
 
 .ellipsis {
-  max-width: 240px;
+  display: block;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -488,6 +521,17 @@
   background: $color-white;
   cursor: pointer;
 }
+
+.pageDots {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-secondary;
+  font-weight: 600;
+}
+
 .pageBtn.active {
   background: $color-primary;
   border-color: $color-primary;

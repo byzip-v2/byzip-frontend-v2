@@ -2,12 +2,6 @@
 @use 'sass:color';
 
 // 좌표 관리 페이지 스타일
-.geoPage {
-  padding: 24px;
-  font-family: $font-family-base;
-  height: 100vh;
-  background-color: $color-white;
-}
 
 .pageHeader {
   padding: 24px 24px 0 24px;
@@ -250,6 +244,7 @@
 .dataTable {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 14px;
 }
 
@@ -272,13 +267,32 @@
   padding: 12px;
   border-bottom: 1px solid $color-white;
   color: $color-text-primary;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
 
   &:last-child,
   &:nth-child(3) {
     text-align: center;
   }
+}
+
+.dataTable th:nth-child(1),
+.dataTable td:nth-child(1) {
+  width: 30%;
+}
+
+.dataTable th:nth-child(2),
+.dataTable td:nth-child(2) {
+  width: 46%;
+}
+
+.dataTable th:nth-child(3),
+.dataTable td:nth-child(3) {
+  width: 12%;
+}
+
+.dataTable th:nth-child(4),
+.dataTable td:nth-child(4) {
+  width: 12%;
 }
 
 .dataTable tr:hover {
@@ -310,4 +324,13 @@
   &:hover {
     background-color: color.adjust($color-primary, $lightness: -10%);
   }
+}
+
+.cellEllipsis {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

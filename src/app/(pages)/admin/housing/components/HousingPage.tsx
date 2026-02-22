@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Spinner from '@/app/components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import styles from '@/styles/pages/admin/housing/housing.module.scss';
 import { getHousingSupplies, toggleHousingSupplyHidden, bulkHideHousingSupplies, bulkDeleteHousingSupplies, deleteHousingSupply, type GetHousingSuppliesResultData } from '../actions';
 import { HousingSupplyDataDto } from 'byzip-v2-sdk';
@@ -14,6 +15,15 @@ type SaleRow = HousingSupplyDataDto & { isHidden?: boolean };
 interface HousingClientProps {
   initialData: GetHousingSuppliesResultData;
 }
+
+type PaginationItem = number | 'ellipsis';
+
+const getPageItems = (totalPages: number): PaginationItem[] => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  return [1, 2, 'ellipsis', totalPages];
+};
 
 export default function HousingClient({ initialData }: HousingClientProps) {
   const { showToast } = useToast();
@@ -42,6 +52,8 @@ export default function HousingClient({ initialData }: HousingClientProps) {
   const [total, setTotal] = useState(initialData.meta.total);
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const pageItems = useMemo(() => getPageItems(totalPages), [totalPages]);
 
   // 첫 마운트 여부 확인용 (최초 SSR 데이터 로드 후 중복 fetch 방지)
   const isMounted = useRef(false);
@@ -87,6 +99,12 @@ export default function HousingClient({ initialData }: HousingClientProps) {
   useEffect(() => {
     fetchList();
   }, [fetchList]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // 체크박스 전체 선택
   const visibleRowKeys = useMemo(
@@ -334,9 +352,12 @@ export default function HousingClient({ initialData }: HousingClientProps) {
               if (e.key === 'Enter') handleSearch();
             }}
           />
-          <button className={styles.searchBtn} onClick={handleSearch} disabled={isSearching || isLoading}>
-            {isSearching || isLoading ? <Spinner /> : '검색'}
-          </button>
+          <PrimaryButton
+            onClick={handleSearch}
+            isLoading={isSearching || isLoading}
+          >
+            검색
+          </PrimaryButton>
           <button
             type="button"
             className={styles.subAction}
@@ -360,19 +381,19 @@ export default function HousingClient({ initialData }: HousingClientProps) {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th style={{ width: 60 }}>
+              <th>
                 <input
                   type="checkbox"
                   checked={allVisibleSelected}
                   onChange={(e) => handleToggleAll(e.target.checked)}
                 />
               </th>
-              <th style={{ width: 280 }}>분양공고명</th>
-              <th style={{ width: 360 }}>공급 위치</th>
-              <th style={{ width: 140 }}>모집 공고일</th>
-              <th style={{ width: 110 }}>지역</th>
-              <th style={{ width: 140 }}>분양유형</th>
-              <th style={{ width: 110 }}>상태</th>
+              <th>분양공고명</th>
+              <th>공급 위치</th>
+              <th>모집 공고일</th>
+              <th>지역</th>
+              <th>분양유형</th>
+              <th>상태</th>
             </tr>
           </thead>
           <tbody>
@@ -396,7 +417,9 @@ export default function HousingClient({ initialData }: HousingClientProps) {
                   <td>
                     <div className={styles.rowTitle}>{row.houseName}</div>
                   </td>
-                  <td className={styles.ellipsis}>{row.hssplyAdres}</td>
+                  <td>
+                    <div className={styles.ellipsis}>{row.hssplyAdres || '-'}</div>
+                  </td>
                   <td>{formatDateString(row.rcritPblancDe)}</td>
                   <td>{row.subscrptAreaCodeNm}</td>
                   <td>{row.houseSecdNm}</td>
@@ -427,24 +450,25 @@ export default function HousingClient({ initialData }: HousingClientProps) {
         >
           {'<'}
         </button>
-        {Array.from({ length: Math.min(5, Math.ceil(total / limit)) }).map(
-          (_, i) => {
-            const pageNum = i + 1;
-            return (
-              <button
-                key={pageNum}
-                className={`${styles.pageBtn} ${pageNum === currentPage ? styles.active : ''}`}
-                onClick={() => setCurrentPage(pageNum)}
-              >
-                {pageNum}
-              </button>
-            );
-          },
+        {pageItems.map((item, idx) =>
+          item === 'ellipsis' ? (
+            <span key={`dots-${idx}`} className={styles.pageDots}>
+              ...
+            </span>
+          ) : (
+            <button
+              key={item}
+              className={`${styles.pageBtn} ${item === currentPage ? styles.active : ''}`}
+              onClick={() => setCurrentPage(item)}
+            >
+              {item}
+            </button>
+          ),
         )}
         <button
           className={styles.arrow}
-          disabled={currentPage >= Math.ceil(total / limit)}
-          onClick={() => setCurrentPage((p) => p + 1)}
+          disabled={currentPage >= totalPages}
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
         >
           {'>'}
         </button>
@@ -466,7 +490,6 @@ export default function HousingClient({ initialData }: HousingClientProps) {
                 >
                   삭제
                 </button>
-                <button className={styles.drawerBtn}>저장</button>
               </div>
             </div>
 

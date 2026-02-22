@@ -1,12 +1,6 @@
 @use '../../../_variables.scss' as *;
 @use 'sass:color';
 
-.page {
-  padding: 24px;
-  background: $color-white;
-  min-height: 100vh;
-  font-family: $font-family-base;
-}
 
 .toolbar {
   display: flex;
@@ -93,7 +87,7 @@
 
   input {
     width: 260px;
-    padding: 10px 12px;
+    padding: 8px 16px;
     border: 1px solid $color-border;
     border-radius: 8px;
     font-size: 14px;
@@ -106,10 +100,16 @@
 
   button {
     padding: 10px 14px;
+    min-width: 96px;
     border-radius: 8px;
     border: 0;
     font-weight: 600;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
   }
 }
 
@@ -157,6 +157,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 13px;
 
   th {
@@ -182,12 +183,49 @@
   th:nth-child(3) {
     text-align: left;
   }
+
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 6%;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 24%;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: 30%;
+  }
+
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 12%;
+  }
+
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 8%;
+  }
+
+  th:nth-child(6),
+  td:nth-child(6) {
+    width: 10%;
+  }
+
+  th:nth-child(7),
+  td:nth-child(7) {
+    width: 10%;
+  }
 }
 
 .rowTitle {
+  display: block;
   font-weight: 700;
   color: $color-text-primary;
-  max-width: 260px;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -233,7 +271,9 @@
 }
 
 .ellipsis {
-  max-width: 240px;
+  display: block;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -255,6 +295,16 @@
   border-radius: 8px;
   background: $color-white;
   cursor: pointer;
+}
+
+.pageDots {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-secondary;
+  font-weight: 600;
 }
 
 .pageBtn.active {
