@@ -15,19 +15,23 @@
   align-items: center;
   margin: 12px 8px;
 }
+
 .total {
   font-size: 13px;
   color: $color-text-secondary;
 }
+
 .totalNum {
   font-weight: 800;
   color: $color-primary;
 }
+
 .toggles {
   display: flex;
   gap: 12px;
   align-items: center;
 }
+
 .toggle {
   display: inline-flex;
   align-items: center;
@@ -42,6 +46,7 @@
     opacity: 0;
   }
 }
+
 .toggleSwitch {
   position: relative;
   width: 36px;
@@ -64,20 +69,23 @@
     transition: transform 0.15s ease;
   }
 }
-.toggle input:checked + .toggleSwitch {
+
+.toggle input:checked+.toggleSwitch {
   background: $color-primary;
 
   &::after {
     transform: translateX(16px);
   }
 }
-.toggle input:checked ~ .toggleSwitch {
+
+.toggle input:checked~.toggleSwitch {
   background: $color-primary;
 
   &::after {
     transform: translateX(16px);
   }
 }
+
 .searchWrap {
   display: flex;
   gap: 8px;
@@ -89,6 +97,7 @@
     border: 1px solid $color-border;
     border-radius: 8px;
     font-size: 14px;
+
     &:focus {
       outline: none;
       border-color: $color-primary;
@@ -103,6 +112,22 @@
     cursor: pointer;
   }
 }
+
+.searchBtn {
+  background-color: $color-primary;
+  color: $color-white;
+  min-width: 96px;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    background: color.adjust($color-primary, $lightness: 10%);
+    color: $color-white;
+  }
+}
+
 .subAction {
   background: $color-gray;
   color: $color-text-primary;
@@ -114,6 +139,7 @@
     cursor: not-allowed;
   }
 }
+
 .danger {
   background: #ffb4b4;
   color: #7a0f0f;
@@ -176,18 +202,22 @@
   font-weight: 700;
   text-align: center;
 }
+
 .statusOk {
   background: color.adjust($color-badge-success, $lightness: 32%);
   color: color.adjust($color-badge-success, $lightness: -6%);
 }
+
 .statusPending {
   background: #ff5252;
   color: #ffffff;
 }
+
 .statusSub {
   background: #b347ff;
   color: #ffffff;
 }
+
 .statusDone {
   background: #5c6675;
   color: #ffffff;
@@ -195,6 +225,7 @@
 
 .checkCell {
   width: 60px;
+
   input {
     width: 14px;
     height: 14px;
@@ -214,6 +245,7 @@
   gap: 6px;
   padding: 12px 0;
 }
+
 .pageBtn,
 .arrow {
   min-width: 32px;
@@ -224,6 +256,7 @@
   background: $color-white;
   cursor: pointer;
 }
+
 .pageBtn.active {
   background: $color-primary;
   border-color: $color-primary;
@@ -256,6 +289,7 @@
   flex-direction: column;
   overflow-y: auto;
 }
+
 .drawerHeader {
   display: flex;
   justify-content: space-between;
@@ -263,16 +297,19 @@
   gap: 10px;
   margin-bottom: 12px;
 }
+
 .drawerClose {
   border: 0;
   background: transparent;
   font-size: 18px;
   cursor: pointer;
 }
+
 .drawerActions {
   display: flex;
   gap: 8px;
 }
+
 .drawerBtn {
   padding: 8px 14px;
   border-radius: 8px;
@@ -282,15 +319,18 @@
   font-weight: 600;
   cursor: pointer;
 }
+
 .secondary {
   background: $color-gray;
   color: $color-text-primary;
 }
+
 .drawerBody {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
 .drawerTitle {
   margin: 0;
   font-size: 18px;
@@ -303,6 +343,7 @@
   flex-direction: column;
   gap: 10px;
 }
+
 .drawerSectionTitle {
   margin: 0;
   font-size: 14px;
@@ -315,21 +356,25 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
+
 .drawerField {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+
 .toggleInline {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding-top: 10px;
 }
+
 .drawerLabel {
   font-size: 12px;
   color: $color-text-secondary;
 }
+
 .readonlyInput {
   width: 100%;
   padding: 10px 12px;
@@ -339,9 +384,11 @@
   font-size: 13px;
   color: $color-text-primary;
 }
+
 .selectField {
   position: relative;
 }
+
 .selectTrigger {
   width: 100%;
   padding: 10px 12px;
@@ -355,16 +402,20 @@
   cursor: pointer;
   color: $color-text-primary;
 }
+
 .selectValue {
   font-weight: 600;
 }
+
 .selectPlaceholder {
   color: $color-text-secondary;
 }
+
 .selectCaret {
   font-size: 12px;
   color: $color-text-secondary;
 }
+
 .selectMenu {
   position: absolute;
   z-index: 905;
@@ -377,6 +428,7 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
+
 .selectOption {
   width: 100%;
   padding: 10px 12px;
@@ -395,6 +447,7 @@
     color: $color-white;
   }
 }
+
 .drawerTextarea {
   width: 100%;
   min-height: 120px;
@@ -407,4 +460,15 @@
   color: $color-text-primary;
   resize: none;
   overflow-y: auto;
+}
+
+.linkText {
+  font-size: 13px;
+  color: $color-primary;
+  text-decoration: none;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }

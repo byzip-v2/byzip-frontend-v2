@@ -8,6 +8,7 @@ import {
   updateBugReport,
   type PaginationMeta,
   type BugReportDataDtoWithMemo,
+  type StatusCounts,
 } from '../actions';
 import Spinner from '../../../../components/common/Spinner/Spinner';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
@@ -16,6 +17,7 @@ import Alert from '@/app/components/common/Alert/Alert';
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
   initialMeta?: PaginationMeta;
+  statusCounts?: StatusCounts;
   searchParams: {
     search?: string;
     assigneeId?: string;
@@ -54,6 +56,7 @@ export const STATUS_LABEL: Record<BugReportStatus, string> = {
 export default function BugReportPage({
   initialBugs,
   initialMeta,
+  statusCounts,
   searchParams,
 }: BugReportClientProps) {
   const router = useRouter();
@@ -89,7 +92,7 @@ export default function BugReportPage({
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeId | 'all'>(
     () =>
       searchParams.assigneeId &&
-      ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
+        ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
         ? (searchParams.assigneeId as AssigneeId)
         : 'all',
   );
@@ -103,6 +106,7 @@ export default function BugReportPage({
         : 'all',
     );
   }, [searchParams.assigneeId]);
+
   const [assigneeFilterOpen, setAssigneeFilterOpen] = useState(false);
   const assigneeFilterRef = useRef<HTMLTableCellElement>(null);
   const assigneeBtnRef = useRef<HTMLButtonElement>(null);
@@ -415,48 +419,44 @@ export default function BugReportPage({
 
       {/* 통계 카드 (서버 상태값 open / in_progress / resolved 로 필터) */}
       <section className={styles.stats}>
+        {/* 해결 필요(open) 카드 */}
         <button
           type="button"
-          className={`${styles.card} ${styles.cardButton} ${styles.yellow} ${
-            statusFilter === BugReportStatus.OPEN ? styles.activeCard : ''
-          }`}
+          className={`${styles.card} ${styles.cardButton} ${styles.yellow} ${statusFilter === BugReportStatus.OPEN ? styles.activeCard : ''
+            }`}
           onClick={() => toggleFilter(BugReportStatus.OPEN)}
         >
           <div className={styles.cardLabel}>해결 필요</div>
           <div className={styles.cardNum}>
-            {statusFilter === BugReportStatus.OPEN && initialMeta
-              ? initialMeta.total
-              : '-'}
+            {statusCounts !== undefined ? statusCounts.open : '-'}
           </div>
         </button>
+
+        {/* 해결중인 버그(in_progress) 카드 */}
         <button
           type="button"
-          className={`${styles.card} ${styles.cardButton} ${styles.mint} ${
-            statusFilter === BugReportStatus.IN_PROGRESS
-              ? styles.activeCard
-              : ''
-          }`}
+          className={`${styles.card} ${styles.cardButton} ${styles.mint} ${statusFilter === BugReportStatus.IN_PROGRESS
+            ? styles.activeCard
+            : ''
+            }`}
           onClick={() => toggleFilter(BugReportStatus.IN_PROGRESS)}
         >
           <div className={styles.cardLabel}>해결중인 버그</div>
           <div className={styles.cardNum}>
-            {statusFilter === BugReportStatus.IN_PROGRESS && initialMeta
-              ? initialMeta.total
-              : '-'}
+            {statusCounts !== undefined ? statusCounts.in_progress : '-'}
           </div>
         </button>
+
+        {/* 해결완료(resolved) 카드 */}
         <button
           type="button"
-          className={`${styles.card} ${styles.cardButton} ${styles.purple} ${
-            statusFilter === BugReportStatus.RESOLVED ? styles.activeCard : ''
-          }`}
+          className={`${styles.card} ${styles.cardButton} ${styles.purple} ${statusFilter === BugReportStatus.RESOLVED ? styles.activeCard : ''
+            }`}
           onClick={() => toggleFilter(BugReportStatus.RESOLVED)}
         >
           <div className={styles.cardLabel}>해결완료</div>
           <div className={styles.cardNum}>
-            {statusFilter === BugReportStatus.RESOLVED && initialMeta
-              ? initialMeta.total
-              : '-'}
+            {statusCounts !== undefined ? statusCounts.resolved : '-'}
           </div>
         </button>
       </section>
@@ -585,15 +585,14 @@ export default function BugReportPage({
                     <td>{r.formattedDate}</td>
                     <td>
                       <span
-                        className={`${styles.badge} ${
-                          r.status === BugReportStatus.RESOLVED
-                            ? styles.statusDone
-                            : r.status === BugReportStatus.IN_PROGRESS
-                              ? styles.statusProgress
-                              : r.status === BugReportStatus.OPEN
-                                ? styles.statusNeeded
-                                : styles.statusNotBug
-                        }`}
+                        className={`${styles.badge} ${r.status === BugReportStatus.RESOLVED
+                          ? styles.statusDone
+                          : r.status === BugReportStatus.IN_PROGRESS
+                            ? styles.statusProgress
+                            : r.status === BugReportStatus.OPEN
+                              ? styles.statusNeeded
+                              : styles.statusNotBug
+                          }`}
                       >
                         {STATUS_LABEL[r.status as BugReportStatus]}
                       </span>
@@ -730,9 +729,8 @@ export default function BugReportPage({
                           <button
                             key={status}
                             type="button"
-                            className={`${styles.selectOption} ${
-                              detailStatus === status ? styles.active : ''
-                            }`}
+                            className={`${styles.selectOption} ${detailStatus === status ? styles.active : ''
+                              }`}
                             onClick={() => handleSelectStatus(status)}
                           >
                             {STATUS_LABEL[status]}
@@ -771,9 +769,8 @@ export default function BugReportPage({
                       <div className={styles.selectMenu}>
                         <button
                           type="button"
-                          className={`${styles.selectOption} ${
-                            detailAssignee === null ? styles.active : ''
-                          }`}
+                          className={`${styles.selectOption} ${detailAssignee === null ? styles.active : ''
+                            }`}
                           onClick={() => handleSelectAssignee(null)}
                         >
                           미지정
@@ -782,9 +779,8 @@ export default function BugReportPage({
                           <button
                             key={id}
                             type="button"
-                            className={`${styles.selectOption} ${
-                              detailAssignee === id ? styles.active : ''
-                            }`}
+                            className={`${styles.selectOption} ${detailAssignee === id ? styles.active : ''
+                              }`}
                             onClick={() => handleSelectAssignee(id)}
                           >
                             {name}
@@ -937,9 +933,8 @@ export default function BugReportPage({
         >
           <button
             type="button"
-            className={`${styles.assigneeOption} ${
-              assigneeFilter === 'all' ? styles.active : ''
-            }`}
+            className={`${styles.assigneeOption} ${assigneeFilter === 'all' ? styles.active : ''
+              }`}
             onClick={() => {
               setAssigneeFilter('all');
               setAssigneeFilterOpen(false);
@@ -954,9 +949,8 @@ export default function BugReportPage({
             <button
               key={id}
               type="button"
-              className={`${styles.assigneeOption} ${
-                assigneeFilter === id ? styles.active : ''
-              }`}
+              className={`${styles.assigneeOption} ${assigneeFilter === id ? styles.active : ''
+                }`}
               onClick={() => {
                 setAssigneeFilter(id);
                 setAssigneeFilterOpen(false);
