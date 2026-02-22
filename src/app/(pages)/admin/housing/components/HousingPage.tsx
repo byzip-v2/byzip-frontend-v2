@@ -1,110 +1,105 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useState, useCallback, useTransition } from 'react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Spinner from '@/app/components/common/Spinner/Spinner';
 import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import styles from '@/styles/pages/admin/housing/housing.module.scss';
-import { getHousingSupplies, toggleHousingSupplyHidden, bulkHideHousingSupplies, bulkDeleteHousingSupplies, deleteHousingSupply, type GetHousingSuppliesResultData } from '../actions';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { toggleHousingSupplyHidden, bulkHideHousingSupplies, bulkDeleteHousingSupplies, deleteHousingSupply, type GetHousingSuppliesResultData } from '../actions';
 import { HousingSupplyDataDto } from 'byzip-v2-sdk';
 import { useToast } from '@/app/libs/hooks/useToast';
 import AlertModal from '@/app/libs/global-components/AlertModal';
+import Pagination from '@/app/components/common/Pagination/Pagination';
 
 type SaleRow = HousingSupplyDataDto & { isHidden?: boolean };
 
 interface HousingClientProps {
   initialData: GetHousingSuppliesResultData;
+  searchParams: {
+    page?: string;
+    search?: string;
+    isHidden?: string;
+    includeEnded?: string;
+  };
 }
 
-type PaginationItem = number | 'ellipsis';
+export default function HousingClient({
+  initialData,
+  searchParams,
+}: HousingClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParamsHook = useSearchParams();
 
-const getPageItems = (totalPages: number): PaginationItem[] => {
-  if (totalPages <= 5) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  return [1, 2, 'ellipsis', totalPages];
-};
+  const [isPending, startTransition] = useTransition();
 
-export default function HousingClient({ initialData }: HousingClientProps) {
   const { showToast } = useToast();
-  const [searchInput, setSearchInput] = useState('');
-  const [q, setQ] = useState('');
+
+  // 검색 입력값 (UI용)
+  const [searchInput, setSearchInput] = useState(searchParams.search || '');
+
+  // URL 파라미터가 바뀌면 입력값 동기화
+  useEffect(() => {
+    setSearchInput(searchParams.search || '');
+  }, [searchParams.search]);
+
+  // 체크박스 선택 상태
   const [selectedRowKeys, setSelectedRowKeys] = useState<Set<number>>(
     new Set(),
   );
 
   const [selected, setSelected] = useState<SaleRow | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // 초기값 false로 변경 (SSR 데이터 있음)
-  const [isActionLoading, setIsActionLoading] = useState(false); // 일괄 액션 입력 주여부
-  const [toggleEnded, setToggleEnded] = useState(false); // 종료된 공고 포함 여부
-  const [toggleHidden, setToggleHidden] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // URL 업데이트 유틸리티
+  const updateUrl = useCallback(
+    (updates: Record<string, string | number | boolean | undefined>) => {
+      const params = new URLSearchParams(searchParamsHook.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === undefined || value === '' || value === false) {
+          params.delete(key);
+        } else {
+          params.set(key, String(value));
+        }
+      });
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      });
+    },
+    [router, pathname, searchParamsHook],
+  );
+
+  // API 데이터 상태 동기화
+  const list = initialData.items;
+  const total = initialData.meta.total;
+  const totalPages = initialData.meta.totalPages || 1;
+  const currentPage = initialData.meta.page || 1;
+
+  const toggleEnded = searchParams.includeEnded === 'true';
+  const toggleHidden = searchParams.isHidden === 'true';
+
+  const isLoading = isPending;
+
+
+  // 데이터 갱신이 필요할 때만 fetchList 사용 (숨김 토글, 삭제 등 액션 후)
+  const fetchList = useCallback(async () => {
+    router.refresh(); // 서버 컴포넌트 재실행을 통한 최신화
+  }, [router]);
 
   // 확인 모달 상태
-  // null: 모달 닫힌
-  // 'hide': 일괄 숨김 확인
-  // 'delete': 일괄 삭제 확인
-  // 'deleteOne': 단건 삭제 확인
   const [confirmModal, setConfirmModal] = useState<'hide' | 'delete' | 'deleteOne' | null>(null);
 
-  // API 데이터 상태
-  const [list, setList] = useState<SaleRow[]>(initialData.items);
-  const [total, setTotal] = useState(initialData.meta.total);
-  const [currentPage, setCurrentPage] = useState(1);
-  const limit = 10;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const pageItems = useMemo(() => getPageItems(totalPages), [totalPages]);
-
-  // 첫 마운트 여부 확인용 (최초 SSR 데이터 로드 후 중복 fetch 방지)
-  const isMounted = useRef(false);
-
-  // 분양공고 목록 조회 API 호출
-  const fetchList = useCallback(async () => {
-    // 마운트 직후 최초 호출은 SSR 데이터가 있으므로 스킵 (단, 검색어나 필터가 변경된 경우는 제외)
-    if (!isMounted.current) {
-      isMounted.current = true;
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // toggleEnded가 false이면 오늘 이후에 종료되는 공고만 조회 (종료된 공고 제외)
-      // toggleEnded가 true이면 rceptEnddeFrom 파라미터를 생략 → 모든 공고 조회
-      const today = new Date().toISOString().split('T')[0];
-
-      const result = await getHousingSupplies({
-        search: q || undefined,
-        isHidden: toggleHidden,
-        page: currentPage,
-        limit,
-        // 종료된 공고 제외: 청약 접수 종료일이 오늘 이후인 것만 조회
-        rcritPblancDeFrom: !toggleEnded ? today : undefined,
-      });
-
-      if (result.success && result.data) {
-        const { items, meta } = result.data as GetHousingSuppliesResultData;
-        setList(items || []);
-        setTotal(meta?.total || 0);
-      } else {
-        showToast(result.message, 'error');
-      }
-    } catch {
-      showToast('데이터를 가져오는 중 오류가 발생했습니다.', 'error');
-    } finally {
-      setIsLoading(false);
-      setIsSearching(false);
-    }
-  }, [q, toggleEnded, toggleHidden, currentPage, showToast]);
+  // 페이지 이동 시 선택 초기화
+  useEffect(() => {
+    setSelectedRowKeys(new Set());
+  }, [currentPage]);
 
   useEffect(() => {
-    fetchList();
-  }, [fetchList]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+    if (currentPage > totalPages && totalPages > 0) {
+      updateUrl({ page: totalPages });
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, updateUrl]);
 
   // 체크박스 전체 선택
   const visibleRowKeys = useMemo(
@@ -138,10 +133,8 @@ export default function HousingClient({ initialData }: HousingClientProps) {
     setSelectedRowKeys(next);
   };
 
-  const handleSearch = async () => {
-    setIsSearching(true);
-    setQ(searchInput);
-    setCurrentPage(1);
+  const handleSearch = () => {
+    updateUrl({ search: searchInput || undefined, page: 1 });
   };
 
   const handleRowClick = (row: SaleRow) => {
@@ -323,8 +316,7 @@ export default function HousingClient({ initialData }: HousingClientProps) {
               type="checkbox"
               checked={toggleEnded}
               onChange={(e) => {
-                setToggleEnded(e.target.checked);
-                setCurrentPage(1);
+                updateUrl({ includeEnded: e.target.checked, page: 1 });
               }}
             />
             <span>종료된 공고 포함</span>
@@ -335,8 +327,7 @@ export default function HousingClient({ initialData }: HousingClientProps) {
               type="checkbox"
               checked={toggleHidden}
               onChange={(e) => {
-                setToggleHidden(e.target.checked);
-                setCurrentPage(1);
+                updateUrl({ isHidden: e.target.checked, page: 1 });
               }}
             />
             <span>숨겨진 공고 포함</span>
@@ -354,7 +345,7 @@ export default function HousingClient({ initialData }: HousingClientProps) {
           />
           <PrimaryButton
             onClick={handleSearch}
-            isLoading={isSearching || isLoading}
+            isLoading={isLoading}
           >
             검색
           </PrimaryButton>
@@ -442,37 +433,12 @@ export default function HousingClient({ initialData }: HousingClientProps) {
         </table>
       </div>
 
-      <div className={styles.paging}>
-        <button
-          className={styles.arrow}
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-        >
-          {'<'}
-        </button>
-        {pageItems.map((item, idx) =>
-          item === 'ellipsis' ? (
-            <span key={`dots-${idx}`} className={styles.pageDots}>
-              ...
-            </span>
-          ) : (
-            <button
-              key={item}
-              className={`${styles.pageBtn} ${item === currentPage ? styles.active : ''}`}
-              onClick={() => setCurrentPage(item)}
-            >
-              {item}
-            </button>
-          ),
-        )}
-        <button
-          className={styles.arrow}
-          disabled={currentPage >= totalPages}
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-        >
-          {'>'}
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => updateUrl({ page })}
+        hasData={list.length > 0}
+      />
 
       {selected && (
         <>

@@ -14,6 +14,7 @@ import Spinner from '../../../../components/common/Spinner/Spinner';
 import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Alert from '@/app/components/common/Alert/Alert';
+import Pagination from '@/app/components/common/Pagination/Pagination';
 
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
@@ -54,14 +55,6 @@ export const STATUS_LABEL: Record<BugReportStatus, string> = {
   [BugReportStatus.CLOSED]: '버그아님',
 };
 
-type PaginationItem = number | 'ellipsis';
-
-const getPageItems = (totalPages: number): PaginationItem[] => {
-  if (totalPages <= 5) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  return [1, 2, 'ellipsis', totalPages];
-};
 
 export default function BugReportPage({
   initialBugs,
@@ -487,11 +480,11 @@ export default function BugReportPage({
             <button
               type="button"
               className={styles.statusActionBtn}
-              disabled={!hasSelection}
+              disabled={!hasSelection || isUpdating}
               onClick={handleToggleStatusAction}
               aria-expanded={statusActionOpen}
             >
-              상태변경
+              {isUpdating ? <Spinner /> : '상태변경'}
             </button>
             {statusActionOpen && (
               <div className={styles.statusActionMenu}>
@@ -644,39 +637,12 @@ export default function BugReportPage({
         </div>
 
         {/* 페이지네이션 */}
-        {initialMeta && initialMeta.totalPages > 1 && (
-          <div className={styles.paging}>
-            <button
-              className={styles.arrow}
-              onClick={() => handlePageChange(initialMeta.page - 1)}
-              disabled={initialMeta.page === 1}
-            >
-              {'<'}
-            </button>
-            {getPageItems(initialMeta.totalPages).map((item, idx) =>
-              item === 'ellipsis' ? (
-                <span key={`dots-${idx}`} className={styles.pageDots}>
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  className={`${styles.pageBtn} ${item === initialMeta.page ? styles.active : ''}`}
-                  onClick={() => handlePageChange(item)}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-            <button
-              className={styles.arrow}
-              onClick={() => handlePageChange(initialMeta.page + 1)}
-              disabled={initialMeta.page === initialMeta.totalPages}
-            >
-              {'>'}
-            </button>
-          </div>
-        )}
+        <Pagination
+          currentPage={initialMeta?.page || 1}
+          totalPages={initialMeta?.totalPages || 1}
+          onPageChange={handlePageChange}
+          hasData={processedBugs.length > 0}
+        />
       </section>
 
       {/* 오른쪽 디테일 서랍 */}
