@@ -1,0 +1,50 @@
+@use '@/styles/_variables.scss' as *;
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 40px;
+  border-radius: 80px;
+  color: $color-white;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: $font-family-base;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-block;
+  min-width: 240px;
+  max-width: 600px;
+
+  &.enter {
+    animation: slideInFromRight 500ms ease forwards;
+  }
+
+  &.exit {
+    animation: slideOutToRight 500ms ease forwards;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}

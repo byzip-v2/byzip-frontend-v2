@@ -1,0 +1,135 @@
+@use '../../_variables.scss' as *;
+
+.wrapper {
+  position: relative;
+  min-height: 100vh;
+  background-color: $color-white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: $font-family-base;
+}
+
+.header {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  img {
+    height: 32px;
+  }
+
+  span {
+    font-size: 18px;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+}
+
+.card {
+  background-color: $color-white;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  width: 400px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+
+  label {
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+}
+
+.inputWithIcon {
+  display: flex;
+  align-items: center;
+  border: 1px solid $color-text-secondary;
+  border-radius: 8px;
+  padding: 0 12px;
+  background-color: $color-white;
+
+  input {
+    flex: 1;
+    padding: 12px 12px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &.fakeDisabled {
+    background-color: $color-white;
+
+    input {
+      color: $color-text-soft;
+    }
+  }
+
+  &.focused {
+    background-color: $color-white;
+  }
+}
+
+.eyeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $color-text-secondary;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    color: $color-text-primary;
+  }
+}
+
+.optionRow {
+  font-size: 14px;
+  margin-bottom: 24px;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.signInBtn {
+  width: 100%;
+  padding: 12px;
+  background-color: $color-primary;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $color-primary;
+  }
+
+  &:disabled {
+    background-color: $color-gray;
+    cursor: not-allowed;
+    color: $color-white;
+  }
+}
