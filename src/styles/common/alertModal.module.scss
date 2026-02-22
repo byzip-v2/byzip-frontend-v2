@@ -23,22 +23,55 @@
   position: relative;
 
   p {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     color: $color-text-muted;
     font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-line;
   }
 }
 
+/* 버튼 그룹: 취소 + 확인 나란히 배치 */
+.btnGroup {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
 
 .confirmBtn {
   background-color: $color-accent-blue-3;
   border: none;
   color: $color-white;
-  padding: 10px 18px;
+  padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
 
   &:hover {
     background-color: $color-accent-blue-2;
+  }
+}
+
+/* 취소 버튼: 회색 계열 */
+.cancelBtn {
+  background-color: transparent;
+  border: 1px solid $color-border;
+  color: $color-text-secondary;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    background-color: $color-gray;
+  }
+}
+
+/* 위험 액션 확인 버튼: 빨간색 */
+.dangerBtn {
+  background-color: #e53e3e !important;
+
+  &:hover {
+    background-color: #c53030 !important;
   }
 }

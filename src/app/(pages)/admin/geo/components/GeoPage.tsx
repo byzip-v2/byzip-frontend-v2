@@ -67,16 +67,28 @@ export default function GeoPage({ initialData }: GeoClientProps) {
       </div>
     `;
     const btn = container.querySelector('#add-coord-btn');
-    if (btn && coords)
+    if (btn && coords) {
+      // 기본은 지번 주소, 지번 주소가 없는 경우 도로명 주소 사용
+      const address = jibunAddress || roadAddress;
       btn.addEventListener('click', () =>
-        handleCoordUpdate(coords?.lat, coords?.lng),
+        handleCoordUpdate(coords?.lat, coords?.lng, address),
       );
+    }
     return container;
   };
 
   const initializeMap = () => {
     if (!checkNaverMapsLoaded()) {
-      console.error('네이버 지도 API가 로드되지 않았습니다.');
+      return;
+    }
+
+    if (mapRef.current) {
+      return;
+    }
+
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+      setTimeout(initializeMap, 100);
       return;
     }
 
@@ -231,16 +243,24 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   };
 
   // 좌표 업데이트 DB 반영 핸들러
-  const handleCoordUpdate = async (lat: number, lng: number) => {
+  const handleCoordUpdate = async (
+    lat: number,
+    lng: number,
+    address?: string,
+  ) => {
     if (!selectedDataRef.current || !lat || !lng || isUpdating) return;
     setIsUpdating(true);
     try {
       const result = await updateHousingSupplyCoords(
         selectedDataRef.current.id,
-        { latitude: lat, longitude: lng },
+        {
+          latitude: lat,
+          longitude: lng,
+          hssplyAdres: address,
+        },
       );
       if (result.success) {
-        showToast('좌표가 성공적으로 업데이트되었습니다.');
+        showToast('좌표 및 주소가 성공적으로 업데이트되었습니다.');
         infowindowRef.current?.close();
         router.refresh();
       } else {
@@ -286,10 +306,10 @@ export default function GeoPage({ initialData }: GeoClientProps) {
       <Script
         strategy="afterInteractive"
         src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_CLIENT_ID}&submodules=geocoder`}
-        // 네이버 지도 API가 완전히 로드된 후 지도 초기화
-        onLoad={() =>
-          setTimeout(() => checkNaverMapsLoaded() && initializeMap(), 100)
-        }
+        // onReady는 스크립트 로드 완료 시점과 컴포넌트 마운트 시점에 모두 실행됨
+        onReady={() => {
+          initializeMap();
+        }}
       />
       <div className={styles.geoPage}>
         <AdminPageHeader title="좌표 관리" />
@@ -327,7 +347,7 @@ export default function GeoPage({ initialData }: GeoClientProps) {
           <div className={styles.tableSection}>
             <div className={styles.tableHeader}>
               <h2 className={styles.tableTitle}>
-                좌표가 없는 공고 (<span>5</span>개)
+                좌표가 없는 공고 (<span>{tableData.length}</span>개)
               </h2>
               <button
                 type="button"
