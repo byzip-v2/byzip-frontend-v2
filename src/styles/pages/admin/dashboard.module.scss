@@ -312,6 +312,7 @@
 }
 
 .tableWrap {
+  position: relative;
   border: 1px solid $color-border-subtle;
   border-radius: 10px;
   overflow-x: hidden;
@@ -331,16 +332,21 @@
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
 
   th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     background: $color-gray;
     color: $color-text-secondary;
     font-weight: 600;
     font-size: 12px;
     text-align: left;
     padding: 10px 12px;
+    border-bottom: 1px solid $color-border-subtle;
   }
 
   td {

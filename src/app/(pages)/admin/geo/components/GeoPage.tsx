@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { updateHousingSupplyCoords } from '../actions';
 import { useToast } from '@/app/libs/hooks/useToast';
 import Spinner from '@/app/components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import { RotateCcw } from 'lucide-react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 
@@ -330,13 +331,12 @@ export default function GeoPage({ initialData }: GeoClientProps) {
                     }
                   }}
                 />
-                <button
-                  className={`${styles.searchBtn} ${isSearching ? styles.searchBtnLoading : ''}`}
+                <PrimaryButton
                   onClick={() => searchAddressToCoordinate(searchAddress)}
-                  disabled={isSearching}
+                  isLoading={isSearching}
                 >
-                  {isSearching ? <Spinner /> : '좌표 검색'}
-                </button>
+                  좌표 검색
+                </PrimaryButton>
               </div>
             </div>
 
@@ -384,8 +384,16 @@ export default function GeoPage({ initialData }: GeoClientProps) {
                           : ''
                       }
                     >
-                      <td>{data.houseName}</td>
-                      <td>{data.hssplyAdres}</td>
+                      <td>
+                        <div className={styles.cellEllipsis}>
+                          {data.houseName || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.cellEllipsis}>
+                          {data.hssplyAdres || '-'}
+                        </div>
+                      </td>
                       <td>
                         <a
                           href={data.pblancUrl}

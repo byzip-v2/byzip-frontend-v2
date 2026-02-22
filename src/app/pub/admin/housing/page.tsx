@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
-import Spinner from '@/app/components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import styles from '@/styles/pages/admin/housing/housing.module.scss';
 
 type SaleStatus = '청약가능' | '청약예정' | '무순위' | '청약종료';
@@ -24,8 +24,8 @@ type SaleRow = {
 const SALE_MOCK: SaleRow[] = [
   {
     id: 'sale-1',
-    title: '고양장항지구 S-1블록 공공분양주택 (본청약)',
-    supplyLocation: '경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원',
+    title: '고양장항지구 S-1블록 공공분양주택 (본청약) 고양장항지구 S-1블록 공공분양주택 (본청약)',
+    supplyLocation: '경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원 경기도 고양시 일산동구 정발산동, 일산서구 대화동 일원',
     region: '경기',
     saleType: '영구임대',
     status: '청약가능',
@@ -89,6 +89,15 @@ const SALE_MOCK: SaleRow[] = [
   },
 ];
 
+type PaginationItem = number | 'ellipsis';
+
+const getPageItems = (totalPages: number): PaginationItem[] => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  return [1, 2, 'ellipsis', totalPages];
+};
+
 export default function SaleManagePage() {
   const [searchInput, setSearchInput] = useState('');
   const [q, setQ] = useState('');
@@ -99,6 +108,7 @@ export default function SaleManagePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [toggleEnded, setToggleEnded] = useState(false);
   const [toggleHidden, setToggleHidden] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const list = useMemo(() => {
     const keyword = q.trim().toLowerCase();
@@ -115,9 +125,22 @@ export default function SaleManagePage() {
     () => list.map((item) => item.id),
     [list],
   );
+  const totalPages = Math.max(1, list.length);
+  const pageItems = useMemo(() => getPageItems(totalPages), [totalPages]);
+  const visiblePages = useMemo(
+    () => pageItems.filter((item): item is number => typeof item === 'number'),
+    [pageItems],
+  );
+  const currentPageIndex = Math.max(visiblePages.indexOf(currentPage), 0);
   const allVisibleSelected = visibleRowKeys.every((key) =>
     selectedRowKeys.has(key),
   );
+
+  useEffect(() => {
+    if (!visiblePages.includes(currentPage)) {
+      setCurrentPage(visiblePages[0] ?? 1);
+    }
+  }, [currentPage, visiblePages]);
 
   const handleToggleAll = (checked: boolean) => {
     const next = new Set(selectedRowKeys);
@@ -199,9 +222,9 @@ export default function SaleManagePage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
-          <button onClick={handleSearch} disabled={isSearching}>
-            {isSearching ? <Spinner /> : '검색'}
-          </button>
+          <PrimaryButton onClick={handleSearch} isLoading={isSearching}>
+            검색
+          </PrimaryButton>
           <button
             type="button"
             className={styles.subAction}
@@ -223,19 +246,19 @@ export default function SaleManagePage() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th style={{ width: 60 }}>
+              <th>
                 <input
                   type="checkbox"
                   checked={allVisibleSelected}
                   onChange={(e) => handleToggleAll(e.target.checked)}
                 />
               </th>
-              <th style={{ width: 280 }}>분양공고명</th>
-              <th style={{ width: 360 }}>공급 위치</th>
-              <th style={{ width: 140 }}>모집 공고일</th>
-              <th style={{ width: 110 }}>지역</th>
-              <th style={{ width: 140 }}>분양유형</th>
-              <th style={{ width: 110 }}>상태</th>
+              <th>분양공고명</th>
+              <th>공급 위치</th>
+              <th>모집 공고일</th>
+              <th>지역</th>
+              <th>분양유형</th>
+              <th>상태</th>
             </tr>
           </thead>
           <tbody>
@@ -258,7 +281,9 @@ export default function SaleManagePage() {
                   <td>
                     <div className={styles.rowTitle}>{row.title}</div>
                   </td>
-                  <td className={styles.ellipsis}>{row.supplyLocation}</td>
+                  <td>
+                    <div className={styles.ellipsis}>{row.supplyLocation}</div>
+                  </td>
                   <td>{row.registeredAt}</td>
                   <td>{row.region}</td>
                   <td>{row.saleType}</td>
@@ -275,16 +300,43 @@ export default function SaleManagePage() {
       </div>
 
       <div className={styles.paging}>
-        <button className={styles.arrow}>{'<'}</button>
-        {[1, 2, 3, 4, 10, 11].map((n) => (
-          <button
-            key={n}
-            className={`${styles.pageBtn} ${n === 1 ? styles.active : ''}`}
-          >
-            {n}
-          </button>
-        ))}
-        <button className={styles.arrow}>{'>'}</button>
+        <button
+          className={styles.arrow}
+          disabled={currentPageIndex === 0}
+          onClick={() =>
+            setCurrentPage(visiblePages[Math.max(currentPageIndex - 1, 0)] ?? 1)
+          }
+        >
+          {'<'}
+        </button>
+        {pageItems.map((item, idx) =>
+          item === 'ellipsis' ? (
+            <span key={`dots-${idx}`} className={styles.pageDots}>
+              ...
+            </span>
+          ) : (
+            <button
+              key={item}
+              className={`${styles.pageBtn} ${item === currentPage ? styles.active : ''}`}
+              onClick={() => setCurrentPage(item)}
+            >
+              {item}
+            </button>
+          ),
+        )}
+        <button
+          className={styles.arrow}
+          disabled={currentPageIndex === visiblePages.length - 1}
+          onClick={() =>
+            setCurrentPage(
+              visiblePages[
+                Math.min(currentPageIndex + 1, visiblePages.length - 1)
+              ] ?? currentPage,
+            )
+          }
+        >
+          {'>'}
+        </button>
       </div>
 
       {selected && (
@@ -299,7 +351,6 @@ export default function SaleManagePage() {
                 <button className={`${styles.drawerBtn} ${styles.secondary}`}>
                   삭제
                 </button>
-                <button className={styles.drawerBtn}>저장</button>
               </div>
             </div>
 

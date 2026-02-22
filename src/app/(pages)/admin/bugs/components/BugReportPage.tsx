@@ -11,6 +11,7 @@ import {
   type StatusCounts,
 } from '../actions';
 import Spinner from '../../../../components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Alert from '@/app/components/common/Alert/Alert';
 
@@ -51,6 +52,15 @@ export const STATUS_LABEL: Record<BugReportStatus, string> = {
   [BugReportStatus.IN_PROGRESS]: '해결중',
   [BugReportStatus.RESOLVED]: '해결완료',
   [BugReportStatus.CLOSED]: '버그아님',
+};
+
+type PaginationItem = number | 'ellipsis';
+
+const getPageItems = (totalPages: number): PaginationItem[] => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  return [1, 2, 'ellipsis', totalPages];
 };
 
 export default function BugReportPage({
@@ -470,9 +480,9 @@ export default function BugReportPage({
             onChange={(e) => setQ(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <button type="button" onClick={handleSearch} disabled={isSearching}>
-            {isSearching ? <Spinner /> : '검색'}
-          </button>
+          <PrimaryButton onClick={handleSearch} isLoading={isSearching}>
+            검색
+          </PrimaryButton>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
@@ -512,20 +522,19 @@ export default function BugReportPage({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: 60 }}>
+                <th>
                   <input
                     type="checkbox"
                     checked={allVisibleSelected}
                     onChange={(e) => handleToggleAllVisible(e.target.checked)}
                   />
                 </th>
-                <th style={{ width: 400 }}>내용</th>
-                <th style={{ width: 150 }}>발생일</th>
-                <th style={{ width: 200 }}>상태</th>
-                <th style={{ width: 240 }}>메모</th>
+                <th>내용</th>
+                <th>발생일</th>
+                <th>상태</th>
+                <th>메모</th>
                 <th
                   className={styles.assigneeHeader}
-                  style={{ width: 140, position: 'relative' }}
                   ref={assigneeFilterRef}
                 >
                   <button
@@ -592,7 +601,9 @@ export default function BugReportPage({
                         {STATUS_LABEL[r.status as BugReportStatus]}
                       </span>
                     </td>
-                    <td className={styles.ellipsis}>{r.memo || ''}</td>
+                    <td>
+                      <div className={styles.ellipsis}>{r.memo || ''}</div>
+                    </td>
                     <td className={styles.assignee}>
                       {(() => {
                         const displayName = r.assigneeId
@@ -642,26 +653,20 @@ export default function BugReportPage({
             >
               {'<'}
             </button>
-            {Array.from(
-              { length: Math.min(10, initialMeta.totalPages) },
-              (_, i) => {
-                const currentPage = Number(searchParams.page) || 1;
-                const startPage = Math.max(
-                  1,
-                  Math.min(currentPage - 4, initialMeta.totalPages - 9),
-                );
-                const p = startPage + i;
-                if (p > initialMeta.totalPages) return null;
-                return (
-                  <button
-                    key={p}
-                    className={`${styles.pageBtn} ${p === currentPage ? styles.active : ''}`}
-                    onClick={() => handlePageChange(p)}
-                  >
-                    {p}
-                  </button>
-                );
-              },
+            {getPageItems(initialMeta.totalPages).map((item, idx) =>
+              item === 'ellipsis' ? (
+                <span key={`dots-${idx}`} className={styles.pageDots}>
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  className={`${styles.pageBtn} ${item === initialMeta.page ? styles.active : ''}`}
+                  onClick={() => handlePageChange(item)}
+                >
+                  {item}
+                </button>
+              ),
             )}
             <button
               className={styles.arrow}

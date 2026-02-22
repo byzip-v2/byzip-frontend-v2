@@ -1,0 +1,41 @@
+@use '../_variables.scss' as *;
+@use 'sass:color';
+
+.button {
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 96px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+/* 두 클래스 조합으로 페이지별 "searchBox button" 규칙보다 우선 적용 */
+.button.primary {
+  background-color: $color-primary;
+  color: $color-white;
+  min-width: 96px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.button.primary:hover:not(:disabled) {
+  background-color: color.adjust($color-primary, $lightness: -10%);
+}
+
+.button.primary:disabled {
+  cursor: not-allowed;
+  color: $color-white;
+  background-color: color.adjust($color-primary, $lightness: 10%);
+}
