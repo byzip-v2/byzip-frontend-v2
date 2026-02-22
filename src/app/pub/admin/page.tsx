@@ -8,7 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type MouseEvent,
+  type MouseEvent as ReactMouseEvent,
 } from 'react';
 
 type BugReport = {
@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
   }, [osTotal]);
   const donutGradient = getConicGradient(OS_SHARE);
 
-  const handleDonutMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+  const handleDonutMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (!osSegments.length) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!rangeOpen) return;
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (rangeRef.current && !rangeRef.current.contains(event.target as Node)) {
         setRangeOpen(false);
       }

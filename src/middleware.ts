@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { logErrorToDatabase } from '@/app/libs/utils/api';
-import { BugReportErrorType } from 'byzip-v2-sdk';
+import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
 import {
   accessTokenMaxAge,
   refreshTokenMaxAge,
@@ -375,4 +374,61 @@ function redirectToLogin(request: NextRequest) {
  */
 function redirectToAdmin(request: NextRequest) {
   return NextResponse.redirect(new URL('/admin', request.url));
+}
+
+type LogErrorOptions = {
+  actionName?: string;
+  errorType?: BugReportErrorType;
+};
+
+/**
+ * Edge Runtime 전용 에러 로거
+ * middleware는 Edge Runtime에서 실행되므로 axios/node API를 사용하지 않고 fetch로 전송합니다.
+ */
+async function logErrorToDatabase(
+  error: unknown,
+  options?: LogErrorOptions,
+): Promise<void> {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiBaseUrl) {
+    return;
+  }
+
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : 'Unknown error';
+
+  const title = options?.actionName
+    ? `Middleware Error: ${options.actionName}`
+    : 'Middleware Error';
+  const description = options?.actionName
+    ? `${options.actionName} 실행 중 오류 발생: ${errorMessage}`
+    : `미들웨어 실행 중 오류 발생: ${errorMessage}`;
+
+  try {
+    await fetch(`${apiBaseUrl}/bug-reports`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title,
+        description,
+        errorMessage,
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorType: options?.errorType ?? BugReportErrorType.SERVER_ERROR,
+        severity: BugReportSeverity.MEDIUM,
+        url: 'middleware',
+        userAgent: 'edge-middleware',
+        metadata: {
+          source: 'middleware',
+        },
+      }),
+    });
+  } catch (logError) {
+    console.error('🔐 [Middleware] 에러 로깅 실패:', logError);
+  }
 }
