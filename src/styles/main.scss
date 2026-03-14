@@ -3,6 +3,7 @@
 
 
 
+
 :root {
   --color-primary: #{$color-primary};
   --color-secondary: #{$color-secondary};
@@ -13,38 +14,40 @@
   --color-text-secondary: #{$color-text-secondary};
 }
 
+/* Tailwind @layer utilities가 적용되도록 리셋/베이스를 base 레이어로 감쌈.
+   레이어 없는 스타일이 @layer 안 스타일보다 우선하므로, 리셋을 base에 넣어야
+   Tailwind 유틸리티(p-8, rounded-xl 등)가 정상 동작함. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-// reset & base style
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  html,
+  body {
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-pretendard);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    background-color: var(--color-white);
+  }
 
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: var(--font-pretendard);
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--color-text-primary);
-  background-color: var(--color-white);
-}
+  button {
+    font-family: inherit;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button {
-  font-family: inherit;
-}
-
-input,
-textarea {
-  font-family: inherit;
+  input,
+  textarea {
+    font-family: inherit;
+  }
 }
 
 // 스크롤바 스타일링

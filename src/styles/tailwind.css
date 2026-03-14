@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Tailwind가 클래스 사용처를 스캔할 경로 (tailwind.css 기준 상대 경로). src 전체 포함해 누락 방지 */
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../**/*.{ts,tsx}";
+
+@theme {
+  /* CSS 변수 직접 매핑 */
+  --font-pretendard: var(--font-pretendard);
+  --font-pyeongchang: var(--font-pyeongchang);
+  
+  /* 브랜드 색상 정의 */
+  --color-brand-blue: #3270ff;
+  --color-brand-yellow: #ffee5a;
+  
+  /* 그림자 가독성 높이기 */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 추가적인 레이아웃 보정 */
+@layer base {
+  body {
+    @apply antialiased text-slate-900;
+    font-family: var(--font-pretendard);
+  }
+}
