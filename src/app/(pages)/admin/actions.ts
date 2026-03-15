@@ -11,6 +11,7 @@ import {
   type GetMeDataDto,
   type GetMeResponseDto,
   type GetHousingSuppliesResponseDto,
+  type HousingSupplyDataDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -283,6 +284,43 @@ export async function getAnalyticsSummary(): Promise<ActionResult<{
         dailyVisitors: [],
         osVisitors: [],
       },
+    };
+  }
+}
+
+/**
+ * 좌표가 없는 공고 목록(최대 10개) 및 전체 개수를 가져옵니다.
+ */
+export async function getMissingCoordinatesSummary(): Promise<
+  ActionResult<{ items: HousingSupplyDataDto[]; total: number }>
+> {
+  try {
+    const response = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
+      '/housing-supplies/missing-coordinates',
+      {
+        params: {
+          limit: 10,
+          page: 1,
+          sortBy: 'rcritPblancDe',
+          sortOrder: 'DESC',
+        },
+      },
+    );
+
+    return {
+      success: true,
+      message: '좌표 없는 공고를 성공적으로 가져왔습니다.',
+      data: {
+        items: response.data.data,
+        total: response.data.meta.total,
+      },
+    };
+  } catch (error) {
+    console.error('🔍 [getMissingCoordinatesSummary] 에러 발생:', error);
+    return {
+      success: false,
+      message: '좌표 없는 공고를 가져오는데 실패했습니다.',
+      data: { items: [], total: 0 },
     };
   }
 }

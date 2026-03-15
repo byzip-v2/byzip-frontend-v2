@@ -3,6 +3,7 @@
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import styles from '@/styles/pages/admin/dashboard.module.scss';
 import { useRouter } from 'next/navigation';
+import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
 import {
   useEffect,
   useMemo,
@@ -133,9 +134,17 @@ interface DashboardClientProps {
     dailyVisitors: { date: string; activeUsers: number }[];
     osVisitors: { os: string; activeUsers: number }[];
   };
+  missingData?: {
+    items: HousingSupplyDataDto[];
+    total: number;
+  };
 }
 
-export default function DashboardClient({ initialStats, analytics }: DashboardClientProps) {
+export default function DashboardClient({
+  initialStats,
+  analytics,
+  missingData,
+}: DashboardClientProps) {
   const router = useRouter();
   const [visitorRange, setVisitorRange] = useState<VisitorRange>(14);
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -198,10 +207,21 @@ export default function DashboardClient({ initialStats, analytics }: DashboardCl
     () => BUG_REPORTS.slice(0, PREVIEW_LIMIT),
     [],
   );
-  const previewMissingGeoRows = useMemo(
-    () => MISSING_GEO_ROWS.slice(0, PREVIEW_LIMIT),
-    [],
-  );
+  const previewMissingGeoRows = useMemo(() => {
+    if (missingData?.items && missingData.items.length > 0) {
+      return missingData.items.map((item) => ({
+        id: String(item.id),
+        announcement: item.houseName || '이름 없음',
+        postedAt: item.rcritPblancDe
+          ? new Date(item.rcritPblancDe).toLocaleDateString('ko-KR')
+          : '-',
+        winnerAt: item.przwnerPresnatnDe
+          ? new Date(item.przwnerPresnatnDe).toLocaleDateString('ko-KR')
+          : '-',
+      }));
+    }
+    return MISSING_GEO_ROWS.slice(0, PREVIEW_LIMIT);
+  }, [missingData]);
   const maxVisitor = Math.max(...visitorChartData.map((item) => item.value), 1);
   const osShareData = useMemo((): OsShare[] => {
     if (analytics?.osVisitors && analytics.osVisitors.length > 0) {
@@ -447,7 +467,7 @@ export default function DashboardClient({ initialStats, analytics }: DashboardCl
               <button
                 type="button"
                 className={styles.linkButton}
-                onClick={() => router.push('/pub/admin/bug')}
+                onClick={() => router.push('/admin/bugs')}
               >
                 더보기
               </button>
@@ -472,13 +492,13 @@ export default function DashboardClient({ initialStats, analytics }: DashboardCl
               <h2 className={styles.panelTitle}>
                 좌표가 없는 공고{' '}
                 <span className={styles.countAccent}>
-                  ({previewMissingGeoRows.length}개)
+                  ({missingData?.total ?? 0}개)
                 </span>
               </h2>
               <button
                 type="button"
                 className={styles.linkButton}
-                onClick={() => router.push('/pub/admin/geo')}
+                onClick={() => router.push('/admin/geo')}
               >
                 더보기
               </button>

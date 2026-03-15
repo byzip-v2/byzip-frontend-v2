@@ -21,6 +21,13 @@ export async function getMissingCoordinates(): Promise<
     const response =
       await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
         '/housing-supplies/missing-coordinates',
+        {
+          params: {
+            limit: 100, // API 자체에 최대 100개 제한 (기본값 10개)
+            sortBy: 'rcritPblancDe',
+            sortOrder: 'DESC',
+          },
+        },
       );
 
     if (response.status !== 200 || !response.data.success) {
