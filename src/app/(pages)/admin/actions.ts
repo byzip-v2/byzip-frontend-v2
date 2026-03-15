@@ -19,6 +19,7 @@ import {
 } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
+import { getDailyVisitors, getOSVisitors } from '@/app/libs/utils/analytics';
 
 /**
  * 사용자 정보 조회 Server Action
@@ -248,6 +249,40 @@ export async function getDashboardSummary(): Promise<ActionResult<{ pendingCount
       success: false,
       message: '통계 정보를 가져오는데 실패했습니다.',
       data: { pendingCount: 0, todayNewCount: 0 },
+    };
+  }
+}
+
+/**
+ * 대시보드 분석 통계(방문자 수, OS 비율)를 가져옵니다.
+ */
+export async function getAnalyticsSummary(): Promise<ActionResult<{
+  dailyVisitors: { date: string; activeUsers: number }[];
+  osVisitors: { os: string; activeUsers: number }[];
+}>> {
+  try {
+    const [daily, os] = await Promise.all([
+      getDailyVisitors(),
+      getOSVisitors(),
+    ]);
+
+    return {
+      success: true,
+      message: '분석 통계를 성공적으로 가져왔습니다.',
+      data: {
+        dailyVisitors: daily,
+        osVisitors: os,
+      },
+    };
+  } catch (error) {
+    console.error('🔍 [getAnalyticsSummary] 에러 발생:', error);
+    return {
+      success: false,
+      message: '분석 통계를 가져오는데 실패했습니다.',
+      data: {
+        dailyVisitors: [],
+        osVisitors: [],
+      },
     };
   }
 }

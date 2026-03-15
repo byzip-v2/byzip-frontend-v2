@@ -129,9 +129,13 @@ interface DashboardClientProps {
     pendingCount: number;
     todayNewCount: number;
   };
+  analytics?: {
+    dailyVisitors: { date: string; activeUsers: number }[];
+    osVisitors: { os: string; activeUsers: number }[];
+  };
 }
 
-export default function DashboardClient({ initialStats }: DashboardClientProps) {
+export default function DashboardClient({ initialStats, analytics }: DashboardClientProps) {
   const router = useRouter();
   const [visitorRange, setVisitorRange] = useState<VisitorRange>(14);
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -142,13 +146,39 @@ export default function DashboardClient({ initialStats }: DashboardClientProps) 
     x: number;
     y: number;
   } | null>(null);
-  const [stats, setStats] = useState(initialStats || {
+  const [visitorTooltip, setVisitorTooltip] = useState<{
+    label: string;
+    value: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [stats] = useState(initialStats || {
     pendingCount: 0,
     todayNewCount: 0,
   });
   const rangeRef = useRef<HTMLDivElement>(null);
 
   const visitorChartData = useMemo(() => {
+    // API 데이터가 있는 경우 우선 사용
+    if (analytics?.dailyVisitors && analytics.dailyVisitors.length > 0) {
+      // 날짜순으로 정렬 (GA 응답 순서 보장 안될 수 있음)
+      const sortedSource = [...analytics.dailyVisitors].sort((a, b) =>
+        Number(a.date) - Number(b.date)
+      );
+
+      // 최근 N일치 선택 (7일, 14일, 30일 등)
+      return sortedSource.slice(-visitorRange).map((item) => {
+        // YYYYMMDD -> DD일 형식으로 변환
+        const day = item.date.slice(-2);
+        return {
+          key: `ga-${item.date}`,
+          label: `${Number(day)}일`,
+          value: item.activeUsers,
+        };
+      });
+    }
+
+    // 데이터가 없는 경우 기존 더미 데이터 유지 (개발용)
     if (visitorRange === 1) {
       return VISITOR_HOURLY.map((value, hour) => ({
         key: `hour-${hour}`,
@@ -162,7 +192,7 @@ export default function DashboardClient({ initialStats }: DashboardClientProps) 
       label: `${index + 1}일`,
       value,
     }));
-  }, [visitorRange]);
+  }, [visitorRange, analytics]);
 
   const previewBugReports = useMemo(
     () => BUG_REPORTS.slice(0, PREVIEW_LIMIT),
@@ -173,12 +203,31 @@ export default function DashboardClient({ initialStats }: DashboardClientProps) 
     [],
   );
   const maxVisitor = Math.max(...visitorChartData.map((item) => item.value), 1);
-  const osTotal = OS_SHARE.reduce((sum, item) => sum + item.value, 0);
+  const osShareData = useMemo((): OsShare[] => {
+    if (analytics?.osVisitors && analytics.osVisitors.length > 0) {
+      const colors: Record<string, string> = {
+        iOS: '#22c55e',
+        Android: '#f2d544',
+        Windows: '#3270ff',
+        Macintosh: '#a855f7',
+        Linux: '#ef4444',
+      };
+
+      return analytics.osVisitors.map((item) => ({
+        label: item.os.toUpperCase(),
+        value: item.activeUsers,
+        color: colors[item.os] || '#94a3b8',
+      }));
+    }
+    return OS_SHARE;
+  }, [analytics]);
+
+  const osTotal = osShareData.reduce((sum, item) => sum + item.value, 0);
   const osSegments = useMemo(() => {
     if (!osTotal) return [];
 
     let cursor = 0;
-    return OS_SHARE.map((item) => {
+    return osShareData.map((item) => {
       const startDeg = cursor;
       cursor += (item.value / osTotal) * 360;
       return {
@@ -187,9 +236,30 @@ export default function DashboardClient({ initialStats }: DashboardClientProps) 
         endDeg: cursor,
       };
     });
-  }, [osTotal]);
+  }, [osTotal, osShareData]);
 
-  const donutGradient = getConicGradient(OS_SHARE);
+  const donutGradient = getConicGradient(osShareData);
+
+  // 차트 최대값 및 수치 레이블 계산
+  const { chartMax, uniqueYLabels } = useMemo(() => {
+    // 수치가 적을 때 중복 방지 및 여유 공간 확보를 위한 보정
+    const max = maxVisitor < 4 ? 4 : Math.ceil(maxVisitor * 1.1);
+    const intervals = [
+      max,
+      Math.round(max * 0.75),
+      Math.round(max * 0.5),
+      Math.round(max * 0.25),
+      0,
+    ];
+
+    // 중복 제거 및 내림차순 정렬
+    const unique = Array.from(new Set(intervals)).sort((a, b) => b - a);
+
+    return {
+      chartMax: max,
+      uniqueYLabels: unique,
+    };
+  }, [maxVisitor]);
 
   const handleDonutMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (!osSegments.length) return;
@@ -307,31 +377,67 @@ export default function DashboardClient({ initialStats }: DashboardClientProps) 
               </div>
             </div>
 
-            <div
-              className={styles.barChart}
-              style={{
-                gridTemplateColumns: `repeat(${visitorChartData.length}, minmax(0, 1fr))`,
-              }}
-              role="img"
-              aria-label={
-                visitorRange === 1
-                  ? '최근 24시간 방문자 수 차트'
-                  : `최근 ${visitorRange}일 방문자 수 차트`
-              }
-            >
-              {visitorChartData.map((item) => (
-                <div key={item.key} className={styles.barItem}>
-                  <div className={styles.barTrack}>
-                    <span
-                      className={styles.bar}
-                      style={{
-                        height: `${Math.max((item.value / maxVisitor) * 100, 10)}%`,
-                      }}
-                    />
-                  </div>
-                  <span className={styles.barLabel}>{item.label}</span>
+            <div className={styles.chartContainer}>
+              <div className={styles.chartYAxis}>
+                {uniqueYLabels.map((label) => (
+                  <span key={label} className={styles.yLabel}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              <div
+                className={styles.barChart}
+                style={{
+                  gridTemplateColumns: `repeat(${visitorChartData.length}, minmax(0, 1fr))`,
+                }}
+                role="img"
+                aria-label={
+                  visitorRange === 1
+                    ? '최근 24시간 방문자 수 차트'
+                    : `최근 ${visitorRange}일 방문자 수 차트`
+                }
+              >
+                <div className={styles.chartGrid}>
+                  {uniqueYLabels.map((label) => (
+                    <div key={`grid-${label}`} className={styles.gridLine} />
+                  ))}
                 </div>
-              ))}
+
+                {visitorChartData.map((item) => (
+                  <div key={item.key} className={styles.barItem}>
+                    <div className={styles.barTrack}>
+                      <span
+                        className={styles.bar}
+                        style={{
+                          height: `${Math.max((item.value / chartMax) * 100, 4)}%`,
+                        }}
+                        onMouseMove={(e) => {
+                          const containerRect = e.currentTarget.closest(`.${styles.chartContainer}`)?.getBoundingClientRect();
+                          if (containerRect) {
+                            setVisitorTooltip({
+                              label: item.label,
+                              value: item.value,
+                              x: e.clientX - containerRect.left,
+                              y: e.clientY - containerRect.top,
+                            });
+                          }
+                        }}
+                        onMouseLeave={() => setVisitorTooltip(null)}
+                      />
+                    </div>
+                    <span className={styles.barLabel}>{item.label}</span>
+                  </div>
+                ))}
+                {visitorTooltip && (
+                  <div
+                    className={styles.donutTooltip}
+                    style={{ left: `${visitorTooltip.x}px`, top: `${visitorTooltip.y}px` }}
+                  >
+                    {visitorTooltip.label}: {visitorTooltip.value}명
+                  </div>
+                )}
+              </div>
             </div>
           </article>
 
@@ -403,7 +509,16 @@ export default function DashboardClient({ initialStats }: DashboardClientProps) 
           <article className={`${styles.panel} ${styles.osPanel}`}>
             <div className={styles.panelHeaderBlock}>
               <h2 className={styles.panelTitle}>방문자별 OS</h2>
-              <p className={styles.panelSubText}>6월 1일 - 15일, 2025</p>
+              <p className={styles.panelSubText}>
+                {(() => {
+                  const now = new Date();
+                  const thirtyDaysAgo = new Date();
+                  thirtyDaysAgo.setDate(now.getDate() - 30);
+
+                  const formatDate = (d: Date) => `${d.getMonth() + 1}월 ${d.getDate()}일`;
+                  return `${formatDate(thirtyDaysAgo)} - ${formatDate(now)}, ${now.getFullYear()}`;
+                })()}
+              </p>
             </div>
 
             <div className={styles.osContent}>
@@ -425,13 +540,13 @@ export default function DashboardClient({ initialStats }: DashboardClientProps) 
                     className={styles.donutTooltip}
                     style={{ left: `${osTooltip.x}px`, top: `${osTooltip.y}px` }}
                   >
-                    {osTooltip.percent}%
+                    {osTooltip.label}: {osTooltip.value}명 ({osTooltip.percent}%)
                   </div>
                 )}
               </div>
 
               <ul className={styles.osLegend}>
-                {OS_SHARE.map((item) => (
+                {osShareData.map((item) => (
                   <li key={item.label} className={styles.osLegendItem}>
                     <span
                       className={styles.osLegendDot}
