@@ -10,6 +10,7 @@ import {
   BugReportErrorType,
   type GetMeDataDto,
   type GetMeResponseDto,
+  type GetHousingSuppliesResponseDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -198,6 +199,55 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
     return {
       success: false,
       message: 'getUserInfo 테스트 에러 발생',
+    };
+  }
+}
+
+export async function getDashboardSummary(): Promise<ActionResult<{ pendingCount: number; todayNewCount: number }>> {
+  try {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    // 1. 오늘 올라온 공고 (공고일 rcritPblancDe가 오늘인 것)
+    const todayRes = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
+      '/housing-supplies',
+      {
+        params: {
+          rcritPblancDeFrom: todayStr,
+          rcritPblancDeTo: todayStr,
+          limit: 1,
+        },
+      },
+    );
+
+    // 2. 모집중인 공고 (공고종료일 rcritPblancDeTo가 오늘 이후인 것)
+    // 사용자 요청: rcritPblancDeTo가 오늘을 지나지 않은(종료되지 않은) 공고
+    const recruitingRes = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
+      '/housing-supplies',
+      {
+        params: {
+          rcritPblancDeToFrom: todayStr, // 종료일이 오늘부터인 것들 시작
+          limit: 1,
+        },
+      },
+    );
+
+    return {
+      success: true,
+      message: '성공적으로 통계를 가져왔습니다.',
+      data: {
+        pendingCount: recruitingRes.data.meta.total,
+        todayNewCount: todayRes.data.meta.total,
+      },
+    };
+  } catch (error) {
+    handleNextRedirectError(error);
+    console.error('🔍 [getDashboardSummary] 에러 발생:', error);
+
+    return {
+      success: false,
+      message: '통계 정보를 가져오는데 실패했습니다.',
+      data: { pendingCount: 0, todayNewCount: 0 },
     };
   }
 }

@@ -33,7 +33,7 @@ export default async function Page({
     search,
     isHidden: isHidden || undefined,
     // includeEnded가 true이면 날짜 필터 생략, false이면 오늘 이후인 것만 조회
-    rcritPblancDeFrom: !includeEnded ? today : undefined,
+    rcritPblancDeTo: !includeEnded ? today : undefined,
   });
 
   if (!result.success) {
