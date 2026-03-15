@@ -224,13 +224,12 @@ export async function getDashboardSummary(): Promise<ActionResult<{ pendingCount
       },
     );
 
-    // 2. 모집중인 공고 (공고종료일 rcritPblancDeTo가 오늘 이후인 것)
-    // 사용자 요청: rcritPblancDeTo가 오늘을 지나지 않은(종료되지 않은) 공고
+    // 2. 모집중인 공고
     const recruitingRes = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
       '/housing-supplies',
       {
         params: {
-          rcritPblancDeToFrom: todayStr, // 종료일이 오늘부터인 것들 시작
+          recruiting: true,
           limit: 1,
         },
       },
