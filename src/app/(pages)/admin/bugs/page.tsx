@@ -1,6 +1,5 @@
 'use server';
 
-import { BugReportStatus } from 'byzip-v2-sdk';
 import { getBugReports, type GetBugReportsParams } from './actions';
 import BugReportPage from './components/BugReportPage';
 
@@ -27,8 +26,8 @@ export default async function Page({ searchParams }: BugReportPageProps) {
     sortOrder: 'DESC',
   };
 
-  // 필터는 항상 있음. URL에 없으면 기본값 open
-  apiParams.status = status || BugReportStatus.OPEN;
+  // 필터는 URL에 있을 때만 적용 (없으면 전체 조회)
+  apiParams.status = status || undefined;
 
   // 서버사이드 데이터 페칭
   const result = await getBugReports(apiParams);

@@ -10,6 +10,10 @@ import {
   BugReportErrorType,
   type GetMeDataDto,
   type GetMeResponseDto,
+  type GetHousingSuppliesResponseDto,
+  type HousingSupplyDataDto,
+  type BugReportDataDto,
+  type GetBugReportsResponseDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -18,6 +22,7 @@ import {
 } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
+import { getDailyVisitors, getOSVisitors } from '@/app/libs/utils/analytics';
 
 /**
  * 사용자 정보 조회 Server Action
@@ -198,6 +203,157 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
     return {
       success: false,
       message: 'getUserInfo 테스트 에러 발생',
+    };
+  }
+}
+
+export async function getDashboardSummary(): Promise<ActionResult<{ pendingCount: number; todayNewCount: number }>> {
+  try {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    // 1. 오늘 올라온 공고 (공고일 rcritPblancDe가 오늘인 것)
+    const todayRes = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
+      '/housing-supplies',
+      {
+        params: {
+          rcritPblancDeFrom: todayStr,
+          rcritPblancDeTo: todayStr,
+          limit: 1,
+        },
+      },
+    );
+
+    // 2. 모집중인 공고
+    const recruitingRes = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
+      '/housing-supplies',
+      {
+        params: {
+          recruiting: true,
+          limit: 1,
+        },
+      },
+    );
+
+    return {
+      success: true,
+      message: '성공적으로 통계를 가져왔습니다.',
+      data: {
+        pendingCount: recruitingRes.data.meta.total,
+        todayNewCount: todayRes.data.meta.total,
+      },
+    };
+  } catch (error) {
+    handleNextRedirectError(error);
+    console.error('🔍 [getDashboardSummary] 에러 발생:', error);
+
+    return {
+      success: false,
+      message: '통계 정보를 가져오는데 실패했습니다.',
+      data: { pendingCount: 0, todayNewCount: 0 },
+    };
+  }
+}
+
+/**
+ * 대시보드 분석 통계(방문자 수, OS 비율)를 가져옵니다.
+ */
+export async function getAnalyticsSummary(): Promise<ActionResult<{
+  dailyVisitors: { date: string; activeUsers: number }[];
+  osVisitors: { os: string; activeUsers: number }[];
+}>> {
+  try {
+    const [daily, os] = await Promise.all([
+      getDailyVisitors(),
+      getOSVisitors(),
+    ]);
+
+    return {
+      success: true,
+      message: '분석 통계를 성공적으로 가져왔습니다.',
+      data: {
+        dailyVisitors: daily,
+        osVisitors: os,
+      },
+    };
+  } catch (error) {
+    console.error('🔍 [getAnalyticsSummary] 에러 발생:', error);
+    return {
+      success: false,
+      message: '분석 통계를 가져오는데 실패했습니다.',
+      data: {
+        dailyVisitors: [],
+        osVisitors: [],
+      },
+    };
+  }
+}
+
+/**
+ * 좌표가 없는 공고 목록(최대 10개) 및 전체 개수를 가져옵니다.
+ */
+export async function getMissingCoordinatesSummary(): Promise<
+  ActionResult<{ items: HousingSupplyDataDto[]; total: number }>
+> {
+  try {
+    const response = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
+      '/housing-supplies/missing-coordinates',
+      {
+        params: {
+          limit: 10,
+          page: 1,
+          sortBy: 'rcritPblancDe',
+          sortOrder: 'DESC',
+        },
+      },
+    );
+
+    return {
+      success: true,
+      message: '좌표 없는 공고를 성공적으로 가져왔습니다.',
+      data: {
+        items: response.data.data,
+        total: response.data.meta.total,
+      },
+    };
+  } catch (error) {
+    console.error('🔍 [getMissingCoordinatesSummary] 에러 발생:', error);
+    return {
+      success: false,
+      message: '좌표 없는 공고를 가져오는데 실패했습니다.',
+      data: { items: [], total: 0 },
+    };
+  }
+}
+
+/**
+ * 최신 버그 리포트 목록(최대 10개)을 가져옵니다.
+ */
+export async function getBugReportsSummary(): Promise<ActionResult<BugReportDataDto[]>> {
+  try {
+    const response = await serverApiWithToken.get<GetBugReportsResponseDto>(
+      '/bug-reports',
+      {
+        params: {
+          limit: 10,
+          page: 1,
+          sortBy: 'createdAt',
+          sortOrder: 'DESC',
+        },
+      },
+    );
+
+    return {
+      success: true,
+      message: '버그 리포트를 성공적으로 가져왔습니다.',
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error('🔍 [getBugReportsSummary] 에러 발생:', error);
+    return {
+      success: false,
+      message: '버그 리포트를 가져오는데 실패했습니다.',
+      data: [],
     };
   }
 }

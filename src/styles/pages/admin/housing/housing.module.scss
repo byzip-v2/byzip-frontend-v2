@@ -279,39 +279,7 @@
   white-space: nowrap;
 }
 
-.paging {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 0;
-}
 
-.pageBtn,
-.arrow {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid $color-border-subtle;
-  border-radius: 8px;
-  background: $color-white;
-  cursor: pointer;
-}
-
-.pageDots {
-  min-width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: $color-text-secondary;
-  font-weight: 600;
-}
-
-.pageBtn.active {
-  background: $color-primary;
-  border-color: $color-primary;
-  color: $color-white;
-}
 
 .rowSelected {
   background: $color-highlight-soft;

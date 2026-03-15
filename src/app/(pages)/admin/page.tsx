@@ -1,34 +1,43 @@
-import ErrorTestButton from './components/ErrorTestButton';
-import ClientErrorTestButton from './components/ClientErrorTestButton';
-import UserMeTestButton from './components/UserMeTestButton';
+import DashboardClient from './DashboardClient';
+import {
+  getDashboardSummary,
+  getAnalyticsSummary,
+  getMissingCoordinatesSummary,
+  getBugReportsSummary,
+} from './actions';
 
-export default async function AdminPage() {
+export default async function AdminDashboardPage() {
+  // 데이터를 서버에서 미리 가져옴
+  const [statsRes, analyticsRes, missingRes, bugRes] = await Promise.all([
+    getDashboardSummary(),
+    getAnalyticsSummary(),
+    getMissingCoordinatesSummary(),
+    getBugReportsSummary(),
+  ]);
+
+  const stats =
+    statsRes.success && statsRes.data
+      ? statsRes.data
+      : { pendingCount: 0, todayNewCount: 0 };
+
+  const analytics =
+    analyticsRes.success && analyticsRes.data
+      ? analyticsRes.data
+      : { dailyVisitors: [], osVisitors: [] };
+
+  const missingData =
+    missingRes.success && missingRes.data
+      ? missingRes.data
+      : { items: [], total: 0 };
+
+  const bugReports = bugRes.success && bugRes.data ? bugRes.data : [];
+
   return (
-    <div style={{ padding: '20px' }}>
-      <header>
-        <h1>대시보드</h1>
-      </header>
-      <section style={{ marginTop: '32px' }}>
-        <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>
-          API 테스트
-        </h2>
-        <UserMeTestButton />
-      </section>
-      <section style={{ marginTop: '32px' }}>
-        <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>
-          서버 에러 테스트
-        </h2>
-        <ErrorTestButton errorType="404" label="404 에러 테스트" />
-        <ErrorTestButton errorType="500" label="500 에러 테스트" />
-        <ErrorTestButton errorType="network" label="네트워크 에러 테스트" />
-        <ErrorTestButton errorType="timeout" label="타임아웃 에러 테스트" />
-      </section>
-      <section style={{ marginTop: '32px' }}>
-        <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>
-          클라이언트 에러 테스트
-        </h2>
-        <ClientErrorTestButton />
-      </section>
-    </div>
+    <DashboardClient
+      initialStats={stats}
+      analytics={analytics}
+      missingData={missingData}
+      bugReports={bugReports}
+    />
   );
 }

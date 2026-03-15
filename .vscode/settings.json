@@ -1,0 +1,3 @@
+{
+  "css.lint.unknownAtRules": "ignore" // CSS 린트 경고 비활성화
+}

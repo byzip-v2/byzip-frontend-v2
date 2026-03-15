@@ -14,6 +14,7 @@ import Spinner from '../../../../components/common/Spinner/Spinner';
 import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Alert from '@/app/components/common/Alert/Alert';
+import Pagination from '@/app/components/common/Pagination/Pagination';
 
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
@@ -27,8 +28,8 @@ interface BugReportClientProps {
   };
 }
 
-/** 서버(byzip-sdk)와 동일한 상태값. 기본값 open */
-export type StatusFilter = BugReportStatus;
+/** 서버(byzip-sdk)와 동일한 상태값 + 전체(all) */
+export type StatusFilter = BugReportStatus | 'all';
 
 // 내부에 저장되는 assignee id 목록 및 표시 이름
 export const ASSIGNEES = [
@@ -54,14 +55,6 @@ export const STATUS_LABEL: Record<BugReportStatus, string> = {
   [BugReportStatus.CLOSED]: '버그아님',
 };
 
-type PaginationItem = number | 'ellipsis';
-
-const getPageItems = (totalPages: number): PaginationItem[] => {
-  if (totalPages <= 5) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  return [1, 2, 'ellipsis', totalPages];
-};
 
 export default function BugReportPage({
   initialBugs,
@@ -147,9 +140,9 @@ export default function BugReportPage({
   const [isUpdating, setIsUpdating] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
 
-  /** 선택된 상태 필터. URL에 없으면 기본값 open */
+  /** 선택된 상태 필터. URL에서 가져오며 없으면 'all' */
   const statusFilter: StatusFilter =
-    (searchParams.status as BugReportStatus) || BugReportStatus.OPEN;
+    (searchParams.status as BugReportStatus) || 'all';
 
   // 데이터 가공 (서버 status 그대로 사용, 포맷된 날짜만 추가)
   const processedBugs = useMemo(() => {
@@ -289,10 +282,9 @@ export default function BugReportPage({
     setAssigneeOpen(false);
   };
 
-  /** 같은 카드 재클릭 시 기본값(open)으로, 아니면 해당 상태로 필터 */
+  /** 같은 카드 재클릭 시 전체(all)로, 아니면 해당 상태로 필터 */
   const toggleFilter = (next: BugReportStatus) => {
-    const newStatus: StatusFilter =
-      statusFilter === next ? BugReportStatus.OPEN : next;
+    const newStatus = statusFilter === next ? undefined : next;
     updateUrl({ status: newStatus, page: 1 });
   };
 
@@ -487,11 +479,11 @@ export default function BugReportPage({
             <button
               type="button"
               className={styles.statusActionBtn}
-              disabled={!hasSelection}
+              disabled={!hasSelection || isUpdating}
               onClick={handleToggleStatusAction}
               aria-expanded={statusActionOpen}
             >
-              상태변경
+              {isUpdating ? <Spinner /> : '상태변경'}
             </button>
             {statusActionOpen && (
               <div className={styles.statusActionMenu}>
@@ -644,39 +636,12 @@ export default function BugReportPage({
         </div>
 
         {/* 페이지네이션 */}
-        {initialMeta && initialMeta.totalPages > 1 && (
-          <div className={styles.paging}>
-            <button
-              className={styles.arrow}
-              onClick={() => handlePageChange(initialMeta.page - 1)}
-              disabled={initialMeta.page === 1}
-            >
-              {'<'}
-            </button>
-            {getPageItems(initialMeta.totalPages).map((item, idx) =>
-              item === 'ellipsis' ? (
-                <span key={`dots-${idx}`} className={styles.pageDots}>
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  className={`${styles.pageBtn} ${item === initialMeta.page ? styles.active : ''}`}
-                  onClick={() => handlePageChange(item)}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-            <button
-              className={styles.arrow}
-              onClick={() => handlePageChange(initialMeta.page + 1)}
-              disabled={initialMeta.page === initialMeta.totalPages}
-            >
-              {'>'}
-            </button>
-          </div>
-        )}
+        <Pagination
+          currentPage={initialMeta?.page || 1}
+          totalPages={initialMeta?.totalPages || 1}
+          onPageChange={handlePageChange}
+          hasData={processedBugs.length > 0}
+        />
       </section>
 
       {/* 오른쪽 디테일 서랍 */}

@@ -43,23 +43,3 @@ export async function getOSVisitors() {
 
   return result;
 }
-
-// 한 달간 조회수 상위 페이지 조회
-export async function getTopPages() {
-  const [response] = await client.runReport({
-    property: `properties/${GOOGLE_ANALYTICS_PROPERTY_ID}`,
-    dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-    dimensions: [{ name: 'pageTitle' }],
-    metrics: [{ name: 'screenPageViews' }],
-    orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
-    limit: 10,
-  });
-
-  const result =
-    response.rows?.map((row) => ({
-      path: row.dimensionValues?.[0]?.value ?? '',
-      pageViews: Number(row.metricValues?.[0]?.value ?? 0),
-    })) ?? [];
-
-  return result;
-}

@@ -7,12 +7,33 @@ import HousingPage from './components/HousingPage';
  * 분양공고 관리 페이지 (서버 컴포넌트)
  * 초기 데이터를 서버사이드에서 페칭하여 클라이언트 컴포넌트로 전달합니다.
  */
-export default async function Page() {
-  // 초기 데이터 페칭 (페이지 1, 리밋 10)
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    isHidden?: string;
+    includeEnded?: string;
+  }>;
+}) {
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
+  const search = params.search || undefined;
+  const isHidden = params.isHidden === 'true';
+  const includeEnded = params.includeEnded === 'true';
+
+  // 오늘 날짜 (종료된 공고 필터용)
+  const today = new Date().toISOString().split('T')[0];
+
+  // 초기 데이터 페칭
   const result = await getHousingSupplies({
-    page: 1,
+    page,
     limit: 10,
-    rcritPblancDeFrom: new Date().toISOString().split('T')[0],
+    search,
+    isHidden: isHidden || undefined,
+    // includeEnded가 true이면 날짜 필터 생략, false이면 오늘 이후인 것만 조회
+    rcritPblancDeTo: !includeEnded ? today : undefined,
   });
 
   if (!result.success) {
@@ -36,5 +57,5 @@ export default async function Page() {
     }
   };
 
-  return <HousingPage initialData={initialData} />;
+  return <HousingPage initialData={initialData} searchParams={params} />;
 }

@@ -27,6 +27,7 @@ export interface GetHousingSuppliesParams {
     parcprcUlsAt?: string;
     specltRdnEarthAt?: string;
     isHidden?: boolean;
+    recruiting?: boolean;
     page?: number;
     limit?: number;
     sortBy?: string;
