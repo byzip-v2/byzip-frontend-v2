@@ -3,7 +3,7 @@
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import styles from '@/styles/pages/admin/dashboard.module.scss';
 import { useRouter } from 'next/navigation';
-import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
+import type { HousingSupplyDataDto, BugReportDataDto } from 'byzip-v2-sdk';
 import {
   useEffect,
   useMemo,
@@ -138,12 +138,14 @@ interface DashboardClientProps {
     items: HousingSupplyDataDto[];
     total: number;
   };
+  bugReports?: BugReportDataDto[];
 }
 
 export default function DashboardClient({
   initialStats,
   analytics,
   missingData,
+  bugReports,
 }: DashboardClientProps) {
   const router = useRouter();
   const [visitorRange, setVisitorRange] = useState<VisitorRange>(14);
@@ -203,10 +205,21 @@ export default function DashboardClient({
     }));
   }, [visitorRange, analytics]);
 
-  const previewBugReports = useMemo(
-    () => BUG_REPORTS.slice(0, PREVIEW_LIMIT),
-    [],
-  );
+  const previewBugReports = useMemo(() => {
+    if (bugReports && bugReports.length > 0) {
+      return bugReports.map((item) => ({
+        id: String(item.id),
+        title: item.title,
+        errorType: item.errorType,
+        summary: item.description,
+      }));
+    }
+    return BUG_REPORTS.slice(0, PREVIEW_LIMIT).map((item) => ({
+      ...item,
+      title: 'Error',
+      errorType: '500 - Internal Server Error',
+    }));
+  }, [bugReports]);
   const previewMissingGeoRows = useMemo(() => {
     if (missingData?.items && missingData.items.length > 0) {
       return missingData.items.map((item) => ({
@@ -476,10 +489,10 @@ export default function DashboardClient({
             <ul className={styles.bugList}>
               {previewBugReports.map((item) => (
                 <li key={item.id} className={styles.bugItem}>
-                  <p className={styles.bugTitle}>Error</p>
+                  <p className={styles.bugTitle}>{item.title}</p>
                   <p className={styles.bugMeta}>
                     <span className={styles.bugMetaDot} aria-hidden />
-                    500 - Internal Server Error
+                    {item.errorType}
                   </p>
                   <p className={styles.bugText}>{item.summary}</p>
                 </li>

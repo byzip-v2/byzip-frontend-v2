@@ -3,14 +3,16 @@ import {
   getDashboardSummary,
   getAnalyticsSummary,
   getMissingCoordinatesSummary,
+  getBugReportsSummary,
 } from './actions';
 
 export default async function AdminDashboardPage() {
   // 데이터를 서버에서 미리 가져옴
-  const [statsRes, analyticsRes, missingRes] = await Promise.all([
+  const [statsRes, analyticsRes, missingRes, bugRes] = await Promise.all([
     getDashboardSummary(),
     getAnalyticsSummary(),
     getMissingCoordinatesSummary(),
+    getBugReportsSummary(),
   ]);
 
   const stats =
@@ -28,11 +30,14 @@ export default async function AdminDashboardPage() {
       ? missingRes.data
       : { items: [], total: 0 };
 
+  const bugReports = bugRes.success && bugRes.data ? bugRes.data : [];
+
   return (
     <DashboardClient
       initialStats={stats}
       analytics={analytics}
       missingData={missingData}
+      bugReports={bugReports}
     />
   );
 }

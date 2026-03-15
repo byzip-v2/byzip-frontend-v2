@@ -12,6 +12,8 @@ import {
   type GetMeResponseDto,
   type GetHousingSuppliesResponseDto,
   type HousingSupplyDataDto,
+  type BugReportDataDto,
+  type GetBugReportsResponseDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -321,6 +323,38 @@ export async function getMissingCoordinatesSummary(): Promise<
       success: false,
       message: '좌표 없는 공고를 가져오는데 실패했습니다.',
       data: { items: [], total: 0 },
+    };
+  }
+}
+
+/**
+ * 최신 버그 리포트 목록(최대 10개)을 가져옵니다.
+ */
+export async function getBugReportsSummary(): Promise<ActionResult<BugReportDataDto[]>> {
+  try {
+    const response = await serverApiWithToken.get<GetBugReportsResponseDto>(
+      '/bug-reports',
+      {
+        params: {
+          limit: 10,
+          page: 1,
+          sortBy: 'createdAt',
+          sortOrder: 'DESC',
+        },
+      },
+    );
+
+    return {
+      success: true,
+      message: '버그 리포트를 성공적으로 가져왔습니다.',
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error('🔍 [getBugReportsSummary] 에러 발생:', error);
+    return {
+      success: false,
+      message: '버그 리포트를 가져오는데 실패했습니다.',
+      data: [],
     };
   }
 }
