@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, LucideMail } from 'lucide-react';
 import AlertModal from '@/app/libs/global-components/AlertModal';
+import Spinner from '@/app/components/common/Spinner/Spinner';
 import { loginAction } from '../actions';
 import styles from '@/styles/pages/login/login.module.scss';
 
@@ -140,7 +141,7 @@ export default function LoginForm() {
       </div>
 
       <button className={styles.signInBtn} onClick={handleLogin}>
-        {isPending ? '로그인 중...' : '로그인'}
+        {isPending ? <Spinner /> : '로그인'}
       </button>
 
       {showModal && (
