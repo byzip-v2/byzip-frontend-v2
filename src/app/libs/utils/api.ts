@@ -341,6 +341,8 @@ interface LogErrorOptions {
   skipAxiosError?: boolean;
   /** 에러 타입 (지정하지 않으면 자동 판단) */
   errorType?: BugReportErrorType;
+  /** 응답 상태 코드 (선택 사항, 404 등 특정 에러 제외 시 사용) */
+  status?: number;
 }
 
 /**
@@ -373,10 +375,21 @@ export const logErrorToDatabase = async (
   error: AxiosError | Error | unknown,
   options?: LogErrorOptions,
 ): Promise<void> => {
-  const { config, actionName, skipAxiosError, errorType } = options || {};
+  const { config, actionName, skipAxiosError, errorType, status } = options || {};
 
   // AxiosError이면 서버 액션 로깅 건너뛰기
   if (axios.isAxiosError(error) && skipAxiosError) {
+    return;
+  }
+
+  // 404 에러인 경우 로깅 제외
+  // 1. AxiosError의 status가 404인 경우
+  // 2. options.status가 404인 경우
+  if (
+    (axios.isAxiosError(error) && error.response?.status === 404) ||
+    status === 404
+  ) {
+    console.log('🔍 [Error Logger] 404 에러는 로깅에서 제외됩니다.');
     return;
   }
 

@@ -199,7 +199,7 @@ async function handleAuthentication({
     await logErrorToDatabase(error, {
       actionName: 'handleAuthentication - 인증 처리 실패',
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
     // 에러 발생 시 인증 실패로 처리
     return { isAccessAllowed: isLoginPage, isAuthenticated: false };
   }
@@ -254,7 +254,7 @@ function isValidToken({
     logErrorToDatabase(error, {
       actionName: 'isValidToken - 토큰 디코딩 실패',
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
   }
 
   return result;
@@ -277,7 +277,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
       await logErrorToDatabase(error, {
         actionName: 'refreshTokens - API URL 미설정',
         errorType: BugReportErrorType.SERVER_ERROR,
-      }).catch(() => {});
+      }).catch(() => { });
       return null;
     }
 
@@ -290,12 +290,18 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
 
     // ========== 3단계: 응답 상태 확인 ==========
     if (!refreshResponse.ok) {
+      // 404 에러인 경우 로깅 제외
+      if (refreshResponse.status === 404) {
+        return null;
+      }
+
       const error = new Error(`토큰 갱신 요청 실패: ${refreshResponse.status}`);
       console.error('🔐 [Middleware]', error.message);
       await logErrorToDatabase(error, {
         actionName: `refreshTokens - HTTP ${refreshResponse.status}`,
         errorType: BugReportErrorType.SERVER_ERROR,
-      }).catch(() => {});
+        status: refreshResponse.status, // status 전달
+      }).catch(() => { });
       return null;
     }
 
@@ -312,7 +318,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
       await logErrorToDatabase(error, {
         actionName: 'refreshTokens - 응답 형식 오류',
         errorType: BugReportErrorType.SERVER_ERROR,
-      }).catch(() => {});
+      }).catch(() => { });
       return null;
     }
 
@@ -328,7 +334,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     await logErrorToDatabase(error, {
       actionName: 'refreshTokens - 예외 발생',
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
     return null;
   }
 }
@@ -379,6 +385,7 @@ function redirectToAdmin(request: NextRequest) {
 type LogErrorOptions = {
   actionName?: string;
   errorType?: BugReportErrorType;
+  status?: number; // 응답 상태 코드 추가
 };
 
 /**
@@ -389,6 +396,11 @@ async function logErrorToDatabase(
   error: unknown,
   options?: LogErrorOptions,
 ): Promise<void> {
+  // 404 에러인 경우 로깅 제외
+  if (options?.status === 404) {
+    return;
+  }
+
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiBaseUrl) {
     return;
