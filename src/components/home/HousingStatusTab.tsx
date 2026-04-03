@@ -55,24 +55,29 @@ const HousingStatusTab = ({
   ];
 
   return (
-    <div className="w-full flex justify-center items-center py-4">
-      <ul className="flex items-center px-4 gap-3 w-full max-w-3xl list-none p-0 overflow-x-auto no-scrollbar">
+    <div className="w-full flex justify-center items-center pt-4 pb-2">
+      <ul className="flex items-center px-4 gap-3 w-full max-w-3xl list-none py-1.5 pb-3 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <li
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
               flex flex-col justify-start items-start p-2 gap-3.5
-              min-w-28 h-19 bg-white border-[1.5px] rounded-xl cursor-pointer transition-all duration-300
+              min-w-28 h-19 bg-white border-[1.5px] rounded-xl cursor-pointer 
+              transition-all duration-500 ease-in-out tab-item
               ${activeTab === tab.id ? 'focused' : 'border-[#d8d8d8]'}
             `}
             style={
-              activeTab === tab.id
-                ? {
+              {
+                '--tab-bd': tab.bd,
+                '--tab-bs': tab.bs,
+                ...(activeTab === tab.id
+                  ? {
                     borderColor: tab.bd,
                     boxShadow: `2px 4px 4px ${tab.bs}`,
                   }
-                : {}
+                  : {}),
+              } as React.CSSProperties
             }
           >
             <div className="flex items-center gap-1.5 w-full text-xs text-[#8e8e8e] leading-[140%] mb-1">
@@ -102,6 +107,10 @@ const HousingStatusTab = ({
         .no-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        .tab-item:hover {
+          border-color: var(--tab-bd);
+          box-shadow: 2px 4px 4px var(--tab-bs);
         }
       `}</style>
     </div>

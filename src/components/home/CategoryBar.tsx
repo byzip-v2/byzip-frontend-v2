@@ -87,10 +87,9 @@ const CategoryBar = () => {
           onClick={() => toggleFilter('region')}
           className={`
             rounded-md border flex items-center pl-3 pr-2 py-1 gap-1 transition-all
-            ${
-              openFilter === 'region' || selectedRegions.length > 0
-                ? 'border-[#356EFF] text-[#356EFF]'
-                : 'border-[#D8D8D8] text-[#505050]'
+            ${openFilter === 'region' || selectedRegions.length > 0
+              ? 'border-[#356EFF] text-[#356EFF]'
+              : 'border-[#D8D8D8] text-[#505050]'
             }
           `}
         >
@@ -109,10 +108,9 @@ const CategoryBar = () => {
           onClick={() => toggleFilter('type')}
           className={`
             rounded-md border flex items-center px-2 py-1 gap-1 transition-all
-            ${
-              openFilter === 'type' || selectedTypes.length > 0
-                ? 'border-[#356EFF] text-[#356EFF]'
-                : 'border-[#D8D8D8] text-[#505050]'
+            ${openFilter === 'type' || selectedTypes.length > 0
+              ? 'border-[#356EFF] text-[#356EFF]'
+              : 'border-[#D8D8D8] text-[#505050]'
             }
           `}
         >
@@ -140,7 +138,7 @@ const CategoryBar = () => {
           `}
         >
           <div
-            className={`grid w-full h-[90%] pb-8 gap-2 ${openFilter === 'region' ? 'grid-cols-5' : ''}`}
+            className={`grid w-full pb-4 gap-x-2 gap-y-3 ${openFilter === 'region' ? 'grid-cols-5' : ''}`}
             style={
               openFilter === 'type'
                 ? { gridTemplateColumns: 'repeat(3, auto)' }
@@ -152,14 +150,13 @@ const CategoryBar = () => {
                 key={item}
                 onClick={() => toggleSelection(item, openFilter)}
                 className={`
-                  w-full h-8 flex justify-center items-center px-1 py-2.5 rounded-md text-xs font-medium border whitespace-nowrap
-                  ${
-                    (openFilter === 'region'
-                      ? selectedRegions
-                      : selectedTypes
-                    ).includes(item)
-                      ? 'bg-[#F0F4FF] border-[#356EFF] text-[#356EFF]'
-                      : 'bg-transparent border-[#d8d8d8] text-[#505050]'
+                  w-full h-8 flex justify-center items-center px-1 py-2.5 rounded-md text-sm! font-medium border whitespace-nowrap
+                  ${(openFilter === 'region'
+                    ? selectedRegions
+                    : selectedTypes
+                  ).includes(item)
+                    ? 'bg-[#F0F4FF] border-[#356EFF] text-[#356EFF]'
+                    : 'bg-transparent border-[#d8d8d8] text-[#505050]'
                   }
                 `}
               >
@@ -171,22 +168,26 @@ const CategoryBar = () => {
           <div className="w-full flex justify-between items-center px-3 pb-3 absolute bottom-0 left-0">
             <button
               onClick={() => selectAll(openFilter)}
-              className="flex flex-row items-end gap-1.5 text-xs font-semibold underline text-[#505050] hover:text-[#3d7fff] decoration-slate-400"
+              className="flex flex-row items-end gap-1.5 text-sm! font-semibold underline text-[#505050] hover:text-[#3d7fff] hover:decoration-[#3d7fff]"
             >
-              <CheckCircle2 className="w-3 h-3" />
+              <div className="pb-0.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </div>
               전체 선택
             </button>
             <button
               onClick={() => clearFilters(openFilter)}
-              className="flex flex-row items-end gap-1.5 text-xs font-semibold underline text-[#505050] hover:text-[#3d7fff] decoration-slate-400"
+              className="flex flex-row items-end gap-1.5 text-sm! font-semibold underline text-[#505050] hover:text-[#3d7fff] hover:decoration-[#3d7fff]"
             >
-              <RotateCcw className="w-3 h-3" />
+              <div className="pb-0.5">
+                <RotateCcw className="w-3.5 h-3.5" />
+              </div>
               초기화
             </button>
           </div>
-        </div>
+        </div >
       )}
-    </section>
+    </section >
   );
 };
 

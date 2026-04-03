@@ -3,7 +3,6 @@ import Link from 'next/link';
 const links = [
   { href: '/home', label: '사용자 홈' },
   { href: '/admin', label: '관리자' },
-  { href: '/analytics', label: '구글 애널리틱스' },
   { href: '/pub', label: '퍼블 리스트' },
 ];
 

@@ -31,7 +31,7 @@ const Header = () => {
           <input
             type="text"
             placeholder="지역, 분양단계, 아파트명을 검색해보세요."
-            className="w-full h-10 px-4 pr-12 border border-gray-200 rounded-full text-xs leading-4 font-medium outline-none focus:border-brand-blue transition-all"
+            className="w-full h-10 px-4 pr-12 border border-gray-200 rounded-full text-sm! leading-4 font-medium outline-none focus:border-brand-blue transition-all"
           />
           <button className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-brand-blue transition-colors">
             <Search size={20} />
@@ -44,9 +44,8 @@ const Header = () => {
         <div className="hidden md:flex items-center gap-9">
           <Link
             href="/calendar"
-            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${
-              pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
-            }`}
+            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
+              }`}
           >
             청약캘린더
           </Link>
