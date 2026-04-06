@@ -80,8 +80,8 @@ const CategoryBar = () => {
   };
 
   return (
-    <section className="w-full max-w-3xl flex flex-row items-center justify-between z-10 relative mx-auto mb-4">
-      <div className="flex flex-row gap-2.5 items-center w-1/2 px-4 text-sm">
+    <section className="w-full max-w-3xl flex flex-row flex-wrap items-center md:justify-between justify-center z-10 relative mx-auto mb-4 px-4 gap-4 md:gap-0">
+      <div className="flex flex-row gap-2.5 items-center text-sm">
         {/* 지역 필터 버튼 */}
         <button
           onClick={() => toggleFilter('region')}

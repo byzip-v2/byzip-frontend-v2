@@ -4,7 +4,9 @@ import React from 'react';
 
 const InfoLinkBtn = () => {
   return (
-    <div className="hidden md:flex flex-row justify-end items-center gap-2.5 text-xs px-4">
+    // <div className="flex flex-row md:justify-end items-center gap-2.5 text-xs">
+    <div className="flex flex-row justify-end items-center gap-2.5 text-xs">
+
       <div className="flex justify-center items-center bg-[#e5edff] rounded-md px-3 py-1.5 gap-2.5">
         <a
           target="_blank"

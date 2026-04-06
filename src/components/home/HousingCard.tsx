@@ -76,7 +76,7 @@ const HousingCard = ({ item }: HousingCardProps) => {
       </div>
 
       {/* 분양형태 / 지역 */}
-      <div className="w-full h-3 flex flex-row justify-start items-center pl-3 mt-1 mb-2 gap-1">
+      <div className="w-full h-3 flex flex-row justify-start items-center pl-3 mt-1 mb-3 gap-1">
         <span className="text-xs font-medium text-[#7b7b7b] leading-3">
           {item.subTitle} |
         </span>

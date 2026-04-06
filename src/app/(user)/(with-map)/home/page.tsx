@@ -1,9 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import HousingStatusTab from '@/components/home/HousingStatusTab';
 import CategoryBar from '@/components/home/CategoryBar';
 import HousingCard, { HousingItem } from '@/components/home/HousingCard';
+import { getPublicHousingSupplies } from './actions';
+import { HousingSupplyDataDto } from 'byzip-v2-sdk';
+import { formatDateRange, determineHousingType } from '@/app/libs/utils/date';
+import Spinner from '@/app/components/common/Spinner/Spinner';
+
+const USE_DUMMY = true; // API 문제로 임시 더미 데이터 사용
 
 const DUMMY_DATA: HousingItem[] = [
   { id: '1', type: 'today', title: '거창대성 4블록 영구임...', subTitle: '영구임대', region: '경남', area: '22m²', price: '공고문 확인', regularDate: '3월 30일 ~ 4월 3일' },
@@ -19,40 +25,113 @@ const DUMMY_DATA: HousingItem[] = [
 
 const HomePage = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [housingData, setHousingData] = useState<HousingSupplyDataDto[]>([]);
+  const [isLoading, setIsLoading] = useState(!USE_DUMMY);
+  const [counts, setCounts] = useState({
+    all: USE_DUMMY ? DUMMY_DATA.length : 0,
+    today: USE_DUMMY ? DUMMY_DATA.filter(d => d.type === 'today').length : 0,
+    coming: 0,
+    random: 0,
+  });
 
-  const counts = useMemo(() => {
-    return {
-      all: 15,
-      today: 15,
-      coming: 0,
-      random: 0,
-    };
+  const fetchHousingSupplies = useCallback(async () => {
+    if (USE_DUMMY) return;
+    setIsLoading(true);
+    try {
+      const result = await getPublicHousingSupplies({
+        limit: 100,
+        sortBy: 'rcritPblancDe',
+        sortOrder: 'DESC'
+      });
+
+      if (result.success && result.data) {
+        setHousingData(result.data.items);
+        const meta = result.data.meta as any;
+        if (meta?.statusCounts) {
+          setCounts({
+            all: meta.total || 0,
+            today: meta.statusCounts.in_progress || 0,
+            coming: meta.statusCounts.open || 0,
+            random: meta.statusCounts.resolved || 0,
+          });
+        } else {
+          const all = result.data.items.length;
+          const today = result.data.items.filter(item => determineHousingType(item.rceptBgnde, item.rceptEndde) === 'today').length;
+          const coming = result.data.items.filter(item => determineHousingType(item.rceptBgnde, item.rceptEndde) === 'coming').length;
+          setCounts({ all, today, coming, random: 0 });
+        }
+      }
+    } catch (error) {
+      console.error('데이터를 가져오는 중 오류 발생:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  // API 문제 해결 시 아래 주석 해제하여 사용
+  /*
+  useEffect(() => {
+    fetchHousingSupplies();
+  }, [fetchHousingSupplies]);
+  */
+
   const filteredData = useMemo(() => {
-    if (activeTab === 0) return DUMMY_DATA;
-    const typeMap = ['all', 'today', 'coming', 'random'];
-    return DUMMY_DATA.filter(item => item.type === typeMap[activeTab]);
-  }, [activeTab]);
+    if (USE_DUMMY) {
+      if (activeTab === 0) return DUMMY_DATA;
+      const typeMap = ['all', 'today', 'coming', 'random'] as const;
+      return DUMMY_DATA.filter(item => item.type === typeMap[activeTab]);
+    }
+
+    return housingData.filter((item) => {
+      const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
+      if (activeTab === 0) return true;
+      if (activeTab === 1) return type === 'today';
+      if (activeTab === 2) return type === 'coming';
+      if (activeTab === 3) return item.houseSecd === '04';
+      return true;
+    }).map((item): HousingItem => ({
+      id: String(item.id),
+      type: determineHousingType(item.rceptBgnde, item.rceptEndde),
+      title: item.houseName || '-',
+      subTitle: item.houseSecdNm || '-',
+      region: item.subscrptAreaCodeNm || '-',
+      area: '-',
+      price: '공고문 확인',
+      regularDate: formatDateRange(item.rceptBgnde, item.rceptEndde),
+      specialDate: formatDateRange(item.spsplyRceptBgnde, item.spsplyRceptEndde),
+    }));
+  }, [housingData, activeTab]);
 
   return (
     <div className="w-full h-full bg-white flex flex-col items-center">
-      {/* 탭 & 카테고리 고정 영역 */}
       <div className="w-full flex flex-col items-center sticky top-0 bg-white z-10">
         <HousingStatusTab activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
         <CategoryBar />
       </div>
 
-      {/* 리스트 섹션 (V1 스타일) */}
       <section className="w-full flex-1 bg-[#f8faff] border-t border-[rgba(0,0,0,0.25)] pt-6 overflow-y-auto">
-        <div className="w-full max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-0 place-items-center">
-          {filteredData.map((item) => (
-            <HousingCard key={item.id} item={item} />
-          ))}
+        <div className="w-full max-w-3xl mx-auto flex flex-wrap justify-center px-4 md:px-0 gap-x-8 gap-y-0">
+          {isLoading ? (
+            <div className="col-span-full py-20">
+              <Spinner />
+            </div>
+          ) : (
+            <>
+              {filteredData.map((item) => (
+                <HousingCard key={item.id} item={item} />
+              ))}
+              {filteredData.length === 0 && (
+                <div className="col-span-full py-20 text-gray-500 font-medium text-center w-full">
+                  해당하는 분양 공고가 없습니다.
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
     </div>
   );
 };
+
 
 export default HomePage;
