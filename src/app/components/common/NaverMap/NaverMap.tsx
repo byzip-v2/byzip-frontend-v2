@@ -17,7 +17,7 @@ const NaverMap = ({
   const mapRef = useRef<naver.maps.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const initMap = () => {
+  const initMap = React.useCallback(() => {
     if (typeof window === 'undefined' || !window.naver || !containerRef.current) return;
 
     if (!mapRef.current) {
@@ -30,13 +30,13 @@ const NaverMap = ({
         },
       });
     }
-  };
+  }, [center.lat, center.lng, zoom]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.naver && window.naver.maps) {
       initMap();
     }
-  }, []);
+  }, [initMap]);
 
   return (
     <>
