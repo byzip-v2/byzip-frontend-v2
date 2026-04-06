@@ -396,8 +396,8 @@ async function logErrorToDatabase(
   error: unknown,
   options?: LogErrorOptions,
 ): Promise<void> {
-  // 404 에러인 경우 로깅 제외
-  if (options?.status === 404) {
+  // 401(인증 실패), 404(찾을 수 없음) 에러인 경우 로깅 제외
+  if (options?.status === 401 || options?.status === 404) {
     return;
   }
 
