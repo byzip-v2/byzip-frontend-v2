@@ -111,7 +111,15 @@ const HousingCard = ({ item }: HousingCardProps) => {
           <span className="text-white text-xs font-normal leading-4">
             특별 청약일
           </span>
-          <span className="text-white text-xs font-bold leading-4">
+          <span
+            className={`text-white text-xs leading-4 ${
+              item.specialDate &&
+              item.specialDate !== '정보가 없습니다.' &&
+              item.specialDate !== '데이터 오류'
+                ? 'font-bold'
+                : 'font-normal'
+            }`}
+          >
             {item.specialDate || '정보가 없습니다.'}
           </span>
         </div>
