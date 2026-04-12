@@ -5,6 +5,34 @@ import Script from 'next/script';
 import { useMapStore } from '@/app/libs/stores/zustand/useMapStore';
 
 /**
+ * public/js/MarkerClustering.js 가 window에 올리는 전역 클래스용 타입.
+ * @types/navermaps 에 없어 no-explicit-any 대신 최소 필드만 선언한다.
+ */
+type NaverMarkerClusteringOptions = {
+  minClusterSize: number;
+  maxZoom: number;
+  map: naver.maps.Map;
+  markers: naver.maps.Marker[];
+  disableClickZoom: boolean;
+  gridSize: number;
+  icons: Array<{
+    content: string;
+    size: naver.maps.Size;
+    anchor: naver.maps.Point;
+  }>;
+  indexGenerator: number[];
+  stylingFunction?: (clusterMarker: naver.maps.Marker, count: number) => void;
+};
+
+type NaverMarkerClusteringConstructor = new (
+  options: NaverMarkerClusteringOptions,
+) => naver.maps.OverlayView;
+
+type WindowWithMarkerClustering = Window & {
+  MarkerClustering?: NaverMarkerClusteringConstructor;
+};
+
+/**
  * NaverMap 컴포넌트 속성 인터페이스
  */
 interface NaverMapProps {
@@ -47,7 +75,7 @@ const NaverMap = ({
   const markersRef = useRef<naver.maps.Marker[]>([]);
 
   // 클러스터링 인스턴스 관리
-  const clustererRef = useRef<any>(null);
+  const clustererRef = useRef<naver.maps.OverlayView | null>(null);
 
   // 전역 스토어에서 마커 데이터를 가져옴
   const { markers } = useMapStore();
@@ -183,7 +211,8 @@ const NaverMap = ({
     }
 
     // global MarkerClustering 인스턴스 생성 (window 레이어의 MarkerClustering 사용)
-    const MarkerClusteringClass = (window as any).MarkerClustering;
+    const MarkerClusteringClass = (window as WindowWithMarkerClustering)
+      .MarkerClustering;
     if (MarkerClusteringClass) {
       clustererRef.current = new MarkerClusteringClass({
         minClusterSize: 1, // 1개라도 무조건 클러스터(원형 UI)로 표시하여 마커와 혼용되지 않도록 함
@@ -194,14 +223,14 @@ const NaverMap = ({
         gridSize: 120,
         icons: clusterIcons,
         indexGenerator: [2, 5, 10, 30, 100],
-        stylingFunction: (clusterMarker: any, count: number) => {
+        stylingFunction: (clusterMarker: naver.maps.Marker, count: number) => {
           const element = clusterMarker.getElement();
           const div = element.querySelector('div');
           if (div) div.innerText = count.toString();
         },
       });
     }
-  }, [map, markers, isClusteringLoaded]);
+  }, [map, markers, isClusteringLoaded, zoom]);
 
   return (
     <>
