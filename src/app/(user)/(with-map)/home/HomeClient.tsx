@@ -4,10 +4,13 @@ import React, { useMemo, useState } from 'react';
 import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
 import HousingStatusTab from '@/components/home/HousingStatusTab';
 import CategoryBar from '@/components/home/CategoryBar';
-import HousingCard, { type HousingItem } from '@/components/home/HousingCard';
-import { formatDateRange, formatDateString, determineHousingType } from '@/app/libs/utils/date';
-import Spinner from '@/app/components/common/Spinner/Spinner';
-
+import { type HousingItem } from '@/components/home/HousingCard';
+import {
+  formatDateRange,
+  formatDateString,
+  determineHousingType,
+} from '@/app/libs/utils/date';
+import HousingListSection from './components/home/HousingListSection';
 interface HomeClientProps {
   /**
    * 서버에서 미리 가져온 public housing-supplies 목록.
@@ -84,27 +87,7 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
         <CategoryBar />
       </div>
 
-      <section className="w-full flex-1 bg-[#f8faff] border-t border-[rgba(0,0,0,0.25)] pt-6 overflow-y-auto">
-        <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-center px-4 md:px-0 gap-x-8 gap-y-0">
-          {isLoading ? (
-            <div className="col-span-full min-h-[40vh] flex items-center justify-center">
-              <Spinner />
-            </div>
-          ) : (
-            <>
-              {filteredData.map((item) => (
-                <HousingCard key={item.id} item={item} />
-              ))}
-              {filteredData.length === 0 && (
-                <div className="col-span-full py-20 text-gray-500 font-medium text-center w-full">
-                  해당하는 분양 공고가 없습니다.
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
+      <HousingListSection items={filteredData} isLoading={isLoading} />
     </div>
   );
 }
-
