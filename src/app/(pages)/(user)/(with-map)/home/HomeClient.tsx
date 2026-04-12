@@ -2,15 +2,18 @@
 
 import React, { useMemo, useState } from 'react';
 import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
-import HousingStatusTab from '@/components/home/HousingStatusTab';
-import CategoryBar from '@/components/home/CategoryBar';
-import { type HousingItem } from '@/components/home/HousingCard';
+// 홈 전용 UI는 라우트 폴더 `home/components/`에 두고, 존재하지 않는 `@/components/home/*` 별칭은 쓰지 않습니다.
+// 같은 트리 안의 상대 경로로 두면 `(pages)` 이동 등 디렉터리 구조 변경 시에도 import가 깨지지 않습니다.
+import HousingStatusTab from './components/HousingStatusTab';
+import CategoryBar from './components/CategoryBar';
+import { type HousingItem } from './components/HousingCard';
 import {
   formatDateRange,
   formatDateString,
   determineHousingType,
 } from '@/app/libs/utils/date';
-import HousingListSection from './components/home/HousingListSection';
+// 리스트 섹션은 `components/home/`가 아니라 `components/` 바로 아래에 있습니다.
+import HousingListSection from './components/HousingListSection';
 interface HomeClientProps {
   /**
    * 서버에서 미리 가져온 public housing-supplies 목록.
