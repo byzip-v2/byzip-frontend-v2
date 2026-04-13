@@ -8,8 +8,8 @@ import {
 } from '@/app/libs/stores/zustand/useMapStore';
 
 /**
- * public/js/MarkerClustering.js 가 window에 올리는 전역 클래스용 타입.
- * @types/navermaps 에 없어 no-explicit-any 대신 최소 필드만 선언한다.
+ * public/js/MarkerClustering.js 가 전역 스크립트로 실행되면 `var MarkerClustering` 이
+ * window에 노출됩니다. @types/navermaps 에 없어 최소 필드만 선언합니다.
  */
 type NaverMarkerClusteringOptions = {
   minClusterSize: number;
@@ -34,6 +34,54 @@ type NaverMarkerClusteringConstructor = new (
 type WindowWithMarkerClustering = Window & {
   MarkerClustering?: NaverMarkerClusteringConstructor;
 };
+
+/**
+ * MarkerClustering 스크립트를 한 번만 주입·재사용하기 위한 캐시.
+ * 네이버 maps.js 로드(맵 인스턴스 생성) 이후에만 호출해야 합니다.
+ */
+let markerClusteringLoadPromise: Promise<NaverMarkerClusteringConstructor> | null =
+  null;
+
+/**
+ * 맵이 준비된 뒤 클러스터 라이브러리만 동적으로 불러옵니다.
+ * - `<Script src="/js/MarkerClustering.js">` 로 초기 HTML과 병렬 요청하지 않고,
+ *   마커가 필요할 때 `<script>` 태그를 한 번 넣어 전역 MarkerClustering 을 채웁니다.
+ */
+function loadMarkerClusteringModule(): Promise<NaverMarkerClusteringConstructor> {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('MarkerClustering: window unavailable'));
+  }
+  const w = window as WindowWithMarkerClustering;
+  if (w.MarkerClustering) {
+    return Promise.resolve(w.MarkerClustering);
+  }
+  if (!markerClusteringLoadPromise) {
+    markerClusteringLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = '/js/MarkerClustering.js';
+      script.async = true;
+      script.onload = () => {
+        const Ctor = (window as WindowWithMarkerClustering).MarkerClustering;
+        if (Ctor) {
+          resolve(Ctor);
+        } else {
+          markerClusteringLoadPromise = null;
+          reject(
+            new Error(
+              'MarkerClustering: global constructor missing after load',
+            ),
+          );
+        }
+      };
+      script.onerror = () => {
+        markerClusteringLoadPromise = null;
+        reject(new Error('MarkerClustering: script load failed'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+  return markerClusteringLoadPromise;
+}
 
 /**
  * NaverMap 컴포넌트 속성 인터페이스
@@ -76,9 +124,6 @@ const NaverMap = ({
 }: NaverMapProps) => {
   // 지도 인스턴스를 상태로 관리하여, 인스턴스가 생성된 후 마커 렌더링 Effect가 실행되도록 함
   const [map, setMap] = React.useState<naver.maps.Map | null>(null);
-
-  // 클러스터링 라이브러리 로드 여부
-  const [isClusteringLoaded, setIsClusteringLoaded] = React.useState(false);
 
   // 지도가 그려질 DOM 요소 참조
   const containerRef = useRef<HTMLDivElement>(null);
@@ -149,11 +194,10 @@ const NaverMap = ({
 
   /**
    * 전역 스토어의 markers 데이터가 변경될 때마다 지도에 마커 및 클러스터링을 업데이트하는 Effect
+   * 클러스터 라이브러리는 maps.js 이후에만 의미가 있으므로, 맵이 준비된 뒤 동적 로드합니다(버전1과 동일한 순서).
    */
   useEffect(() => {
-    // 지도 인스턴스나 네이버 객체, 또는 클러스터링 라이브러리가 로드되지 않았으면 대기
-    if (!map || !window.naver || !window.naver.maps || !isClusteringLoaded)
-      return;
+    if (!map || !window.naver || !window.naver.maps) return;
 
     // 1. 기존 클러스터러 및 마커 정리
     if (clustererRef.current) {
@@ -163,7 +207,7 @@ const NaverMap = ({
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
 
-    // 표시할 데이터가 없으면 종료
+    // 표시할 데이터가 없으면 종료 (클러스터 스크립트는 불러오지 않음)
     if (markers.length === 0) return;
 
     // 2. 새로운 마커 객체 생성 (지도에는 직접 연결하지 않고 클러스터러에 전달)
@@ -179,8 +223,7 @@ const NaverMap = ({
 
     markersRef.current = newMarkers;
 
-    // 3. 클러스터링 적용
-    // 이미지 UI와 동일하게 파란색 원형 스타일 정의 (숫자: font-weight +100, font-size는 16px부터 단계마다 +1px)
+    // 3. 클러스터링용 아이콘 (UI 스펙: 파란 원 + 단계별 크기·글자)
     const clusterIcons = [
       {
         content:
@@ -221,7 +264,6 @@ const NaverMap = ({
     ];
 
     // 생성된 마커들에 맞춰 지도의 영역 조정 및 현재 줌 레벨 확인
-    // 단일 마커일 때는 페이지에서 지정한 기본 줌(resolvedZoom)을 사용해 상세 페이지 등에서 확대 배율을 통일할 수 있습니다.
     let currentBaseZoom = resolvedZoom;
     if (newMarkers.length > 0) {
       const bounds = new naver.maps.LatLngBounds(
@@ -245,32 +287,50 @@ const NaverMap = ({
         currentBaseZoom = resolvedZoom;
       } else {
         map.fitBounds(bounds);
-        // fitBounds 이후의 실제 줌 레벨을 기본값으로 사용
         currentBaseZoom = map.getZoom();
       }
     }
 
-    // global MarkerClustering 인스턴스 생성 (window 레이어의 MarkerClustering 사용)
-    const MarkerClusteringClass = (window as WindowWithMarkerClustering)
-      .MarkerClustering;
-    if (MarkerClusteringClass) {
-      clustererRef.current = new MarkerClusteringClass({
-        minClusterSize: 1, // 1개라도 무조건 클러스터(원형 UI)로 표시하여 마커와 혼용되지 않도록 함
-        maxZoom: currentBaseZoom + 2, // 실제 초기 줌 레벨에서 2단계 더 들어갔을 때부터 클러스터 해제
-        map: map,
-        markers: newMarkers,
-        disableClickZoom: false,
-        gridSize: 120,
-        icons: clusterIcons,
-        indexGenerator: [2, 5, 10, 30, 100],
-        stylingFunction: (clusterMarker: naver.maps.Marker, count: number) => {
-          const element = clusterMarker.getElement();
-          const div = element.querySelector('div');
-          if (div) div.innerText = count.toString();
-        },
+    // 비동기 로드가 끝난 뒤에도 이 effect가 이미 정리됐으면 클러스터를 붙이지 않습니다.
+    let cancelled = false;
+    loadMarkerClusteringModule()
+      .then((MarkerClusteringClass) => {
+        if (cancelled) return;
+        clustererRef.current = new MarkerClusteringClass({
+          minClusterSize: 1,
+          maxZoom: currentBaseZoom + 2,
+          map: map,
+          markers: newMarkers,
+          disableClickZoom: false,
+          gridSize: 120,
+          icons: clusterIcons,
+          indexGenerator: [2, 5, 10, 30, 100],
+          stylingFunction: (
+            clusterMarker: naver.maps.Marker,
+            count: number,
+          ) => {
+            const element = clusterMarker.getElement();
+            const div = element.querySelector('div');
+            if (div) div.innerText = count.toString();
+          },
+        });
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[NaverMap] MarkerClustering load failed:', err);
+        }
       });
-    }
-  }, [map, markers, isClusteringLoaded, resolvedZoom]);
+
+    return () => {
+      cancelled = true;
+      if (clustererRef.current) {
+        clustererRef.current.setMap(null);
+        clustererRef.current = null;
+      }
+      markersRef.current.forEach((marker) => marker.setMap(null));
+      markersRef.current = [];
+    };
+  }, [map, markers, resolvedZoom]);
 
   return (
     <>
@@ -279,12 +339,6 @@ const NaverMap = ({
         src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_CLIENT_ID}&submodules=geocoder`}
         strategy="afterInteractive"
         onReady={initMap} // 스크립트 로드 완료 시 초기화 함수 실행
-      />
-      {/* 클러스터링 확장 라이브러리 로드 */}
-      <Script
-        src="/js/MarkerClustering.js"
-        strategy="afterInteractive"
-        onReady={() => setIsClusteringLoaded(true)}
       />
       {/* 지도가 렌더링될 컨테이너 */}
       <div
