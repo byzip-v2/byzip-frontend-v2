@@ -2,7 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
-import { useMapStore } from '@/app/libs/stores/zustand/useMapStore';
+import {
+  DEFAULT_MAP_PAGE_VIEW,
+  useMapStore,
+} from '@/app/libs/stores/zustand/useMapStore';
 // 홈 전용 UI는 라우트 폴더 `home/components/`에 두고, 존재하지 않는 `@/components/home/*` 별칭은 쓰지 않습니다.
 // 같은 트리 안의 상대 경로로 두면 `(pages)` 이동 등 디렉터리 구조 변경 시에도 import가 깨지지 않습니다.
 import HousingStatusTab from './components/HousingStatusTab';
@@ -13,6 +16,7 @@ import {
   formatDateString,
   determineHousingType,
 } from '@/app/libs/utils/date';
+import { useMapPageView } from '@/app/libs/hooks/useMapPageView';
 // 리스트 섹션은 `components/home/`가 아니라 `components/` 바로 아래에 있습니다.
 import HousingListSection from './components/HousingListSection';
 interface HomeClientProps {
@@ -31,6 +35,8 @@ interface HomeClientProps {
 export default function HomeClient({ initialHousingData }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState(0);
   const { setMarkers } = useMapStore();
+
+  useMapPageView(DEFAULT_MAP_PAGE_VIEW.center, DEFAULT_MAP_PAGE_VIEW.zoom);
 
   // 서버에서 주입받은 원본 데이터
   const housingData = initialHousingData;
@@ -64,8 +70,11 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
         return true;
       })
       .filter((item) => {
-        const hasCoords = item.latitude !== undefined && item.latitude !== null &&
-          item.longitude !== undefined && item.longitude !== null;
+        const hasCoords =
+          item.latitude !== undefined &&
+          item.latitude !== null &&
+          item.longitude !== undefined &&
+          item.longitude !== null;
         return hasCoords;
       })
       .map((item) => ({
@@ -77,13 +86,11 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
 
     setMarkers(markers);
 
-
     // 컴포넌트 언마운트 시 마커 초기화 (다른 페이지 이동 시 지도의 마커를 비움)
     return () => {
       setMarkers([]);
     };
   }, [housingData, activeTab, setMarkers]);
-
 
   // 탭에 따른 카드 데이터 가공
   const filteredData = useMemo((): HousingItem[] => {

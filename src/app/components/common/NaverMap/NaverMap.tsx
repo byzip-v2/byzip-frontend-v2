@@ -2,7 +2,10 @@
 
 import React, { useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { useMapStore } from '@/app/libs/stores/zustand/useMapStore';
+import {
+  DEFAULT_MAP_PAGE_VIEW,
+  useMapStore,
+} from '@/app/libs/stores/zustand/useMapStore';
 
 /**
  * public/js/MarkerClustering.js 가 window에 올리는 전역 클래스용 타입.
@@ -38,9 +41,17 @@ type WindowWithMarkerClustering = Window & {
 interface NaverMapProps {
   /** 지도의 추가 스타일링을 위한 클래스명 (width, height, border 등) */
   className?: string;
-  /** 지도가 처음 렌더링될 때의 중심 좌표 (기본값: 서울 시청) */
+  /**
+   * 지도의 폴백 중심 좌표.
+   * - 페이지에서 mapPageView를 설정하지 않았을 때는 스토어 기본값(DEFAULT_MAP_PAGE_VIEW.center)이 우선됩니다.
+   * - 이 props는 특정 레이아웃에서 임시 override가 필요할 때만 사용합니다.
+   */
   center?: { lat: number; lng: number };
-  /** 지도의 초기 확대 레벨 (기본값: 13) */
+  /**
+   * 지도의 폴백 확대 레벨.
+   * - 페이지 미지정 시 스토어 기본값(DEFAULT_MAP_PAGE_VIEW.zoom)을 우선합니다.
+   * - 이 props는 특정 레이아웃에서 임시 override가 필요할 때만 사용합니다.
+   */
   zoom?: number;
 }
 
@@ -55,12 +66,13 @@ interface NaverMapProps {
  * [사용 방법]
  * - 지도 위에 마커를 표시하고 싶다면, 이 컴포넌트를 사용하는 페이지(Client Component)에서
  *   `useMapStore`의 `setMarkers` 함수를 사용하여 마커 배열을 업데이트하세요.
+ * - 페이지별 기본 중심·줌은 `useMapPageView(center, zoom)` 또는 `setMapPageView`로 등록합니다.
  * - 이 컴포넌트 내부에서 마커 생성 로직이 자동으로 실행됩니다.
  */
 const NaverMap = ({
   className,
-  center = { lat: 37.5665, lng: 126.978 }, // 기본 서울 중심
-  zoom = 15,
+  center = DEFAULT_MAP_PAGE_VIEW.center,
+  zoom = DEFAULT_MAP_PAGE_VIEW.zoom,
 }: NaverMapProps) => {
   // 지도 인스턴스를 상태로 관리하여, 인스턴스가 생성된 후 마커 렌더링 Effect가 실행되도록 함
   const [map, setMap] = React.useState<naver.maps.Map | null>(null);
@@ -77,8 +89,15 @@ const NaverMap = ({
   // 클러스터링 인스턴스 관리
   const clustererRef = useRef<naver.maps.OverlayView | null>(null);
 
-  // 전역 스토어에서 마커 데이터를 가져옴
-  const { markers } = useMapStore();
+  // 전역 스토어: 마커 + 페이지별 기본 뷰(중심·줌)
+  const { markers, mapPageView } = useMapStore();
+
+  /**
+   * 스토어에 페이지 뷰가 있으면 우선하고, 없으면 레이아웃에 넘긴 props를 씁니다.
+   * 이렇게 해야 레이아웃 단일 NaverMap으로 라우트마다 다른 기본 카메라를 줄 수 있습니다.
+   */
+  const resolvedCenter = mapPageView.center ?? center;
+  const resolvedZoom = mapPageView.zoom ?? zoom;
 
   /**
    * 네이버 지도 SDK를 사용하여 지도 인스턴스를 생성하는 함수
@@ -90,8 +109,8 @@ const NaverMap = ({
     // 이미 지도가 초기화되었다면 중복 생성 방지
     if (!map) {
       const newMap = new naver.maps.Map(containerRef.current, {
-        center: new naver.maps.LatLng(center.lat, center.lng),
-        zoom: zoom,
+        center: new naver.maps.LatLng(resolvedCenter.lat, resolvedCenter.lng),
+        zoom: resolvedZoom,
         zoomControl: true,
         zoomControlOptions: {
           position: naver.maps.Position.TOP_RIGHT,
@@ -99,7 +118,7 @@ const NaverMap = ({
       });
       setMap(newMap);
     }
-  }, [center.lat, center.lng, zoom, map]);
+  }, [resolvedCenter.lat, resolvedCenter.lng, resolvedZoom, map]);
 
   // 컴포넌트 마운트 시 또는 SDK 로드 시 지도 초기화 시도
   useEffect(() => {
@@ -107,6 +126,26 @@ const NaverMap = ({
       initMap();
     }
   }, [initMap]);
+
+  /**
+   * 마커가 없을 때만 페이지 기본 뷰(스토어 또는 props)를 지도에 반영합니다.
+   * 마커가 있으면 아래 마커 effect가 fitBounds/단일 마커 줌을 담당하므로 여기서는 건드리지 않습니다.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined' || !map || !window.naver?.maps) return;
+    if (markers.length > 0) return;
+
+    map.setCenter(
+      new naver.maps.LatLng(resolvedCenter.lat, resolvedCenter.lng),
+    );
+    map.setZoom(resolvedZoom);
+  }, [
+    map,
+    markers.length,
+    resolvedCenter.lat,
+    resolvedCenter.lng,
+    resolvedZoom,
+  ]);
 
   /**
    * 전역 스토어의 markers 데이터가 변경될 때마다 지도에 마커 및 클러스터링을 업데이트하는 Effect
@@ -182,7 +221,8 @@ const NaverMap = ({
     ];
 
     // 생성된 마커들에 맞춰 지도의 영역 조정 및 현재 줌 레벨 확인
-    let currentBaseZoom = zoom;
+    // 단일 마커일 때는 페이지에서 지정한 기본 줌(resolvedZoom)을 사용해 상세 페이지 등에서 확대 배율을 통일할 수 있습니다.
+    let currentBaseZoom = resolvedZoom;
     if (newMarkers.length > 0) {
       const bounds = new naver.maps.LatLngBounds(
         new naver.maps.LatLng(
@@ -201,8 +241,8 @@ const NaverMap = ({
 
       if (newMarkers.length === 1) {
         map.setCenter(newMarkers[0].getPosition());
-        map.setZoom(15);
-        currentBaseZoom = 15;
+        map.setZoom(resolvedZoom);
+        currentBaseZoom = resolvedZoom;
       } else {
         map.fitBounds(bounds);
         // fitBounds 이후의 실제 줌 레벨을 기본값으로 사용
@@ -230,7 +270,7 @@ const NaverMap = ({
         },
       });
     }
-  }, [map, markers, isClusteringLoaded, zoom]);
+  }, [map, markers, isClusteringLoaded, resolvedZoom]);
 
   return (
     <>
