@@ -26,7 +26,6 @@ export interface HousingListSectionProps {
 /**
  * HousingListSection
  * - 홈·검색 등에서 공통으로 쓰는 분양 카드 스크롤 영역(배경, 그리드, 로딩, 빈 상태)을 한곳에 둡니다.
- * - 레이아웃/스타일을 한 컴포넌트로 묶어 두면 검색 페이지 추가 시 JSX 중복과 스타일 불일치를 막을 수 있습니다.
  */
 export default function HousingListSection({
   items,
@@ -34,7 +33,7 @@ export default function HousingListSection({
   emptyMessage = '해당하는 분양 공고가 없습니다.',
 }: HousingListSectionProps) {
   return (
-    <section className="w-full flex-1 bg-[#f8faff] border-t border-[rgba(0,0,0,0.25)] pt-6 overflow-y-auto">
+    <section className="w-full flex-1 min-h-0 bg-[#f8faff] pt-6 overflow-y-auto">
       <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-center px-4 md:px-0 gap-x-8 gap-y-0">
         {isLoading ? (
           <div className="col-span-full min-h-[40vh] flex items-center justify-center">

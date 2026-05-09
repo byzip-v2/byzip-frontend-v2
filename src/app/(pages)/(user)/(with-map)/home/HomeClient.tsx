@@ -133,7 +133,9 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
         <CategoryBar />
       </div>
 
-      <HousingListSection items={filteredData} isLoading={isLoading} />
+      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-[rgba(0,0,0,0.25)]">
+        <HousingListSection items={filteredData} isLoading={isLoading} />
+      </div>
     </div>
   );
 }
