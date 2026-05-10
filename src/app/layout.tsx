@@ -1,5 +1,6 @@
 import localFont from 'next/font/local';
 import type { Metadata } from 'next';
+import '../styles/legacy-fonts.css';
 // Tailwind를 먼저 로드해 레이어가 정의된 뒤, main.scss의 base 레이어가 합쳐지도록 함
 import '../styles/tailwind.css';
 import '../styles/main.scss';

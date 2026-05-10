@@ -1,0 +1,482 @@
+.page {
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  background-color: #fff;
+  display: flex;
+  justify-content: stretch;
+  font-family: 'Pretendard Variable', var(--font-pretendard), sans-serif;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.shell {
+  width: 100%;
+}
+
+.page button,
+.page input,
+.page textarea {
+  font-family: inherit;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 0 40px;
+  background-size: 105%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image:
+    linear-gradient(rgba(78, 127, 250, 0.8), rgba(78, 127, 255, 0.8)),
+    url('/images/detail/detailHeaderBackground.png');
+}
+
+.headerTopRow,
+.headerTopRowMobile {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px 10px 10px;
+}
+
+.headerTopRowMobile {
+  display: none;
+}
+
+.iconButton {
+  width: 25px;
+  height: 25px;
+  padding: 0 0 0 10px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-sizing: content-box;
+}
+
+.bookmarkButton,
+.bookmarkButtonMobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.bookmarkButton {
+  width: 120px;
+  height: 28px;
+  padding: 0;
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  font-weight: 400;
+  font-variation-settings: 'wght' 400;
+}
+
+.bookmarkButton span {
+  font-size: 11px;
+}
+
+.bookmarkButtonMobile {
+  width: 25px;
+  height: 25px;
+  border-radius: 30px;
+  border: 1px solid #fff;
+  padding: 0;
+}
+
+.headerBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: -35px;
+  gap: 5px;
+  padding: 0;
+  text-align: center;
+}
+
+.headerTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 300;
+  font-variation-settings: 'wght' 300;
+}
+
+.headerTagGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.headerTag {
+  color: #fff;
+  line-height: 28px;
+}
+
+.headerTagDivider {
+  color: #fff;
+  line-height: 28px;
+}
+
+.headerTitle {
+  color: #fff;
+  font-size: 25px;
+  font-weight: 500;
+  font-variation-settings: 'wght' 500;
+  line-height: normal;
+  padding-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+
+.headerAddress {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 300;
+  font-variation-settings: 'wght' 300;
+  padding-bottom: 5px;
+  letter-spacing: 0;
+}
+
+.headerInterestBadge {
+  height: 32px;
+  padding: 11px 13px;
+  gap: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  font-variation-settings: 'wght' 500;
+}
+
+.headerInterestIcon {
+  color: #ffe14d;
+}
+
+.tabRow {
+  display: flex;
+  width: 100%;
+  padding: 10px 20px 0;
+  background-color: #fff;
+}
+
+.tabButton {
+  border: 0;
+  border-bottom: 2px solid #f4f4f4;
+  background: transparent;
+  color: #7b7b7b;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 15px 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  letter-spacing: -0.02em;
+}
+
+.tabButtonActive {
+  color: #3d7fff;
+  border-bottom-color: #3d7fff;
+}
+
+.contentSection {
+  width: 100%;
+  padding: 30px;
+  background-color: #fff;
+}
+
+.sectionTitle {
+  padding-top: 30px;
+  padding-bottom: 10px;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -0.03em;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.articleTable {
+  width: 100%;
+  min-width: 680px;
+  margin-bottom: 15px;
+  border: 1px solid #f4f4f4;
+  border-right: 1px solid #e8eaef;
+  border-top: 1.3px solid #8e8e8e;
+  font-size: 15px;
+  text-align: center;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+.articleTitle {
+  height: 51px;
+  border: 1px solid #e8eaef;
+  background-color: #f0f4ff;
+  color: #356eff;
+  font-size: 16px;
+  font-weight: 600;
+  vertical-align: middle;
+  letter-spacing: -0.03em;
+}
+
+.tableHead,
+.tableHeadBlue,
+.tableHeadCompact {
+  height: 50px;
+  padding: 8px 10px;
+  border: 1px solid #e8eaef;
+  background-color: #f0f4ff;
+  color: #000;
+  font-size: 15px;
+  font-weight: 500;
+  vertical-align: middle;
+  letter-spacing: -0.02em;
+}
+
+.tableHeadBlue {
+  color: #356eff;
+}
+
+.tableHeadCompact {
+  width: 10%;
+}
+
+.tableCell,
+.tableCellCenter {
+  height: 50px;
+  padding: 8px 10px;
+  border: 1px solid #e8eaef;
+  font-size: 15px;
+  font-weight: 400;
+  vertical-align: middle;
+  letter-spacing: -0.02em;
+}
+
+.tableCell {
+  text-align: left;
+}
+
+.tableCellCenter {
+  text-align: center;
+}
+
+.subText {
+  color: #8e8e8e;
+  font-size: 13px;
+}
+
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.primaryLinkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primaryLinkButton {
+  min-width: 110px;
+  min-height: 40px;
+  padding: 10px 16px;
+  background-color: #3d7fff;
+  color: #fff;
+}
+
+.sectionInfo {
+  padding-left: 10px;
+  color: #8e8e8e;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.02em;
+}
+
+.noticeBox {
+  padding: 18px;
+  border: 1px solid #e8eaef;
+  border-top: 1.3px solid #8e8e8e;
+  background-color: #fff;
+  color: #5d6775;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  letter-spacing: -0.02em;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fileButton {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #e8eaef;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #1e1e1e;
+  text-decoration: none;
+}
+
+.fileName {
+  color: #356eff;
+  font-size: 13px;
+}
+
+.realPricePlaceholder {
+  padding-bottom: 10px;
+}
+
+.realPriceText {
+  color: #1e1e1e;
+  font-size: 15px;
+  line-height: 1.8;
+  padding-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (max-width: 450px) {
+  .header {
+    height: 200px;
+    padding-top: 30px;
+    padding-right: 30px;
+  }
+
+  .headerTopRow {
+    display: none;
+  }
+
+  .headerTopRowMobile {
+    display: flex;
+    margin-left: 30px;
+    margin-bottom: 10px;
+    padding: 0;
+  }
+
+  .headerBody {
+    margin-left: 30px;
+    padding: 0;
+  }
+
+  .headerTagRow {
+    font-size: 12px;
+  }
+
+  .headerTagGroup {
+    gap: 2px;
+  }
+
+  .headerTag {
+    line-height: 22px;
+  }
+
+  .headerTagDivider {
+    line-height: 22px;
+  }
+
+  .headerTitle {
+    font-size: 16px;
+    padding-bottom: 5px;
+  }
+
+  .headerAddress {
+    font-size: 12px;
+    padding-bottom: 2px;
+  }
+
+  .headerInterestBadge {
+    height: 26px;
+    padding-top: 10px;
+    margin-top: 5px;
+    font-size: 10px;
+    font-weight: 400;
+  }
+
+  .tabRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 10px 10px 0;
+  }
+
+  .tabButton {
+    flex-direction: column;
+    height: 35px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .contentSection {
+    padding: 10px;
+  }
+
+  .sectionTitle {
+    font-size: 16px;
+  }
+
+  .articleTable {
+    min-width: 344px;
+    font-size: 12px;
+  }
+
+  .articleTitle {
+    font-size: 14px;
+  }
+
+  .tableHead,
+  .tableHeadBlue,
+  .tableHeadCompact,
+  .tableCell,
+  .tableCellCenter {
+    font-size: 12px;
+  }
+
+  .primaryLinkButton {
+    min-width: 90px;
+    min-height: 30px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+
+  .sectionInfo,
+  .realPriceText,
+  .noticeBox {
+    font-size: 11px;
+  }
+}

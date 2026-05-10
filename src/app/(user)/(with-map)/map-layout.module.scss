@@ -1,0 +1,29 @@
+.scrollPane {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollPane::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollPane::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollPane::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.scrollPaneActive {
+  scrollbar-color: rgba(148, 163, 184, 0.85) transparent;
+}
+
+.scrollPaneActive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollPaneActive::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.85);
+}
