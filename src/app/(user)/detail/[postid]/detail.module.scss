@@ -414,12 +414,76 @@
   padding-bottom: 10px;
 }
 
+.realPriceSection {
+  width: 100%;
+  padding: 0 30px 30px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.realPriceStatusBox {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  width: 100%;
+}
+
+.realPriceEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.realPriceEmptyImage {
+  width: 100px;
+  height: auto;
+}
+
 .realPriceText {
-  color: #1e1e1e;
+  color: #8e8e8e;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21px;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.realPriceTable {
+  width: 100%;
+  min-width: 680px;
+  margin-top: 40px;
+  border: 1px solid #e8eaef;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+.realPriceHead {
+  border: 1px solid #e8eaef;
+  background-color: #f0f4ff;
+  padding: 15px 25px;
   font-size: 15px;
-  line-height: 1.8;
-  padding-bottom: 8px;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.realPriceCell {
+  border: 1px solid #e8eaef;
+  padding: 15px 25px;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.realPriceFloor {
+  color: #8e8e8e;
+  font-size: 13px;
 }
 
 @media screen and (max-width: 450px) {
@@ -496,6 +560,10 @@
     padding: 10px;
   }
 
+  .realPriceSection {
+    padding: 0 10px 10px;
+  }
+
   .sectionTitle {
     font-size: 16px;
   }
@@ -532,8 +600,22 @@
   }
 
   .sectionInfo,
-  .realPriceText,
   .noticeBox {
+    font-size: 11px;
+  }
+
+  .realPriceText {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .realPriceHead,
+  .realPriceCell {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .realPriceFloor {
     font-size: 11px;
   }
 }

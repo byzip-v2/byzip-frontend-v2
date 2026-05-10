@@ -1,12 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Spinner from '@/app/components/common/Spinner/Spinner';
+import { getLawdCdByAddress, getPreviousMonth } from '@/app/libs/utils/apt-real-price';
 
 import styles from './detail.module.scss';
-import type { DetailPageData, DetailRow } from './detail.types';
+import type {
+  AptRealPriceItem,
+  AptRealPriceResponse,
+  DetailPageData,
+  DetailRow,
+} from './detail.types';
 
 const DETAIL_BOOKMARK_STORAGE_KEY = 'byzip:detail-bookmarks';
+const REAL_PRICE_CONTRACT_MONTH = getPreviousMonth();
 
 interface DetailPageClientProps {
   detail: DetailPageData;
@@ -737,21 +746,189 @@ function LhDetailSection({ detail }: { detail: DetailPageData }) {
   );
 }
 
-function RealPricePanel({ isRealPriceEnabled }: { isRealPriceEnabled: boolean }) {
+function formatDealDate(item: AptRealPriceItem) {
+  const year = displayText(item.dealYear);
+  const month = displayText(item.dealMonth).padStart(2, '0');
+  const day = displayText(item.dealDay).padStart(2, '0');
+
+  if (!year || !month || !day) {
+    return '';
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+function sortRealPriceItems(items: AptRealPriceItem[]) {
+  return [...items].sort((a, b) => {
+    const left = Number(
+      `${displayText(a.dealYear)}${displayText(a.dealMonth).padStart(2, '0')}${displayText(a.dealDay).padStart(2, '0')}`,
+    );
+    const right = Number(
+      `${displayText(b.dealYear)}${displayText(b.dealMonth).padStart(2, '0')}${displayText(b.dealDay).padStart(2, '0')}`,
+    );
+
+    return right - left;
+  });
+}
+
+function RealPriceEmptyState({ message }: { message: string }) {
   return (
-    <section className={styles.contentSection}>
-      <div className={styles.realPricePlaceholder}>
-        <h2 className={styles.sectionTitle}>주변 아파트 매매 실거래가</h2>
-        <p className={styles.realPriceText}>
-          {isRealPriceEnabled
-            ? '실거래가 연동 구조는 준비되어 있지만 현재 상세 페이지에는 아직 연결되지 않았습니다.'
-            : '현재 v2 환경에는 실거래가 API 키가 없어 탭 UI만 우선 복원했습니다.'}
-        </p>
-        <p className={styles.sectionInfo}>
-          현재 상세 API 응답에는 실거래가 연동용 후처리가 아직 없어, 탭 UI만 유지하고 실제 데이터 연동은 추후
-          연결하도록 분리해뒀습니다.
-        </p>
+    <div className={styles.realPriceStatusBox}>
+      <div className={styles.realPriceEmptyState}>
+        <Image
+          src="/images/icons/NoResult.png"
+          alt="실거래가 조회 결과 없음"
+          width={100}
+          height={100}
+          priority
+          className={styles.realPriceEmptyImage}
+        />
+        <p className={styles.realPriceText}>{message}</p>
       </div>
+    </div>
+  );
+}
+
+function RealPricePanel({
+  detail,
+  isRealPriceEnabled,
+}: {
+  detail: DetailPageData;
+  isRealPriceEnabled: boolean;
+}) {
+  const [items, setItems] = useState<AptRealPriceItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const address = detail.hssplyAdres || '';
+  const lawdCd = getLawdCdByAddress(address);
+
+  useEffect(() => {
+    if (!isRealPriceEnabled) {
+      setItems([]);
+      setMessage('현재 v2 환경에는 실거래가 API 키가 없어 탭 UI만 우선 복원했습니다.');
+      return;
+    }
+
+    if (!address) {
+      setItems([]);
+      setMessage('상세 주소가 없어 실거래가를 조회할 수 없습니다.');
+      return;
+    }
+
+    if (!lawdCd) {
+      setItems([]);
+      setMessage('상세 주소 기준 지역코드를 찾지 못해 실거래가를 조회할 수 없습니다.');
+      return;
+    }
+
+    let isCancelled = false;
+
+    const fetchRealPrice = async () => {
+      setIsLoading(true);
+      setMessage('');
+
+      try {
+        const response = await fetch(
+          `/api/apt-real-price/${lawdCd}/${REAL_PRICE_CONTRACT_MONTH}`,
+          {
+            cache: 'no-store',
+          },
+        );
+        const data = (await response.json()) as AptRealPriceResponse;
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || '실거래가 데이터를 불러오지 못했습니다.');
+        }
+
+        const nextItems = sortRealPriceItems(data.items ?? []);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setItems(nextItems);
+        setMessage(
+          nextItems.length
+            ? ''
+            : '해당 지역의 최근 아파트 매매 실거래가 정보가 없습니다.',
+        );
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        const nextMessage =
+          error instanceof Error
+            ? error.message
+            : '실거래가 데이터를 불러오지 못했습니다.';
+
+        console.error('[APT Real Price] fetch failed', {
+          lawdCd,
+          contractMonth: REAL_PRICE_CONTRACT_MONTH,
+          message: nextMessage,
+        });
+        setItems([]);
+        setMessage(nextMessage);
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchRealPrice();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [address, isRealPriceEnabled, lawdCd]);
+
+  return (
+    <section className={styles.realPriceSection}>
+      {isLoading ? (
+        <div className={styles.realPriceStatusBox}>
+          <Spinner />
+        </div>
+      ) : items.length ? (
+        <div className={styles.tableScroll}>
+          <table className={styles.realPriceTable}>
+            <thead>
+              <tr>
+                <th className={styles.realPriceHead}>계약일</th>
+                <th className={styles.realPriceHead}>아파트명</th>
+                <th className={styles.realPriceHead}>법정동</th>
+                <th className={styles.realPriceHead}>전용면적</th>
+                <th className={styles.realPriceHead}>거래금액</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={`${displayText(item.aptNm)}-${formatDealDate(item)}-${index}`}>
+                  <td className={styles.realPriceCell}>{formatDealDate(item)}</td>
+                  <td className={styles.realPriceCell}>
+                    <div>{displayText(item.aptNm)}</div>
+                    {displayText(item.floor) ? (
+                      <span className={styles.realPriceFloor}>
+                        ({displayText(item.floor)}층)
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className={styles.realPriceCell}>{displayText(item.umdNm)}</td>
+                  <td className={styles.realPriceCell}>
+                    {displayText(item.excluUseAr) ? `${displayText(item.excluUseAr)}㎡` : ''}
+                  </td>
+                  <td className={styles.realPriceCell}>
+                    {displayText(item.dealAmount) ? `${displayText(item.dealAmount)}만 원` : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <RealPriceEmptyState message={message} />
+      )}
     </section>
   );
 }
@@ -831,7 +1008,7 @@ export default function DetailPageClient({
             )}
           </section>
         ) : (
-          <RealPricePanel isRealPriceEnabled={isRealPriceEnabled} />
+          <RealPricePanel detail={detail} isRealPriceEnabled={isRealPriceEnabled} />
         )}
       </div>
     </div>

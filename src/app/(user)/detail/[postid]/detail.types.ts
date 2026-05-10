@@ -32,3 +32,22 @@ export interface DetailPageData extends HousingSupplyDataDto {
   gnrlRnk2EtcAreaRcptdePd?: string;
   lhNoticeText?: string;
 }
+
+export interface AptRealPriceItem {
+  dealYear?: string | number;
+  dealMonth?: string | number;
+  dealDay?: string | number;
+  aptNm?: string;
+  floor?: string | number;
+  umdNm?: string;
+  excluUseAr?: string | number;
+  dealAmount?: string;
+}
+
+export interface AptRealPriceResponse {
+  success: boolean;
+  message: string;
+  lawdCd?: string;
+  contractMonth?: string;
+  items: AptRealPriceItem[];
+}
