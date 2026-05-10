@@ -22,6 +22,7 @@
 @layer base {
   body {
     @apply antialiased text-slate-900;
-    font-family: var(--font-pretendard);
+    font-family: 'Pretendard Variable', var(--font-pretendard), sans-serif;
+    font-synthesis: none;
   }
 }
