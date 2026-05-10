@@ -10,7 +10,7 @@ const Header = () => {
   const pathname = usePathname();
 
   return (
-    <header className="fixed top-0 left-0 w-full h-[60px] bg-white border-b border-gray-200 z-300 px-4 md:px-[30px] grid grid-cols-3 items-center">
+    <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-300 px-4 md:px-8 flex items-center justify-between md:grid md:grid-cols-3">
       {/* 로고 영역 */}
       <Link href="/" className="flex items-center gap-1 cursor-pointer">
         <Image
@@ -20,24 +20,32 @@ const Header = () => {
           height={30}
           priority
         />
-        <span className="font-pyeongchang text-[18px] font-bold pl-[7px] pt-px hidden sm:block">
+        <span className="font-pyeongchang text-lg font-bold pl-2 pt-px hidden sm:block">
           분양모음집
         </span>
       </Link>
 
-      {/* 검색창 영역 (추후 구현) */}
-      <div className="w-full h-full flex items-center justify-center">
-        {/* <SearchWeb /> - v1의 검색바 자리 */}
+      {/* 검색창 영역 - 모바일에서는 숨김김 */}
+      <div className="hidden md:flex w-full items-center justify-center">
+        <div className="relative w-full max-w-lg">
+          <input
+            type="text"
+            placeholder="지역, 분양단계, 아파트명을 검색해보세요."
+            className="w-full h-10 px-4 pr-12 border border-gray-200 rounded-full text-sm! leading-4 font-medium outline-none focus:border-brand-blue transition-all"
+          />
+          <button className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-brand-blue transition-colors">
+            <Search size={20} />
+          </button>
+        </div>
       </div>
 
       {/* 네비게이션 영역 - 우측에 청약캘린더만 */}
-      <nav className="flex justify-end items-center gap-[10px] md:gap-[35px] h-full">
-        <div className="hidden md:flex items-center">
+      <nav className="flex justify-end items-center gap-2.5 md:gap-9 h-full">
+        <div className="hidden md:flex items-center gap-9">
           <Link
             href="/calendar"
-            className={`text-[14px] font-semibold hover:text-brand-blue transition-colors ${
-              pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
-            }`}
+            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
+              }`}
           >
             청약캘린더
           </Link>
