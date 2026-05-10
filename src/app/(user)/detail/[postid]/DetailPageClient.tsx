@@ -1,19 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import styles from './detail.module.scss';
 import type { DetailPageData, DetailRow } from './detail.types';
 
+const DETAIL_BOOKMARK_STORAGE_KEY = 'byzip:detail-bookmarks';
+
 interface DetailPageClientProps {
   detail: DetailPageData;
+  detailId: string;
   isRealPriceEnabled: boolean;
 }
 
 interface LegacyIconProps {
   className?: string;
   size?: number;
+}
+
+interface DetailBookmarkItem {
+  detailId: string;
+  apiId: number;
+  houseName: string;
+  address: string;
+  sourceSystem: DetailPageData['sourceSystem'];
+  savedAt: string;
 }
 
 function LegacyBackIcon({ className, size = 24 }: LegacyIconProps) {
@@ -237,9 +249,66 @@ function getHeaderTags(detail: DetailPageData) {
   ].filter(Boolean);
 }
 
-function DetailHeader({ detail }: { detail: DetailPageData }) {
+function readBookmarksFromStorage() {
+  if (typeof window === 'undefined') {
+    return [] as DetailBookmarkItem[];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(DETAIL_BOOKMARK_STORAGE_KEY);
+
+    if (!raw) {
+      return [] as DetailBookmarkItem[];
+    }
+
+    const parsed = JSON.parse(raw) as DetailBookmarkItem[];
+
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [] as DetailBookmarkItem[];
+  }
+}
+
+function writeBookmarksToStorage(bookmarks: DetailBookmarkItem[]) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(
+    DETAIL_BOOKMARK_STORAGE_KEY,
+    JSON.stringify(bookmarks),
+  );
+}
+
+function buildBookmarkItem(detailId: string, detail: DetailPageData): DetailBookmarkItem {
+  return {
+    detailId,
+    apiId: detail.id,
+    houseName: detail.houseName || '',
+    address: detail.hssplyAdres || '',
+    sourceSystem: detail.sourceSystem,
+    savedAt: new Date().toISOString(),
+  };
+}
+
+function logBookmarkList(action: 'added' | 'removed', bookmarks: DetailBookmarkItem[]) {
+  console.log(`[Detail Bookmark] ${action}`, bookmarks);
+}
+
+function DetailHeader({
+  detail,
+  detailId,
+  isBookmarked,
+  onToggleBookmark,
+}: {
+  detail: DetailPageData;
+  detailId: string;
+  isBookmarked: boolean;
+  onToggleBookmark: () => void;
+}) {
   const router = useRouter();
   const headerTags = getHeaderTags(detail);
+  const bookmarkLabel = isBookmarked ? '북마크 해제하기' : '북마크 추가하기';
 
   return (
     <header className={styles.header}>
@@ -252,9 +321,21 @@ function DetailHeader({ detail }: { detail: DetailPageData }) {
         >
           <LegacyBackIcon />
         </button>
-        <button type="button" className={styles.bookmarkButton} aria-label="북마크 추가하기">
-          <LegacyStarOutlineIcon />
-          <span>북마크 추가하기</span>
+        <button
+          type="button"
+          className={`${styles.bookmarkButton} ${
+            isBookmarked ? styles.bookmarkButtonActive : ''
+          }`}
+          aria-label={bookmarkLabel}
+          data-detail-id={detailId}
+          onClick={onToggleBookmark}
+        >
+          {isBookmarked ? (
+            <LegacyStarFilledIcon className={styles.bookmarkActiveIcon} size={16} />
+          ) : (
+            <LegacyStarOutlineIcon />
+          )}
+          <span>{bookmarkLabel}</span>
         </button>
       </div>
 
@@ -269,10 +350,18 @@ function DetailHeader({ detail }: { detail: DetailPageData }) {
         </button>
         <button
           type="button"
-          className={styles.bookmarkButtonMobile}
-          aria-label="북마크 추가하기"
+          className={`${styles.bookmarkButtonMobile} ${
+            isBookmarked ? styles.bookmarkButtonActive : ''
+          }`}
+          aria-label={bookmarkLabel}
+          data-detail-id={detailId}
+          onClick={onToggleBookmark}
         >
-          <LegacyStarOutlineIcon />
+          {isBookmarked ? (
+            <LegacyStarFilledIcon className={styles.bookmarkActiveIcon} size={14} />
+          ) : (
+            <LegacyStarOutlineIcon size={14} />
+          )}
         </button>
       </div>
 
@@ -669,15 +758,45 @@ function RealPricePanel({ isRealPriceEnabled }: { isRealPriceEnabled: boolean })
 
 export default function DetailPageClient({
   detail,
+  detailId,
   isRealPriceEnabled,
 }: DetailPageClientProps) {
   const [isRealPriceTab, setIsRealPriceTab] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const isLhDetail = detail.sourceSystem === 'LH';
+
+  useEffect(() => {
+    const bookmarks = readBookmarksFromStorage();
+    setIsBookmarked(bookmarks.some((item) => item.detailId === detailId));
+  }, [detailId]);
+
+  const handleToggleBookmark = () => {
+    const bookmarks = readBookmarksFromStorage();
+    const exists = bookmarks.some((item) => item.detailId === detailId);
+
+    if (exists) {
+      const nextBookmarks = bookmarks.filter((item) => item.detailId !== detailId);
+      writeBookmarksToStorage(nextBookmarks);
+      setIsBookmarked(false);
+      logBookmarkList('removed', nextBookmarks);
+      return;
+    }
+
+    const nextBookmarks = [...bookmarks, buildBookmarkItem(detailId, detail)];
+    writeBookmarksToStorage(nextBookmarks);
+    setIsBookmarked(true);
+    logBookmarkList('added', nextBookmarks);
+  };
 
   return (
     <div className={styles.page}>
       <div className={styles.shell}>
-        <DetailHeader detail={detail} />
+        <DetailHeader
+          detail={detail}
+          detailId={detailId}
+          isBookmarked={isBookmarked}
+          onToggleBookmark={handleToggleBookmark}
+        />
 
         <div className={styles.tabRow}>
           <button

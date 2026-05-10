@@ -18,6 +18,7 @@ export default async function DetailPage({ params }: DetailPageProps) {
     return (
       <DetailPageClient
         detail={detail}
+        detailId={postid}
         isRealPriceEnabled={Boolean(process.env.NEXT_PUBLIC_APT_API_KEY)}
       />
     );
