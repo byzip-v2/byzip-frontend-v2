@@ -1,7 +1,5 @@
-import { notFound } from 'next/navigation';
-
 import DetailPageClient from '@/app/(user)/detail/[postid]/DetailPageClient';
-import { getLegacyDetail } from '@/app/(user)/detail/[postid]/legacy-detail';
+import { getHousingSupplyDetail } from '@/app/(user)/detail/[postid]/housing-supply-detail';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,11 +13,7 @@ export default async function DetailPage({ params }: DetailPageProps) {
   const { postid } = await params;
 
   try {
-    const detail = await getLegacyDetail(postid);
-
-    if (!detail) {
-      notFound();
-    }
+    const detail = await getHousingSupplyDetail(postid);
 
     return (
       <DetailPageClient

@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import styles from './detail.module.scss';
-import type { LegacyDetailRow, LegacyHomeData } from './types';
+import type { DetailPageData, DetailRow } from './detail.types';
 
 interface DetailPageClientProps {
-  detail: LegacyHomeData;
+  detail: DetailPageData;
   isRealPriceEnabled: boolean;
 }
 
@@ -76,39 +76,60 @@ function hasValue(value: unknown) {
   return true;
 }
 
-function formatRawDate(value?: string | null) {
+function displayText(value?: string | number | null) {
   if (!hasValue(value)) {
-    return '-';
+    return '';
+  }
+
+  return String(value).trim();
+}
+
+function formatRawDate(value?: string | Date | null) {
+  if (!hasValue(value)) {
+    return '';
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = `${value.getMonth() + 1}`.padStart(2, '0');
+    const day = `${value.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   const normalized = String(value).trim();
 
   if (/^\d{8}$/.test(normalized)) {
-    return `${normalized.slice(0, 4)}.${normalized.slice(4, 6)}.${normalized.slice(6, 8)}`;
+    return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}T/.test(normalized)) {
+    return normalized.slice(0, 10);
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-    return normalized.replace(/-/g, '.');
+    return normalized;
   }
 
   return normalized;
 }
 
-function formatDateRange(start?: string | null, end?: string | null) {
-  if (!hasValue(start) && !hasValue(end)) {
-    return '-';
+function formatDateRange(
+  start?: string | Date | null,
+  end?: string | Date | null,
+) {
+  const startText = formatRawDate(start);
+  const endText = formatRawDate(end);
+
+  if (startText && endText) {
+    return `${startText}~${endText}`;
   }
 
-  if (hasValue(start) && hasValue(end)) {
-    return `${formatRawDate(start)} ~ ${formatRawDate(end)}`;
-  }
-
-  return formatRawDate(start || end || '');
+  return startText || endText || '';
 }
 
 function formatPhoneNumber(value?: string | null) {
   if (!hasValue(value)) {
-    return '-';
+    return '';
   }
 
   const digits = String(value).replace(/\D/g, '');
@@ -138,7 +159,7 @@ function formatPhoneNumber(value?: string | null) {
 
 function formatHouseholdCount(value?: string | number | null) {
   if (!hasValue(value)) {
-    return '-';
+    return '';
   }
 
   const raw = String(value).trim();
@@ -155,42 +176,68 @@ function formatHouseholdCount(value?: string | number | null) {
   return raw;
 }
 
-function formatPrice(value?: string | number | null) {
-  if (!hasValue(value)) {
-    return '-';
-  }
-
-  const raw = String(value).trim();
-  return raw.endsWith('만원') ? raw : `${raw}만원`;
-}
-
-function toPyeong(value?: string | number | null) {
+function parseNumericValue(value?: string | number | null) {
   if (!hasValue(value)) {
     return null;
   }
 
   const parsed = Number(String(value).replace(/,/g, ''));
 
-  if (!Number.isFinite(parsed)) {
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatArea(value?: string | number | null) {
+  if (!hasValue(value)) {
+    return '';
+  }
+
+  return `${value}㎡`;
+}
+
+function toPyeong(value?: string | number | null) {
+  const parsed = parseNumericValue(value);
+
+  if (parsed === null) {
     return null;
   }
 
   return Math.round(parsed / 3.3);
 }
 
-function getHeaderTags(detail: LegacyHomeData) {
-  if (detail.HOUSE_DTL_SECD_NM && detail.HOUSE_DTL_SECD_NM === detail.HOUSE_SECD_NM) {
-    return [detail.HOUSE_DTL_SECD_NM, detail.SUBSCRPT_AREA_CODE_NM].filter(Boolean);
+function formatPrice(value?: string | number | null) {
+  if (!hasValue(value)) {
+    return '';
+  }
+
+  const raw = String(value).trim();
+  return raw.endsWith('만원') ? raw : `${raw}만원`;
+}
+
+function sumCounts(...values: Array<string | number | null | undefined>) {
+  const parsedValues = values
+    .map((value) => parseNumericValue(value))
+    .filter((value): value is number => value !== null);
+
+  if (!parsedValues.length) {
+    return '';
+  }
+
+  return String(parsedValues.reduce((total, current) => total + current, 0));
+}
+
+function getHeaderTags(detail: DetailPageData) {
+  if (detail.houseDtlSecdNm && detail.houseDtlSecdNm === detail.houseSecdNm) {
+    return [detail.houseDtlSecdNm, detail.subscrptAreaCodeNm].filter(Boolean);
   }
 
   return [
-    detail.HOUSE_DTL_SECD_NM,
-    detail.HOUSE_SECD_NM,
-    detail.SUBSCRPT_AREA_CODE_NM,
+    detail.houseDtlSecdNm,
+    detail.houseSecdNm,
+    detail.subscrptAreaCodeNm,
   ].filter(Boolean);
 }
 
-function DetailHeader({ detail }: { detail: LegacyHomeData }) {
+function DetailHeader({ detail }: { detail: DetailPageData }) {
   const router = useRouter();
   const headerTags = getHeaderTags(detail);
 
@@ -243,10 +290,8 @@ function DetailHeader({ detail }: { detail: LegacyHomeData }) {
           ))}
         </div>
 
-        <h1 className={styles.headerTitle}>{detail.HOUSE_NM || '상세페이지'}</h1>
-        <p className={styles.headerAddress}>
-          {detail.FOR_COORDINATES_ADRES || detail.HSSPLY_ADRES || '-'}
-        </p>
+        <h1 className={styles.headerTitle}>{detail.houseName || '상세페이지'}</h1>
+        <p className={styles.headerAddress}>{displayText(detail.hssplyAdres)}</p>
         <div className={styles.headerInterestBadge}>
           <LegacyStarFilledIcon className={styles.headerInterestIcon} />
           <span>0명이 관심을 갖고 있어요</span>
@@ -256,26 +301,34 @@ function DetailHeader({ detail }: { detail: LegacyHomeData }) {
   );
 }
 
+const EMPTY_ROW: DetailRow = {};
+
 function TableCell({
   children,
   align = 'left',
   colSpan,
+  className,
 }: {
   children: React.ReactNode;
   align?: 'left' | 'center';
   colSpan?: number;
+  className?: string;
 }) {
   return (
     <td
       colSpan={colSpan}
-      className={align === 'center' ? styles.tableCellCenter : styles.tableCell}
+      className={`${align === 'center' ? styles.tableCellCenter : styles.tableCell} ${
+        className ?? ''
+      }`.trim()}
     >
       {children}
     </td>
   );
 }
 
-function KeyInfoSection({ detail }: { detail: LegacyHomeData }) {
+function KeyInfoSection({ detail }: { detail: DetailPageData }) {
+  const contactNumber = formatPhoneNumber(detail.mdhsTelno);
+
   return (
     <section>
       <h2 className={styles.sectionTitle}>입주자모집공고 주요정보</h2>
@@ -284,16 +337,16 @@ function KeyInfoSection({ detail }: { detail: LegacyHomeData }) {
           <tbody>
             <tr>
               <td className={styles.articleTitle} colSpan={4}>
-                {detail.HOUSE_NM || '-'}
+                {displayText(detail.houseName)}
               </td>
             </tr>
             <tr>
               <td className={styles.tableHead}>공급위치</td>
-              <TableCell>{detail.HSSPLY_ADRES || '-'}</TableCell>
+              <TableCell>{displayText(detail.hssplyAdres)}</TableCell>
             </tr>
             <tr>
               <td className={styles.tableHead}>공급규모</td>
-              <TableCell>{formatHouseholdCount(detail.TOT_SUPLY_HSHLDCO)}</TableCell>
+              <TableCell>{formatHouseholdCount(detail.totSuplyHshldco)}</TableCell>
             </tr>
             <tr>
               <td className={styles.tableHead}>관련문의</td>
@@ -301,16 +354,16 @@ function KeyInfoSection({ detail }: { detail: LegacyHomeData }) {
             </tr>
             <tr>
               <td className={styles.tableHead}>문의처</td>
-              <TableCell>☎ {formatPhoneNumber(detail.MDHS_TELNO)}</TableCell>
+              <TableCell>{contactNumber ? `☎ ${contactNumber}` : ''}</TableCell>
             </tr>
           </tbody>
         </table>
       </div>
 
       <div className={styles.linkRow}>
-        {detail.PBLANC_URL ? (
+        {detail.pblancUrl ? (
           <a
-            href={detail.PBLANC_URL}
+            href={detail.pblancUrl}
             target="_blank"
             rel="noreferrer"
             className={styles.primaryLinkButton}
@@ -323,8 +376,8 @@ function KeyInfoSection({ detail }: { detail: LegacyHomeData }) {
   );
 }
 
-function SubscriptionScheduleSection({ detail }: { detail: LegacyHomeData }) {
-  const hideSpecialRows = ['02', '03', '04', '06'].includes(detail.HOUSE_SECD || '');
+function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
+  const hideDetailedSchedule = ['02', '03', '04', '06'].includes(detail.houseSecd || '');
 
   return (
     <section>
@@ -334,10 +387,10 @@ function SubscriptionScheduleSection({ detail }: { detail: LegacyHomeData }) {
           <tbody>
             <tr>
               <td className={styles.tableHead}>모집공고일</td>
-              <TableCell>{formatRawDate(detail.RCRIT_PBLANC_DE)}</TableCell>
+              <TableCell colSpan={4}>{formatRawDate(detail.rcritPblancDe)}</TableCell>
             </tr>
 
-            {!hideSpecialRows ? (
+            {!hideDetailedSchedule ? (
               <>
                 <tr>
                   <td className={styles.tableHead} rowSpan={4}>
@@ -351,53 +404,55 @@ function SubscriptionScheduleSection({ detail }: { detail: LegacyHomeData }) {
                 <tr>
                   <TableCell align="center">특별공급</TableCell>
                   <TableCell align="center" colSpan={3}>
-                    {formatDateRange(detail.SPSPLY_RCEPT_BGNDE, detail.SPSPLY_RCEPT_ENDDE)}
+                    {formatDateRange(detail.spsplyRceptBgnde, detail.spsplyRceptEndde)}
                   </TableCell>
                 </tr>
                 <tr>
                   <TableCell align="center">1순위</TableCell>
-                  <TableCell align="center">{formatRawDate(detail.GNRL_RNK1_CRSPAREA_RCEPT_PD)}</TableCell>
-                  <TableCell align="center">{formatRawDate(detail.GNRL_RNK1_ETC_GG_RCPTDE_PD)}</TableCell>
-                  <TableCell align="center">{formatRawDate(detail.GNRL_RNK1_ETC_AREA_RCPTDE_PD)}</TableCell>
+                  <TableCell align="center">
+                    {displayText(detail.gnrlRnk1CrspareaRceptPd)}
+                  </TableCell>
+                  <TableCell align="center">
+                    {displayText(detail.gnrlRnk1EtcGgRcptdePd)}
+                  </TableCell>
+                  <TableCell align="center">
+                    {displayText(detail.gnrlRnk1EtcAreaRcptdePd)}
+                  </TableCell>
                 </tr>
                 <tr>
                   <TableCell align="center">2순위</TableCell>
-                  <TableCell align="center">{formatRawDate(detail.GNRL_RNK2_CRSPAREA_RCEPT_PD)}</TableCell>
-                  <TableCell align="center">{formatRawDate(detail.GNRL_RNK2_ETC_GG_RCPTDE_PD)}</TableCell>
-                  <TableCell align="center">{formatRawDate(detail.GNRL_RNK2_ETC_AREA_RCPTDE_PD)}</TableCell>
+                  <TableCell align="center">
+                    {displayText(detail.gnrlRnk2CrspareaRceptPd)}
+                  </TableCell>
+                  <TableCell align="center">
+                    {displayText(detail.gnrlRnk2EtcGgRcptdePd)}
+                  </TableCell>
+                  <TableCell align="center">
+                    {displayText(detail.gnrlRnk2EtcAreaRcptdePd)}
+                  </TableCell>
                 </tr>
               </>
-            ) : (
-              <tr>
-                <td className={styles.tableHead}>청약접수</td>
-                <TableCell>{formatDateRange(detail.RCEPT_BGNDE, detail.RCEPT_ENDDE)}</TableCell>
-              </tr>
-            )}
+            ) : null}
 
             <tr>
               <td className={styles.tableHead}>당첨자 발표일</td>
-              <TableCell>{formatRawDate(detail.PRZWNER_PRESNATN_DE)}</TableCell>
+              <TableCell colSpan={4}>{formatRawDate(detail.przwnerPresnatnDe)}</TableCell>
             </tr>
             <tr>
               <td className={styles.tableHead}>계약일</td>
-              <TableCell>
-                {formatDateRange(detail.CNTRCT_CNCLS_BGNDE, detail.CNTRCT_CNCLS_ENDDE)}
+              <TableCell colSpan={4}>
+                {formatDateRange(detail.cntrctCnclsBgnde, detail.cntrctCnclsEndde)}
               </TableCell>
             </tr>
           </tbody>
         </table>
       </div>
-      <p className={styles.sectionInfo}>
-        *특별공급 종류에 따라 접수기간 및 장소가 다를 수 있으니 모집공고를 반드시 확인하시기 바랍니다.
-      </p>
     </section>
   );
 }
 
-function SupplyInfoSection({ detailRows }: { detailRows: LegacyDetailRow[] }) {
-  if (!detailRows.length) {
-    return null;
-  }
+function SupplyInfoSection({ detail }: { detail: DetailPageData }) {
+  const rows = detail.detailRows.length ? detail.detailRows : [EMPTY_ROW];
 
   return (
     <section>
@@ -426,27 +481,29 @@ function SupplyInfoSection({ detailRows }: { detailRows: LegacyDetailRow[] }) {
               <td className={styles.tableHeadCompact}>총계</td>
               <td className={styles.tableHeadCompact}>(최고가 기준)</td>
             </tr>
-
-            {detailRows.map((item, index) => {
-              const exclusiveArea = item.HOUSE_TY || item.EXCLUSE_AR || '-';
-              const supplyArea = item.SUPLY_AR || item.EXCLUSE_AR || '-';
-              const generalCount = Number(item.SUPLY_HSHLDCO || 0);
-              const specialCount = Number(item.SPSPLY_HSHLDCO || 0);
-              const pyeong = toPyeong(item.SUPLY_AR || item.EXCLUSE_AR);
+            {rows.map((row, index) => {
+              const exclusiveArea = displayText(row.houseTy) || formatArea(row.excluseAr);
+              const supplyAreaValue = hasValue(row.suplyAr) ? row.suplyAr : row.excluseAr;
+              const supplyArea = formatArea(supplyAreaValue);
+              const pyeong = toPyeong(supplyAreaValue);
 
               return (
-                <tr key={`${item.MODEL_NO || 'row'}-${index}`}>
-                  <td className={styles.tableHeadCompact}>{item.MODEL_NO || index + 1}</td>
-                  <TableCell align="center">{exclusiveArea || '-'}</TableCell>
+                <tr key={`${displayText(row.modelNo) || 'empty'}-${index}`}>
+                  <td className={styles.tableHeadCompact}>{displayText(row.modelNo)}</td>
+                  <TableCell align="center">{exclusiveArea}</TableCell>
                   <TableCell align="center">
-                    <div>{hasValue(supplyArea) ? `${supplyArea}㎡` : '-'}</div>
-                    {pyeong ? <div className={styles.subText}>({pyeong}평)</div> : null}
+                    <div>{supplyArea}</div>
+                    {pyeong !== null && supplyArea ? (
+                      <div className={styles.subText}>({pyeong}평)</div>
+                    ) : null}
                   </TableCell>
-                  <TableCell align="center">{generalCount}</TableCell>
-                  <TableCell align="center">{specialCount}</TableCell>
-                  <TableCell align="center">{generalCount + specialCount}</TableCell>
+                  <TableCell align="center">{displayText(row.suplyHshldco)}</TableCell>
+                  <TableCell align="center">{displayText(row.spsplyHshldco)}</TableCell>
                   <TableCell align="center">
-                    {formatPrice(item.LTTOT_TOP_AMOUNT || item.SUPLY_AMOUNT)}
+                    {sumCounts(row.suplyHshldco, row.spsplyHshldco)}
+                  </TableCell>
+                  <TableCell align="center">
+                    {formatPrice(row.lttotTopAmount ?? row.suplyAmount)}
                   </TableCell>
                 </tr>
               );
@@ -458,20 +515,12 @@ function SupplyInfoSection({ detailRows }: { detailRows: LegacyDetailRow[] }) {
   );
 }
 
-function SpecialSupplySection({
-  detail,
-  detailRows,
-}: {
-  detail: LegacyHomeData;
-  detailRows: LegacyDetailRow[];
-}) {
-  if (!detailRows.length) {
+function SpecialSupplySection({ detail }: { detail: DetailPageData }) {
+  if (['06', '04', '03', '02'].includes(detail.houseSecd || '')) {
     return null;
   }
 
-  if (['06', '04', '03', '02'].includes(detail.HOUSE_SECD || '')) {
-    return null;
-  }
+  const rows = detail.detailRows.length ? detail.detailRows : [EMPTY_ROW];
 
   return (
     <section>
@@ -498,31 +547,34 @@ function SpecialSupplySection({
               <td className={styles.tableHeadCompact}>총계</td>
             </tr>
 
-            {detailRows.map((item, index) => (
-              <tr key={`${item.MODEL_NO || 'special'}-${index}`}>
-                <TableCell align="center">{item.HOUSE_TY || '-'}</TableCell>
-                <TableCell align="center">{item.MNYCH_HSHLDCO || 0}</TableCell>
-                <TableCell align="center">{item.NWWDS_HSHLDCO || 0}</TableCell>
-                <TableCell align="center">{item.LFE_FRST_HSHLDCO || 0}</TableCell>
-                <TableCell align="center">{item.OLD_PARNTS_SUPORT_HSHLDCO || 0}</TableCell>
-                <TableCell align="center">{item.INSTT_RECOMEND_HSHLDCO || 0}</TableCell>
-                <TableCell align="center">{item.ETC_HSHLDCO || 0}</TableCell>
-                <TableCell align="center">{item.TRANSR_INSTT_ENFSN_HSHLDCO || 0}</TableCell>
-                <TableCell align="center">{item.SPSPLY_HSHLDCO || 0}</TableCell>
+            {rows.map((row, index) => (
+              <tr key={`${displayText(row.modelNo) || 'special'}-${index}`}>
+                <TableCell align="center">
+                  {displayText(row.houseTy) || formatArea(row.excluseAr)}
+                </TableCell>
+                <TableCell align="center">{displayText(row.mnychHshldco)}</TableCell>
+                <TableCell align="center">{displayText(row.nwwdsHshldco)}</TableCell>
+                <TableCell align="center">{displayText(row.lfeFrstHshldco)}</TableCell>
+                <TableCell align="center">{displayText(row.oldParntsSuportHshldco)}</TableCell>
+                <TableCell align="center">{displayText(row.insttRecomendHshldco)}</TableCell>
+                <TableCell align="center">{displayText(row.etcHshldco)}</TableCell>
+                <TableCell align="center">{displayText(row.transrInsttEnfsnHshldco)}</TableCell>
+                <TableCell align="center">{displayText(row.spsplyHshldco)}</TableCell>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <p className={styles.sectionInfo}>
-        *공급세대수는 사업주체의 최초 입주자모집 공고문 기준입니다. 특별공급 신청 미달 시 잔여물량은 일반공급으로
-        전환될 수 있으므로 최종 세대수는 모집공고문을 다시 확인하시기 바랍니다.
+        *공급세대수는 사업주체의 최초 입주자모집 공고문 기준입니다. 특별공급 신청 미달 시 잔여물량은
+        일반공급으로 전환됨에 따라 일반공급 세대 수가 변경될 수 있으므로 최종 일반공급 세대수는 일반공급
+        신청일에 청약접수 경쟁률에서 확인 또는 사업주체에 문의하시기 바랍니다.
       </p>
     </section>
   );
 }
 
-function ExtraInfoSection({ detail }: { detail: LegacyHomeData }) {
+function ExtraInfoSection({ detail }: { detail: DetailPageData }) {
   return (
     <section>
       <h2 className={styles.sectionTitle}>기타사항</h2>
@@ -535,9 +587,9 @@ function ExtraInfoSection({ detail }: { detail: LegacyHomeData }) {
               <td className={styles.tableHeadCompact}>사업주체 전화번호</td>
             </tr>
             <tr>
-              <TableCell align="center">{detail.BSNS_MBY_NM || '-'}</TableCell>
-              <TableCell align="center">{detail.CNSTRCT_ENTRPS_NM || '-'}</TableCell>
-              <TableCell align="center">{formatPhoneNumber(detail.MDHS_TELNO)}</TableCell>
+              <TableCell align="center">{displayText(detail.bsnsMbyNm)}</TableCell>
+              <TableCell align="center">{displayText(detail.cnstrctEntrpsNm)}</TableCell>
+              <TableCell align="center">{formatPhoneNumber(detail.mdhsTelno)}</TableCell>
             </tr>
           </tbody>
         </table>
@@ -546,12 +598,7 @@ function ExtraInfoSection({ detail }: { detail: LegacyHomeData }) {
   );
 }
 
-function LhDetailSection({ detail }: { detail: LegacyHomeData }) {
-  const lhDetail = detail.DETAIL?.[0];
-  const register = lhDetail?.REGISTER?.[0];
-  const fileList = lhDetail?.FILE ?? [];
-  const complexList = lhDetail?.DETAIL ?? [];
-
+function LhDetailSection({ detail }: { detail: DetailPageData }) {
   return (
     <>
       <section>
@@ -560,80 +607,43 @@ function LhDetailSection({ detail }: { detail: LegacyHomeData }) {
           <table className={styles.articleTable}>
             <tbody>
               <tr>
-                <td className={styles.tableHead}>모집공고일</td>
-                <TableCell>{formatRawDate(detail.RCRIT_PBLANC_DE)}</TableCell>
+                <td className={styles.tableHeadLh}>모집공고일</td>
+                <TableCell align="center" className={styles.tableCellLh}>
+                  {formatRawDate(detail.rcritPblancDe)}
+                </TableCell>
               </tr>
               <tr>
-                <td className={styles.tableHead}>서류 접수 기간</td>
-                <TableCell>{formatDateRange(detail.RCEPT_BGNDE, detail.RCEPT_ENDDE)}</TableCell>
+                <td className={styles.tableHeadLh}>서류 접수 기간</td>
+                <TableCell align="center" className={styles.tableCellLh}>
+                  {formatDateRange(detail.rceptBgnde, detail.rceptEndde)}
+                </TableCell>
               </tr>
               <tr>
-                <td className={styles.tableHead}>당첨자 발표일</td>
-                <TableCell>{formatRawDate(detail.PRZWNER_PRESNATN_DE)}</TableCell>
+                <td className={styles.tableHeadLh}>당첨자 발표일</td>
+                <TableCell align="center" className={styles.tableCellLh}>
+                  {formatRawDate(detail.przwnerPresnatnDe)}
+                </TableCell>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      {complexList.length ? (
-        <section>
-          <h2 className={styles.sectionTitle}>공급단지 정보</h2>
-          <div className={styles.tableScroll}>
-            <table className={styles.articleTable}>
-              <tbody>
-                <tr>
-                  <td className={styles.tableHeadCompact}>단지명</td>
-                  <td className={styles.tableHeadCompact}>공급위치</td>
-                  <td className={styles.tableHeadCompact}>세대수</td>
-                  <td className={styles.tableHeadCompact}>면적</td>
-                  <td className={styles.tableHeadCompact}>입주예정</td>
-                </tr>
-                {complexList.map((item, index) => (
-                  <tr key={`${item.LCC_NT_NM || 'lh'}-${index}`}>
-                    <TableCell align="center">{item.LCC_NT_NM || '-'}</TableCell>
-                    <TableCell>{item.LGDN_ADR || '-'}</TableCell>
-                    <TableCell align="center">
-                      {hasValue(item.HSH_CNT) ? `${item.HSH_CNT}세대` : '-'}
-                    </TableCell>
-                    <TableCell align="center">{item.DDO_AR || '-'}</TableCell>
-                    <TableCell align="center">{item.MVIN_XPC_YM || '-'}</TableCell>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-
-      {register?.SIL_OFC_GUD_FCTS ? (
-        <section>
-          <h2 className={styles.sectionTitle}>유의사항</h2>
-          <div className={styles.noticeBox}>{register.SIL_OFC_GUD_FCTS}</div>
-        </section>
-      ) : null}
-
-      {fileList.length ? (
-        <section>
-          <h2 className={styles.sectionTitle}>첨부파일</h2>
-          <div className={styles.fileList}>
-            {fileList.map((file, index) =>
-              file.AHFL_URL ? (
-                <a
-                  key={`${file.AHFL_URL}-${index}`}
-                  href={file.AHFL_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={styles.fileButton}
-                >
-                  <span>{file.SL_PAN_AHFL_DS_CD_NM || '첨부파일'}</span>
-                  <span className={styles.fileName}>{file.CMN_AHFL_NM || '열기'}</span>
-                </a>
-              ) : null,
-            )}
-          </div>
-        </section>
-      ) : null}
+      <section>
+        <h2 className={styles.sectionTitle}>유의사항</h2>
+        <div className={styles.tableScroll}>
+          <table className={styles.articleTable}>
+            <tbody>
+              <tr>
+                <td className={styles.tableHeadLh}>유의사항</td>
+                <TableCell className={styles.tableCellLhNotice}>
+                  {displayText(detail.lhNoticeText)}
+                </TableCell>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </>
   );
 }
@@ -649,7 +659,8 @@ function RealPricePanel({ isRealPriceEnabled }: { isRealPriceEnabled: boolean })
             : '현재 v2 환경에는 실거래가 API 키가 없어 탭 UI만 우선 복원했습니다.'}
         </p>
         <p className={styles.sectionInfo}>
-          기존 분양모음집의 탭 구조는 유지하되, 외부 API 연동은 v2 환경 정리 후 붙이는 편이 안전합니다.
+          현재 상세 API 응답에는 실거래가 연동용 후처리가 아직 없어, 탭 UI만 유지하고 실제 데이터 연동은 추후
+          연결하도록 분리해뒀습니다.
         </p>
       </div>
     </section>
@@ -661,8 +672,7 @@ export default function DetailPageClient({
   isRealPriceEnabled,
 }: DetailPageClientProps) {
   const [isRealPriceTab, setIsRealPriceTab] = useState(false);
-  const isLhDetail = detail.API === 'LH';
-  const detailRows = isLhDetail ? [] : detail.DETAIL ?? [];
+  const isLhDetail = detail.sourceSystem === 'LH';
 
   return (
     <div className={styles.page}>
@@ -688,21 +698,19 @@ export default function DetailPageClient({
         </div>
 
         {!isRealPriceTab ? (
-          <>
-            <section className={styles.contentSection}>
-              <KeyInfoSection detail={detail} />
-              {isLhDetail ? (
-                <LhDetailSection detail={detail} />
-              ) : (
-                <>
-                  <SubscriptionScheduleSection detail={detail} />
-                  <SupplyInfoSection detailRows={detailRows} />
-                  <SpecialSupplySection detail={detail} detailRows={detailRows} />
-                  <ExtraInfoSection detail={detail} />
-                </>
-              )}
-            </section>
-          </>
+          <section className={styles.contentSection}>
+            <KeyInfoSection detail={detail} />
+            {isLhDetail ? (
+              <LhDetailSection detail={detail} />
+            ) : (
+              <>
+                <SubscriptionScheduleSection detail={detail} />
+                <SupplyInfoSection detail={detail} />
+                <SpecialSupplySection detail={detail} />
+                <ExtraInfoSection detail={detail} />
+              </>
+            )}
+          </section>
         ) : (
           <RealPricePanel isRealPriceEnabled={isRealPriceEnabled} />
         )}

@@ -107,4 +107,3 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
     </div>
   );
 }
-
