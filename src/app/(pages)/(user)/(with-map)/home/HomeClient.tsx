@@ -1,13 +1,24 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
-import HousingStatusTab from '@/components/home/HousingStatusTab';
-import CategoryBar from '@/components/home/CategoryBar';
-import HousingCard, { type HousingItem } from '@/components/home/HousingCard';
-import { formatDateRange, formatDateString, determineHousingType } from '@/app/libs/utils/date';
-import Spinner from '@/app/components/common/Spinner/Spinner';
-
+import {
+  DEFAULT_MAP_PAGE_VIEW,
+  useMapStore,
+} from '@/app/libs/stores/zustand/useMapStore';
+// 홈 전용 UI는 라우트 폴더 `home/components/`에 두고, 존재하지 않는 `@/components/home/*` 별칭은 쓰지 않습니다.
+// 같은 트리 안의 상대 경로로 두면 `(pages)` 이동 등 디렉터리 구조 변경 시에도 import가 깨지지 않습니다.
+import HousingStatusTab from './components/HousingStatusTab';
+import CategoryBar from './components/CategoryBar';
+import { type HousingItem } from './components/HousingCard';
+import {
+  formatDateRange,
+  formatDateString,
+  determineHousingType,
+} from '@/app/libs/utils/date';
+import { useMapPageView } from '@/app/libs/hooks/useMapPageView';
+// 리스트 섹션은 `components/home/`가 아니라 `components/` 바로 아래에 있습니다.
+import HousingListSection from './components/HousingListSection';
 interface HomeClientProps {
   /**
    * 서버에서 미리 가져온 public housing-supplies 목록.
@@ -23,6 +34,9 @@ interface HomeClientProps {
  */
 export default function HomeClient({ initialHousingData }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState(0);
+  const { setMarkers } = useMapStore();
+
+  useMapPageView(DEFAULT_MAP_PAGE_VIEW.center, DEFAULT_MAP_PAGE_VIEW.zoom);
 
   // 서버에서 주입받은 원본 데이터
   const housingData = initialHousingData;
@@ -42,6 +56,41 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
       { all: 0, today: 0, coming: 0, random: 0 },
     );
   }, [housingData]);
+
+  // 스토어의 markers 데이터 동기화
+  useEffect(() => {
+    // 필터링된 데이터에서 좌표가 있는 항목만 마커로 생성
+    const markers = housingData
+      .filter((item) => {
+        const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
+        if (activeTab === 0) return true;
+        if (activeTab === 1) return type === 'today';
+        if (activeTab === 2) return type === 'coming';
+        if (activeTab === 3) return item.houseSecd === '04';
+        return true;
+      })
+      .filter((item) => {
+        const hasCoords =
+          item.latitude !== undefined &&
+          item.latitude !== null &&
+          item.longitude !== undefined &&
+          item.longitude !== null;
+        return hasCoords;
+      })
+      .map((item) => ({
+        id: String(item.id),
+        lat: Number(item.latitude),
+        lng: Number(item.longitude),
+        title: item.houseName || '',
+      }));
+
+    setMarkers(markers);
+
+    // 컴포넌트 언마운트 시 마커 초기화 (다른 페이지 이동 시 지도의 마커를 비움)
+    return () => {
+      setMarkers([]);
+    };
+  }, [housingData, activeTab, setMarkers]);
 
   // 탭에 따른 카드 데이터 가공
   const filteredData = useMemo((): HousingItem[] => {
@@ -84,26 +133,9 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
         <CategoryBar />
       </div>
 
-      <section className="w-full flex-1 bg-[#f8faff] border-t border-[rgba(0,0,0,0.25)] pt-6 overflow-y-auto">
-        <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-center px-4 md:px-0 gap-x-8 gap-y-0">
-          {isLoading ? (
-            <div className="col-span-full min-h-[40vh] flex items-center justify-center">
-              <Spinner />
-            </div>
-          ) : (
-            <>
-              {filteredData.map((item) => (
-                <HousingCard key={item.id} item={item} />
-              ))}
-              {filteredData.length === 0 && (
-                <div className="col-span-full py-20 text-gray-500 font-medium text-center w-full">
-                  해당하는 분양 공고가 없습니다.
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
+      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-[rgba(0,0,0,0.25)]">
+        <HousingListSection items={filteredData} isLoading={isLoading} />
+      </div>
     </div>
   );
 }

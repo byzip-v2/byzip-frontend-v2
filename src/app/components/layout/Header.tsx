@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu } from 'lucide-react';
+import { Search, Menu, Bookmark } from 'lucide-react';
 
 const Header = () => {
   const pathname = usePathname();
@@ -12,7 +12,7 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-300 px-4 md:px-8 flex items-center justify-between md:grid md:grid-cols-3">
       {/* 로고 영역 */}
-      <Link href="/" className="flex items-center gap-1 cursor-pointer">
+      <Link href="/home" className="flex items-center gap-1 cursor-pointer">
         <Image
           src="/images/byzip_logo.png"
           alt="logoImg"
@@ -39,24 +39,40 @@ const Header = () => {
         </div>
       </div>
 
-      {/* 네비게이션 영역 - 우측에 청약캘린더만 */}
+      {/* 네비게이션: 데스크톱은 텍스트 링크, 모바일은 아이콘으로 동일 경로 제공 */}
       <nav className="flex justify-end items-center gap-2.5 md:gap-9 h-full">
         <div className="hidden md:flex items-center gap-9">
           <Link
             href="/calendar"
-            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
-              }`}
+            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${
+              pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
+            }`}
           >
             청약캘린더
           </Link>
+          <Link
+            href="/bookmark"
+            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${
+              pathname === '/bookmark' ? 'text-brand-blue' : 'text-black'
+            }`}
+          >
+            북마크
+          </Link>
         </div>
 
-        {/* 모바일 아이콘 */}
+        {/* 모바일: 공간 제약으로 아이콘 링크로 북마크 진입 (검색/메뉴와 동일 높이) */}
         <div className="md:hidden flex items-center gap-4">
-          <button className="text-black">
+          <Link
+            href="/bookmark"
+            aria-label="북마크"
+            className={`text-black hover:text-brand-blue transition-colors ${pathname === '/bookmark' ? 'text-brand-blue' : ''}`}
+          >
+            <Bookmark size={24} />
+          </Link>
+          <button type="button" className="text-black">
             <Search size={24} />
           </button>
-          <button className="text-black">
+          <button type="button" className="text-black">
             <Menu size={24} />
           </button>
         </div>
