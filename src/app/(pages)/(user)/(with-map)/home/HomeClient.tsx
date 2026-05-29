@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
 import {
   DEFAULT_MAP_PAGE_VIEW,
   useMapStore,
@@ -19,12 +18,13 @@ import {
 import { useMapPageView } from '@/app/libs/hooks/useMapPageView';
 // 리스트 섹션은 `components/home/`가 아니라 `components/` 바로 아래에 있습니다.
 import HousingListSection from './components/HousingListSection';
+import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 interface HomeClientProps {
   /**
    * 서버에서 미리 가져온 public housing-supplies 목록.
    * 클라이언트에서는 이 원본 데이터를 탭/필터 기준으로만 가공합니다.
    */
-  initialHousingData: HousingSupplyDataDto[];
+  initialHousingData: HousingSupplyResponseDto[];
 }
 
 /**

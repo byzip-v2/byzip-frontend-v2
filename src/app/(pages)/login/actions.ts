@@ -9,9 +9,9 @@ import { cookies } from 'next/headers';
 import axios from 'axios';
 import {
   BugReportErrorType,
+  TokenResponseDto,
   type BaseResponseDto,
   type LoginRequestDto,
-  type TokenDataDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -43,13 +43,13 @@ export async function loginAction(
 ): Promise<ActionResult> {
   try {
     const requestBody: LoginRequestDto = {
-      userId: userId.trim(),
+      username: userId.trim(),
       password: password,
     };
 
     // API 요청 (serverApi 사용)
     const response = await serverApiWithoutToken.post<
-      BaseResponseDto<TokenDataDto>
+      BaseResponseDto<TokenResponseDto>
     >('/auth/login', requestBody);
 
     // 응답 성공 시 응답 데이터 확인
@@ -142,7 +142,7 @@ export async function loginAction(
     // 기타 모든 에러
     return {
       success: false,
-      message: '로그인 중 오류가 발생했습니다. 다시 시도해주세요.',
+      message: '로그인에 실패했습니다.',
     };
   }
 }

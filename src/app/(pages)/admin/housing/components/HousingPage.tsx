@@ -1,18 +1,30 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback, useTransition } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useTransition,
+} from 'react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Spinner from '@/app/components/common/Spinner/Spinner';
 import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import styles from '@/styles/pages/admin/housing/housing.module.scss';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { toggleHousingSupplyHidden, bulkHideHousingSupplies, bulkDeleteHousingSupplies, deleteHousingSupply, type GetHousingSuppliesResultData } from '../actions';
-import { HousingSupplyDataDto } from 'byzip-v2-sdk';
+import {
+  toggleHousingSupplyHidden,
+  bulkHideHousingSupplies,
+  bulkDeleteHousingSupplies,
+  deleteHousingSupply,
+  type GetHousingSuppliesResultData,
+} from '../actions';
+import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 import { useToast } from '@/app/libs/hooks/useToast';
 import AlertModal from '@/app/libs/global-components/AlertModal';
 import Pagination from '@/app/components/common/Pagination/Pagination';
 
-type SaleRow = HousingSupplyDataDto & { isHidden?: boolean };
+type SaleRow = HousingSupplyResponseDto & { isHidden?: boolean };
 
 interface HousingClientProps {
   initialData: GetHousingSuppliesResultData;
@@ -81,14 +93,15 @@ export default function HousingClient({
 
   const isLoading = isPending;
 
-
   // 데이터 갱신이 필요할 때만 fetchList 사용 (숨김 토글, 삭제 등 액션 후)
   const fetchList = useCallback(async () => {
     router.refresh(); // 서버 컴포넌트 재실행을 통한 최신화
   }, [router]);
 
   // 확인 모달 상태
-  const [confirmModal, setConfirmModal] = useState<'hide' | 'delete' | 'deleteOne' | null>(null);
+  const [confirmModal, setConfirmModal] = useState<
+    'hide' | 'delete' | 'deleteOne' | null
+  >(null);
 
   // 페이지 이동 시 선택 초기화
   useEffect(() => {
@@ -102,15 +115,12 @@ export default function HousingClient({
   }, [currentPage, totalPages, updateUrl]);
 
   // 체크박스 전체 선택
-  const visibleRowKeys = useMemo(
-    () => list.map((item) => item.id),
-    [list],
-  );
+  const visibleRowKeys = useMemo(() => list.map((item) => item.id), [list]);
 
   // 전체 체크박스 상태
-  const allVisibleSelected = visibleRowKeys.length > 0 && visibleRowKeys.every((key) =>
-    selectedRowKeys.has(key),
-  );
+  const allVisibleSelected =
+    visibleRowKeys.length > 0 &&
+    visibleRowKeys.every((key) => selectedRowKeys.has(key));
 
   // 체크박스 전체 선택 토글
   const handleToggleAll = (checked: boolean) => {
@@ -148,7 +158,7 @@ export default function HousingClient({
         showToast('숨김 상태가 변경되었습니다.');
         fetchList();
         if (selected?.id === id) {
-          setSelected(result.data!);
+          setSelected(result.data! as unknown as HousingSupplyResponseDto);
         }
       } else {
         showToast(result.message, 'error');
@@ -224,8 +234,8 @@ export default function HousingClient({
       const result = await deleteHousingSupply(selected.id);
       if (result.success) {
         showToast(result.message);
-        setSelected(null);          // 서랍 닫기
-        await fetchList();           // 목록 새로고침
+        setSelected(null); // 서랍 닫기
+        await fetchList(); // 목록 새로고침
       } else {
         showToast(result.message, 'error');
       }
@@ -290,8 +300,10 @@ export default function HousingClient({
       return cleaned.replace(/(\d{4})(\d{4})/, '$1-$2');
     }
     if (cleaned.startsWith('02')) {
-      if (cleaned.length === 9) return cleaned.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
-      if (cleaned.length === 10) return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+      if (cleaned.length === 9)
+        return cleaned.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+      if (cleaned.length === 10)
+        return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
     }
     if (cleaned.length === 10) {
       return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
@@ -343,10 +355,7 @@ export default function HousingClient({
               if (e.key === 'Enter') handleSearch();
             }}
           />
-          <PrimaryButton
-            onClick={handleSearch}
-            isLoading={isLoading}
-          >
+          <PrimaryButton onClick={handleSearch} isLoading={isLoading}>
             검색
           </PrimaryButton>
           <button
@@ -355,7 +364,11 @@ export default function HousingClient({
             disabled={!selectedRowKeys.size || isActionLoading}
             onClick={() => setConfirmModal('hide')}
           >
-            {isActionLoading ? <Spinner /> : `선택 숨김${selectedRowKeys.size > 0 ? ` (${selectedRowKeys.size})` : ''}`}
+            {isActionLoading ? (
+              <Spinner />
+            ) : (
+              `선택 숨김${selectedRowKeys.size > 0 ? ` (${selectedRowKeys.size})` : ''}`
+            )}
           </button>
           <button
             type="button"
@@ -363,7 +376,11 @@ export default function HousingClient({
             disabled={!selectedRowKeys.size || isActionLoading}
             onClick={() => setConfirmModal('delete')}
           >
-            {isActionLoading ? <Spinner /> : `선택 삭제${selectedRowKeys.size > 0 ? ` (${selectedRowKeys.size})` : ''}`}
+            {isActionLoading ? (
+              <Spinner />
+            ) : (
+              `선택 삭제${selectedRowKeys.size > 0 ? ` (${selectedRowKeys.size})` : ''}`
+            )}
           </button>
         </div>
       </div>
@@ -401,7 +418,9 @@ export default function HousingClient({
                     <input
                       type="checkbox"
                       checked={checked}
-                      onChange={(e) => handleToggleRow(row.id, e.target.checked)}
+                      onChange={(e) =>
+                        handleToggleRow(row.id, e.target.checked)
+                      }
                       onClick={(e) => e.stopPropagation()}
                     />
                   </td>
@@ -409,7 +428,9 @@ export default function HousingClient({
                     <div className={styles.rowTitle}>{row.houseName}</div>
                   </td>
                   <td>
-                    <div className={styles.ellipsis}>{row.hssplyAdres || '-'}</div>
+                    <div className={styles.ellipsis}>
+                      {row.hssplyAdres || '-'}
+                    </div>
                   </td>
                   <td>{formatDateString(row.rcritPblancDe)}</td>
                   <td>{row.subscrptAreaCodeNm}</td>
@@ -424,7 +445,10 @@ export default function HousingClient({
             })}
             {list.length === 0 && !isLoading && (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>
+                <td
+                  colSpan={7}
+                  style={{ textAlign: 'center', padding: '40px' }}
+                >
                   공고가 없습니다.
                 </td>
               </tr>
@@ -479,7 +503,10 @@ export default function HousingClient({
                         type="checkbox"
                         checked={selected.isHidden}
                         onChange={() =>
-                          handleToggleHiddenItem(selected.id, !!selected.isHidden)
+                          handleToggleHiddenItem(
+                            selected.id,
+                            !!selected.isHidden,
+                          )
                         }
                       />
                       <span className={styles.toggleSwitch} aria-hidden />
@@ -489,7 +516,9 @@ export default function HousingClient({
               </div>
 
               <section className={styles.drawerSection}>
-                <h3 className={styles.drawerSectionTitle}>입주자 모집공고 주요정보</h3>
+                <h3 className={styles.drawerSectionTitle}>
+                  입주자 모집공고 주요정보
+                </h3>
                 <div className={styles.drawerRow}>
                   <div className={styles.drawerField}>
                     <label className={styles.drawerLabel}>공급위치</label>

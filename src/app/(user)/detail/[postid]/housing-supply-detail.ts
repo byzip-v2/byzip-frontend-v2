@@ -1,10 +1,14 @@
 import 'server-only';
 
 import axios from 'axios';
-import type { GetHousingSupplyResponseDto, HousingSupplyDataDto } from 'byzip-v2-sdk';
+import type { ApiResponse, HousingSupplyResponseDto } from 'byzip-v2-sdk';
 
 import { getApiBaseUrl } from '@/app/libs/utils/api';
-import type { DetailPageData, DetailRow, DetailSourceSystem } from './detail.types';
+import type {
+  DetailPageData,
+  DetailRow,
+  DetailSourceSystem,
+} from './detail.types';
 
 const detailApi = axios.create({
   baseURL: getApiBaseUrl(),
@@ -14,7 +18,9 @@ const detailApi = axios.create({
   },
 });
 
-function inferSourceSystem(detail: HousingSupplyDataDto): DetailSourceSystem {
+function inferSourceSystem(
+  detail: HousingSupplyResponseDto,
+): DetailSourceSystem {
   if (detail.pblancUrl?.includes('lh.or.kr')) {
     return 'LH';
   }
@@ -22,7 +28,9 @@ function inferSourceSystem(detail: HousingSupplyDataDto): DetailSourceSystem {
   return '청약홈';
 }
 
-function mapApiDetailToPageData(detail: HousingSupplyDataDto): DetailPageData {
+function mapApiDetailToPageData(
+  detail: HousingSupplyResponseDto,
+): DetailPageData {
   return {
     ...detail,
     sourceSystem: inferSourceSystem(detail),
@@ -41,7 +49,7 @@ function createEmptyDetailPageData(identifier: string): DetailPageData {
     collectedAt: fallbackTimestamp,
     createdAt: fallbackTimestamp,
     updatedAt: fallbackTimestamp,
-  };
+  } as DetailPageData;
 }
 
 function logDetailApiError(identifier: string, error: unknown) {
@@ -67,7 +75,7 @@ async function fetchHousingSupplyById(id: string) {
   }
 
   try {
-    const response = await detailApi.get<GetHousingSupplyResponseDto>(
+    const response = await detailApi.get<ApiResponse<HousingSupplyResponseDto>>(
       `/housing-supplies/${parsedId}`,
     );
 

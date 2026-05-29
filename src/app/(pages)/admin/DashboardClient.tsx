@@ -3,7 +3,10 @@
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import styles from '@/styles/pages/admin/dashboard.module.scss';
 import { useRouter } from 'next/navigation';
-import type { HousingSupplyDataDto, BugReportDataDto } from 'byzip-v2-sdk';
+import type {
+  HousingSupplyResponseDto,
+  BugReportResponseDto,
+} from 'byzip-v2-sdk';
 import {
   useEffect,
   useMemo,
@@ -135,10 +138,10 @@ interface DashboardClientProps {
     osVisitors: { os: string; activeUsers: number }[];
   };
   missingData?: {
-    items: HousingSupplyDataDto[];
+    items: HousingSupplyResponseDto[];
     total: number;
   };
-  bugReports?: BugReportDataDto[];
+  bugReports?: BugReportResponseDto[];
 }
 
 export default function DashboardClient({
@@ -163,18 +166,20 @@ export default function DashboardClient({
     x: number;
     y: number;
   } | null>(null);
-  const [stats] = useState(initialStats || {
-    pendingCount: 0,
-    todayNewCount: 0,
-  });
+  const [stats] = useState(
+    initialStats || {
+      pendingCount: 0,
+      todayNewCount: 0,
+    },
+  );
   const rangeRef = useRef<HTMLDivElement>(null);
 
   const visitorChartData = useMemo(() => {
     // API 데이터가 있는 경우 우선 사용
     if (analytics?.dailyVisitors && analytics.dailyVisitors.length > 0) {
       // 날짜순으로 정렬 (GA 응답 순서 보장 안될 수 있음)
-      const sortedSource = [...analytics.dailyVisitors].sort((a, b) =>
-        Number(a.date) - Number(b.date)
+      const sortedSource = [...analytics.dailyVisitors].sort(
+        (a, b) => Number(a.date) - Number(b.date),
       );
 
       // 최근 N일치 선택 (7일, 14일, 30일 등)
@@ -317,8 +322,7 @@ export default function DashboardClient({
 
     const segment =
       osSegments.find(
-        (item) =>
-          angleFromTop >= item.startDeg && angleFromTop < item.endDeg,
+        (item) => angleFromTop >= item.startDeg && angleFromTop < item.endDeg,
       ) ?? osSegments[osSegments.length - 1];
 
     const percent = Math.round((segment.value / osTotal) * 100);
@@ -335,7 +339,10 @@ export default function DashboardClient({
     if (!rangeOpen) return;
 
     const handleClickOutside = (event: globalThis.MouseEvent) => {
-      if (rangeRef.current && !rangeRef.current.contains(event.target as Node)) {
+      if (
+        rangeRef.current &&
+        !rangeRef.current.contains(event.target as Node)
+      ) {
         setRangeOpen(false);
       }
     };
@@ -351,17 +358,17 @@ export default function DashboardClient({
       <section className={styles.section}>
         <div className={styles.dashboardGrid}>
           <div className={styles.summaryRow}>
-            <article
-              className={`${styles.summaryCard} ${styles.pendingCard}`}
-            >
+            <article className={`${styles.summaryCard} ${styles.pendingCard}`}>
               <p className={styles.summaryLabel}>모집중인 공고</p>
-              <strong className={styles.summaryValue}>{stats.pendingCount}건</strong>
+              <strong className={styles.summaryValue}>
+                {stats.pendingCount}건
+              </strong>
             </article>
-            <article
-              className={`${styles.summaryCard} ${styles.newCard}`}
-            >
+            <article className={`${styles.summaryCard} ${styles.newCard}`}>
               <p className={styles.summaryLabel}>오늘 올라온 공고</p>
-              <strong className={styles.summaryValue}>{stats.todayNewCount}건</strong>
+              <strong className={styles.summaryValue}>
+                {stats.todayNewCount}건
+              </strong>
             </article>
           </div>
 
@@ -446,7 +453,9 @@ export default function DashboardClient({
                           height: `${Math.max((item.value / chartMax) * 100, 4)}%`,
                         }}
                         onMouseMove={(e) => {
-                          const containerRect = e.currentTarget.closest(`.${styles.chartContainer}`)?.getBoundingClientRect();
+                          const containerRect = e.currentTarget
+                            .closest(`.${styles.chartContainer}`)
+                            ?.getBoundingClientRect();
                           if (containerRect) {
                             setVisitorTooltip({
                               label: item.label,
@@ -465,7 +474,10 @@ export default function DashboardClient({
                 {visitorTooltip && (
                   <div
                     className={styles.donutTooltip}
-                    style={{ left: `${visitorTooltip.x}px`, top: `${visitorTooltip.y}px` }}
+                    style={{
+                      left: `${visitorTooltip.x}px`,
+                      top: `${visitorTooltip.y}px`,
+                    }}
                   >
                     {visitorTooltip.label}: {visitorTooltip.value}명
                   </div>
@@ -548,7 +560,8 @@ export default function DashboardClient({
                   const thirtyDaysAgo = new Date();
                   thirtyDaysAgo.setDate(now.getDate() - 30);
 
-                  const formatDate = (d: Date) => `${d.getMonth() + 1}월 ${d.getDate()}일`;
+                  const formatDate = (d: Date) =>
+                    `${d.getMonth() + 1}월 ${d.getDate()}일`;
                   return `${formatDate(thirtyDaysAgo)} - ${formatDate(now)}, ${now.getFullYear()}`;
                 })()}
               </p>
@@ -571,9 +584,13 @@ export default function DashboardClient({
                 {osTooltip && (
                   <div
                     className={styles.donutTooltip}
-                    style={{ left: `${osTooltip.x}px`, top: `${osTooltip.y}px` }}
+                    style={{
+                      left: `${osTooltip.x}px`,
+                      top: `${osTooltip.y}px`,
+                    }}
                   >
-                    {osTooltip.label}: {osTooltip.value}명 ({osTooltip.percent}%)
+                    {osTooltip.label}: {osTooltip.value}명 ({osTooltip.percent}
+                    %)
                   </div>
                 )}
               </div>

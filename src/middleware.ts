@@ -199,7 +199,7 @@ async function handleAuthentication({
     await logErrorToDatabase(error, {
       actionName: 'handleAuthentication - 인증 처리 실패',
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
     // 에러 발생 시 인증 실패로 처리
     return { isAccessAllowed: isLoginPage, isAuthenticated: false };
   }
@@ -254,7 +254,7 @@ function isValidToken({
     logErrorToDatabase(error, {
       actionName: 'isValidToken - 토큰 디코딩 실패',
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
   }
 
   return result;
@@ -277,12 +277,12 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
       await logErrorToDatabase(error, {
         actionName: 'refreshTokens - API URL 미설정',
         errorType: BugReportErrorType.SERVER_ERROR,
-      }).catch(() => { });
+      }).catch(() => {});
       return null;
     }
 
     // ========== 2단계: 토큰 재발급 API 요청 ==========
-    const refreshResponse = await fetch(`${apiBaseUrl}/auth/refresh`, {
+    const refreshResponse = await fetch(`${apiBaseUrl}/auth/reissue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -301,7 +301,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
         actionName: `refreshTokens - HTTP ${refreshResponse.status}`,
         errorType: BugReportErrorType.SERVER_ERROR,
         status: refreshResponse.status, // status 전달
-      }).catch(() => { });
+      }).catch(() => {});
       return null;
     }
 
@@ -318,7 +318,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
       await logErrorToDatabase(error, {
         actionName: 'refreshTokens - 응답 형식 오류',
         errorType: BugReportErrorType.SERVER_ERROR,
-      }).catch(() => { });
+      }).catch(() => {});
       return null;
     }
 
@@ -334,7 +334,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     await logErrorToDatabase(error, {
       actionName: 'refreshTokens - 예외 발생',
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
     return null;
   }
 }

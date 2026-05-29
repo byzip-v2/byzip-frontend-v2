@@ -3,7 +3,7 @@
 import { serverApiWithToken, logErrorToDatabase } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
-import { BugReportDataDto, BugReportErrorType } from 'byzip-v2-sdk';
+import { BugReportErrorType, BugReportResponseDto } from 'byzip-v2-sdk';
 import axios from 'axios';
 import { notifySlackAssigneeChange } from '@/app/libs/utils/notifySlack';
 
@@ -23,7 +23,7 @@ export interface GetBugReportsParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
-export interface BugReportDataDtoWithMemo extends BugReportDataDto {
+export interface BugReportDataDtoWithMemo extends BugReportResponseDto {
   memo: string;
 }
 
@@ -108,7 +108,7 @@ export async function getBugReports(
       actionName: 'getBugReports',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -196,7 +196,7 @@ export async function updateBugReport(
       actionName: 'updateBugReport',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -250,7 +250,7 @@ export async function bulkUpdateBugStatus(
       actionName: 'bulkUpdateBugStatus',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
 
     if (axios.isAxiosError(error) && error.response) {
       return {

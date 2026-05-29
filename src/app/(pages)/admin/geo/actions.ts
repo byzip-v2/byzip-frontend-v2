@@ -3,32 +3,26 @@
 import { serverApiWithToken, logErrorToDatabase } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
-import {
-  BugReportErrorType,
-  GetHousingSuppliesResponseDto,
-  HousingSupplyDataDto,
-  UpdateHousingSupplyResponseDto,
-} from 'byzip-v2-sdk';
+import { BugReportErrorType, HousingSupplyResponseDto } from 'byzip-v2-sdk';
 import axios from 'axios';
 
 /**
  * 좌표가 없는 주택 공급 데이터를 조회하는 Server Action
  */
 export async function getMissingCoordinates(): Promise<
-  ActionResult<HousingSupplyDataDto[]>
+  ActionResult<HousingSupplyResponseDto[]>
 > {
   try {
-    const response =
-      await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
-        '/housing-supplies/missing-coordinates',
-        {
-          params: {
-            limit: 100, // API 자체에 최대 100개 제한 (기본값 10개)
-            sortBy: 'rcritPblancDe',
-            sortOrder: 'DESC',
-          },
+    const response = await serverApiWithToken.get(
+      '/housing-supplies/missing-coordinates',
+      {
+        params: {
+          limit: 100, // API 자체에 최대 100개 제한 (기본값 10개)
+          sortBy: 'rcritPblancDe',
+          sortOrder: 'DESC',
         },
-      );
+      },
+    );
 
     if (response.status !== 200 || !response.data.success) {
       return {
@@ -50,7 +44,7 @@ export async function getMissingCoordinates(): Promise<
       actionName: 'getMissingCoordinates',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -82,13 +76,12 @@ export interface UpdateHousingSupplyCoordsDto {
 export async function updateHousingSupplyCoords(
   id: number,
   data: UpdateHousingSupplyCoordsDto,
-): Promise<ActionResult<HousingSupplyDataDto>> {
+): Promise<ActionResult<HousingSupplyResponseDto>> {
   try {
-    const response =
-      await serverApiWithToken.patch<UpdateHousingSupplyResponseDto>(
-        `/housing-supplies/${id}`,
-        data,
-      );
+    const response = await serverApiWithToken.patch(
+      `/housing-supplies/${id}`,
+      data,
+    );
 
     if (response.status !== 200 || !response.data.success) {
       return {
@@ -110,7 +103,7 @@ export async function updateHousingSupplyCoords(
       actionName: 'updateHousingSupplyCoords',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => { });
+    }).catch(() => {});
 
     if (axios.isAxiosError(error) && error.response) {
       return {
