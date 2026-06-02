@@ -1,7 +1,6 @@
 'use client';
 
 import styles from '@/styles/pages/admin/geo/geo.module.scss';
-import { HousingSupplyDataDto } from 'byzip-v2-sdk';
 import Script from 'next/script';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,9 +10,10 @@ import Spinner from '@/app/components/common/Spinner/Spinner';
 import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import { RotateCcw } from 'lucide-react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
+import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 
 interface GeoClientProps {
-  initialData: HousingSupplyDataDto[];
+  initialData: HousingSupplyResponseDto[];
 }
 
 export default function GeoPage({ initialData }: GeoClientProps) {
@@ -21,14 +21,14 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   const mapRef = useRef<naver.maps.Map | null>(null);
   const infowindowRef = useRef<naver.maps.InfoWindow | null>(null);
   const markerRef = useRef<naver.maps.Marker | null>(null);
-  const selectedDataRef = useRef<HousingSupplyDataDto | null>(null);
+  const selectedDataRef = useRef<HousingSupplyResponseDto | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   const [searchAddress, setSearchAddress] = useState<string>('');
   const [tableData, setTableData] =
-    useState<HousingSupplyDataDto[]>(initialData);
+    useState<HousingSupplyResponseDto[]>(initialData);
   const { showToast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -237,7 +237,7 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   };
 
   // 좌표 찾기 버튼 클릭 핸들러
-  const handleCoordinateSearch = (data: HousingSupplyDataDto) => {
+  const handleCoordinateSearch = (data: HousingSupplyResponseDto) => {
     setSearchAddress(data.hssplyAdres || '');
     selectedDataRef.current = data; // ref 업데이트
     searchAddressToCoordinate(data.hssplyAdres || '');

@@ -1,4 +1,4 @@
-import type { HousingSupplyDataDto } from 'byzip-v2-sdk';
+import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 
 export type DetailSourceSystem = '청약홈' | 'LH' | 'UNKNOWN';
 
@@ -21,7 +21,7 @@ export interface DetailRow {
   transrInsttEnfsnHshldco?: string | number | null;
 }
 
-export interface DetailPageData extends HousingSupplyDataDto {
+export interface DetailPageData extends HousingSupplyResponseDto {
   sourceSystem: DetailSourceSystem;
   detailRows: DetailRow[];
   gnrlRnk1CrspareaRceptPd?: string;

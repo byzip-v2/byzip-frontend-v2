@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { getUserInfo } from '../actions';
-import type { GetMeDataDto } from 'byzip-v2-sdk';
+import type { MemberResponseDto } from 'byzip-v2-sdk';
 
 /**
  * /user/me API 호출 테스트 버튼 컴포넌트
@@ -10,7 +10,7 @@ import type { GetMeDataDto } from 'byzip-v2-sdk';
 export default function UserMeTestButton() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [userData, setUserData] = useState<GetMeDataDto | null>(null);
+  const [userData, setUserData] = useState<MemberResponseDto | null>(null);
 
   const handleClick = async () => {
     setLoading(true);
@@ -86,10 +86,8 @@ export default function UserMeTestButton() {
           <div style={{ marginBottom: '4px', fontWeight: 'bold' }}>
             사용자 정보:
           </div>
-          <div>ID: {userData.userId}</div>
+          <div>ID: {userData.username}</div>
           <div>이름: {userData.name}</div>
-          <div>이메일: {userData.email}</div>
-          {userData.phoneNumber && <div>전화번호: {userData.phoneNumber}</div>}
         </div>
       )}
     </div>

@@ -7,13 +7,11 @@
 
 import axios from 'axios';
 import {
+  ApiResponse,
   BugReportErrorType,
-  type GetMeDataDto,
-  type GetMeResponseDto,
-  type GetHousingSuppliesResponseDto,
-  type HousingSupplyDataDto,
-  type BugReportDataDto,
-  type GetBugReportsResponseDto,
+  BugReportResponseDto,
+  HousingSupplyResponseDto,
+  MemberResponseDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -34,11 +32,10 @@ import { getDailyVisitors, getOSVisitors } from '@/app/libs/utils/analytics';
  *
  * @returns 사용자 정보 조회 결과
  */
-export async function getUserInfo(): Promise<ActionResult<GetMeDataDto>> {
+export async function getUserInfo(): Promise<ActionResult<MemberResponseDto>> {
   try {
     // API 요청 (토큰 자동 포함)
-    const response =
-      await serverApiWithToken.get<GetMeResponseDto>('/users/me');
+    const response = await serverApiWithToken.get('/users/me');
 
     // SDK 응답 구조 검증
     if (response.status != 200 || !response.data) {
@@ -207,33 +204,31 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
   }
 }
 
-export async function getDashboardSummary(): Promise<ActionResult<{ pendingCount: number; todayNewCount: number }>> {
+export async function getDashboardSummary(): Promise<
+  ActionResult<{ pendingCount: number; todayNewCount: number }>
+> {
   try {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
 
     // 1. 오늘 올라온 공고 (공고일 rcritPblancDe가 오늘인 것)
-    const todayRes = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
-      '/housing-supplies',
-      {
-        params: {
-          rcritPblancDeFrom: todayStr,
-          rcritPblancDeTo: todayStr,
-          limit: 1,
-        },
+    const todayRes = await serverApiWithToken.get<
+      ApiResponse<HousingSupplyResponseDto[]>
+    >('/housing-supplies', {
+      params: {
+        rcritPblancDeFrom: todayStr,
+        rcritPblancDeTo: todayStr,
+        limit: 1,
       },
-    );
+    });
 
     // 2. 모집중인 공고
-    const recruitingRes = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
-      '/housing-supplies',
-      {
-        params: {
-          recruiting: true,
-          limit: 1,
-        },
+    const recruitingRes = await serverApiWithToken.get('/housing-supplies', {
+      params: {
+        recruiting: true,
+        limit: 1,
       },
-    );
+    });
 
     return {
       success: true,
@@ -258,10 +253,12 @@ export async function getDashboardSummary(): Promise<ActionResult<{ pendingCount
 /**
  * 대시보드 분석 통계(방문자 수, OS 비율)를 가져옵니다.
  */
-export async function getAnalyticsSummary(): Promise<ActionResult<{
-  dailyVisitors: { date: string; activeUsers: number }[];
-  osVisitors: { os: string; activeUsers: number }[];
-}>> {
+export async function getAnalyticsSummary(): Promise<
+  ActionResult<{
+    dailyVisitors: { date: string; activeUsers: number }[];
+    osVisitors: { os: string; activeUsers: number }[];
+  }>
+> {
   try {
     const [daily, os] = await Promise.all([
       getDailyVisitors(),
@@ -293,10 +290,10 @@ export async function getAnalyticsSummary(): Promise<ActionResult<{
  * 좌표가 없는 공고 목록(최대 10개) 및 전체 개수를 가져옵니다.
  */
 export async function getMissingCoordinatesSummary(): Promise<
-  ActionResult<{ items: HousingSupplyDataDto[]; total: number }>
+  ActionResult<{ items: HousingSupplyResponseDto[]; total: number }>
 > {
   try {
-    const response = await serverApiWithToken.get<GetHousingSuppliesResponseDto>(
+    const response = await serverApiWithToken.get(
       '/housing-supplies/missing-coordinates',
       {
         params: {
@@ -329,19 +326,18 @@ export async function getMissingCoordinatesSummary(): Promise<
 /**
  * 최신 버그 리포트 목록(최대 10개)을 가져옵니다.
  */
-export async function getBugReportsSummary(): Promise<ActionResult<BugReportDataDto[]>> {
+export async function getBugReportsSummary(): Promise<
+  ActionResult<BugReportResponseDto[]>
+> {
   try {
-    const response = await serverApiWithToken.get<GetBugReportsResponseDto>(
-      '/bug-reports',
-      {
-        params: {
-          limit: 10,
-          page: 1,
-          sortBy: 'createdAt',
-          sortOrder: 'DESC',
-        },
+    const response = await serverApiWithToken.get('/bug-reports', {
+      params: {
+        limit: 10,
+        page: 1,
+        sortBy: 'createdAt',
+        sortOrder: 'DESC',
       },
-    );
+    });
 
     return {
       success: true,

@@ -1,7 +1,7 @@
 'use server';
 
 import axios from 'axios';
-import { BaseResponseDto, TokenDataDto } from 'byzip-v2-sdk';
+import { BaseResponseDto, TokenResponseDto } from 'byzip-v2-sdk';
 import { cookies } from 'next/headers';
 import { getApiBaseUrl } from './api';
 
@@ -85,11 +85,11 @@ export async function getUserId(): Promise<string | undefined> {
  */
 export const refreshAccessToken = async (
   refreshToken: string,
-): Promise<TokenDataDto | null> => {
+): Promise<TokenResponseDto | null> => {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await axios.post<BaseResponseDto<TokenDataDto>>(
-      `${apiBaseUrl}/auth/refresh`,
+    const response = await axios.post<BaseResponseDto<TokenResponseDto>>(
+      `${apiBaseUrl}/auth/reissue`,
       { refreshToken },
       {
         headers: {

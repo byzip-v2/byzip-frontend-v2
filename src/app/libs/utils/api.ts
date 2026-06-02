@@ -17,8 +17,11 @@ import {
 } from '@/app/libs/utils/auth';
 import { getUserAgent, getReferer } from '@/app/libs/utils/headers';
 import { notifySlackBugReport } from '@/app/libs/utils/notifySlack';
-import type { CreateBugReportDto } from 'byzip-v2-sdk';
-import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
+import {
+  BugReportCreateRequestDto,
+  BugReportErrorType,
+  BugReportSeverity,
+} from 'byzip-v2-sdk';
 import { accessTokenMaxAge, refreshTokenMaxAge } from './constants';
 
 // User-Agent를 저장하기 위한 확장 타입
@@ -169,7 +172,7 @@ const determineSeverity = (
  * 버그 리포트를 DB에 저장하는 공통 함수
  */
 const createBugReport = async (
-  bugReportData: CreateBugReportDto,
+  bugReportData: BugReportCreateRequestDto,
 ): Promise<void> => {
   const apiBaseUrl = getApiBaseUrl();
 
@@ -257,14 +260,16 @@ const logAxiosError = async (
       title,
       description,
       errorMessage,
-      errorStack: error.stack,
+      errorStack: error.stack as string,
       errorType,
       errorCode,
       url,
-      userAgent,
+      userAgent: userAgent || 'Unknown',
       severity,
-      userId,
+      userId: userId || 'Unknown',
       metadata,
+      assigneeId: '', // 초기 담당자는 미지정
+      memo: '',
     });
   } catch (logError) {
     console.warn('🔍 [Error Logger] 버그 리포트 저장 중 오류:', logError);
@@ -315,14 +320,16 @@ const logGeneralError = async (
       title,
       description,
       errorMessage,
-      errorStack,
+      errorStack: errorStack as string,
       errorType,
-      errorCode: undefined,
+      errorCode: '0',
       url,
-      userAgent,
+      userAgent: userAgent || 'Unknown',
       severity,
-      userId,
+      userId: userId || 'Unknown',
       metadata,
+      assigneeId: '', // 초기 담당자는 미지정
+      memo: '',
     });
   } catch (logError) {
     console.warn('🔍 [Error Logger] 버그 리포트 저장 중 오류:', logError);
@@ -375,7 +382,8 @@ export const logErrorToDatabase = async (
   error: AxiosError | Error | unknown,
   options?: LogErrorOptions,
 ): Promise<void> => {
-  const { config, actionName, skipAxiosError, errorType, status } = options || {};
+  const { config, actionName, skipAxiosError, errorType, status } =
+    options || {};
 
   // AxiosError이면 서버 액션 로깅 건너뛰기
   if (axios.isAxiosError(error) && skipAxiosError) {

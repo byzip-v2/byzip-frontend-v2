@@ -1,6 +1,6 @@
 'use server';
 
-import { getHousingSupplies } from './actions';
+import { getHousingSupplies, GetHousingSuppliesResultData } from './actions';
 import HousingPage from './components/HousingPage';
 
 /**
@@ -23,9 +23,6 @@ export default async function Page({
   const isHidden = params.isHidden === 'true';
   const includeEnded = params.includeEnded === 'true';
 
-  // 오늘 날짜 (종료된 공고 필터용)
-  const today = new Date().toISOString().split('T')[0];
-
   // 초기 데이터 페칭
   const result = await getHousingSupplies({
     page,
@@ -33,9 +30,9 @@ export default async function Page({
     search,
     isHidden: isHidden || undefined,
     // includeEnded가 true이면 날짜 필터 생략, false이면 오늘 이후인 것만 조회
-    rcritPblancDeTo: !includeEnded ? today : undefined,
+    includeEnded: includeEnded,
+    recruiting: includeEnded ? undefined : true,
   });
-
   if (!result.success) {
     return (
       <div style={{ padding: '40px', textAlign: 'center' }}>
@@ -53,9 +50,14 @@ export default async function Page({
       limit: 10,
       total: 0,
       totalPages: 0,
-      itemCount: 0
-    }
+      itemCount: 0,
+    },
   };
 
-  return <HousingPage initialData={initialData} searchParams={params} />;
+  return (
+    <HousingPage
+      initialData={initialData as GetHousingSuppliesResultData}
+      searchParams={params}
+    />
+  );
 }
