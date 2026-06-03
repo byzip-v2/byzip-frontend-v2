@@ -14,6 +14,7 @@ import {
   getAccessToken,
   getUserId,
   refreshAccessToken,
+  getGrantType,
 } from '@/app/libs/utils/auth';
 import { getUserAgent, getReferer } from '@/app/libs/utils/headers';
 import { notifySlackBugReport } from '@/app/libs/utils/notifySlack';
@@ -486,7 +487,7 @@ export const createServerApi = (options: {
                 const newTokens = await refreshAccessToken(refreshToken);
 
                 if (newTokens) {
-                  // 새 토큰을 쿠키에 저장
+                  // 1. 새 Access Token 쿠키 저장
                   cookieStore.set('access_token', newTokens.accessToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
@@ -495,11 +496,21 @@ export const createServerApi = (options: {
                     path: '/',
                   });
 
+                  // 2. 새 Refresh Token 쿠키 저장 (만료 30일)
                   cookieStore.set('refresh_token', newTokens.refreshToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
                     maxAge: refreshTokenMaxAge,
+                    path: '/',
+                  });
+
+                  // 3. 새 Grant Type 쿠키 저장 (동적 헤더 구성 대응)
+                  cookieStore.set('grant_type', newTokens.grantType, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    maxAge: accessTokenMaxAge,
                     path: '/',
                   });
 
@@ -530,7 +541,9 @@ export const createServerApi = (options: {
 
           // 토큰이 있으면 헤더에 추가, 없으면 토큰 없이 요청 전송 (서버에서 401 처리)
           if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
+            // 쿠키 저장소에서 동적으로 grant_type(기본값: Bearer)을 읽어와 Authorization 헤더를 구성
+            const grantType = await getGrantType();
+            config.headers.Authorization = `${grantType} ${accessToken}`;
           }
         } catch (error) {
           // 예상치 못한 에러 발생 시에도 요청은 전송 (서버에서 처리)
@@ -558,9 +571,10 @@ export const createServerApi = (options: {
       console.log('🔍 [Server API] Response Error:', error.response?.status);
 
       // 401 에러 처리: Request Interceptor에서 이미 토큰 갱신을 시도했으므로
-      // 여기서는 인증 실패로 간주하고 리다이렉트만 처리
-      if (error.response?.status === 401) {
-        console.log('🔍 [Server API] 401 에러 처리');
+      // 여기서는 인증 실패로 간주하고 리다이렉트만 처리합니다.
+      // 단, 로그인 API('/auth/login') 자체의 실패로 인한 401 에러는 로그인 화면에서 오류 메시지를 정상적으로 렌더링해야 하므로 예외 처리합니다.
+      if (error.response?.status === 401 && error.config?.url !== '/auth/login') {
+        console.log('🔍 [Server API] 401 에러 처리 - 로그인 API 제외');
         // redirect()는 try/catch 블록 밖에서 호출해야 함 (Next.js 요구사항)
         const { redirect } = await import('next/navigation');
         redirect('/login');
