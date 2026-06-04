@@ -33,15 +33,6 @@ type OsShare = {
   color: string;
 };
 
-const VISITOR_DAILY = [
-  41, 56, 28, 31, 36, 39, 57, 55, 64, 43, 71, 78, 80, 84, 62, 66, 69, 52, 58,
-  61, 65, 68, 73, 70, 76, 79, 82, 85, 88, 92,
-];
-
-const VISITOR_HOURLY = [
-  8, 6, 5, 4, 3, 4, 7, 10, 14, 17, 20, 22, 24, 23, 21, 20, 19, 18, 16, 14, 12,
-  10, 9, 8,
-];
 
 const BUG_REPORTS: BugReport[] = [
   {
@@ -104,17 +95,17 @@ const MISSING_GEO_ROWS: MissingGeoRow[] = [
   },
 ];
 
-const OS_SHARE: OsShare[] = [
-  { label: 'WEB', value: 22, color: '#3270ff' },
-  { label: 'IOS', value: 38, color: '#22c55e' },
-  { label: 'ANDROID', value: 40, color: '#f2d544' },
-];
 
 const VISITOR_RANGE_OPTIONS = [1, 7, 14, 30] as const;
 type VisitorRange = (typeof VISITOR_RANGE_OPTIONS)[number];
 const PREVIEW_LIMIT = 10;
 
 const getConicGradient = (items: OsShare[]) => {
+  // 데이터가 없을 때 conic-gradient() CSS 문법 오류 및 비정상 출력을 방지하기 위한 예외 처리
+  if (items.length === 0) {
+    return 'conic-gradient(#e2e8f0 0deg 360deg)';
+  }
+
   const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
   let cursor = 0;
 
@@ -194,20 +185,8 @@ export default function DashboardClient({
       });
     }
 
-    // 데이터가 없는 경우 기존 더미 데이터 유지 (개발용)
-    if (visitorRange === 1) {
-      return VISITOR_HOURLY.map((value, hour) => ({
-        key: `hour-${hour}`,
-        label: `${hour}시`,
-        value,
-      }));
-    }
-
-    return VISITOR_DAILY.slice(-visitorRange).map((value, index) => ({
-      key: `day-${index + 1}`,
-      label: `${index + 1}일`,
-      value,
-    }));
+    // 에러 발생으로 데이터 로드가 실패한 경우, 더미 데이터를 표시하지 않고 빈 배열을 반환
+    return [];
   }, [visitorRange, analytics]);
 
   const previewBugReports = useMemo(() => {
@@ -257,7 +236,8 @@ export default function DashboardClient({
         color: colors[item.os] || '#94a3b8',
       }));
     }
-    return OS_SHARE;
+    // API 에러 또는 누락 시 더미 데이터(OS_SHARE) 대신 빈 배열 반환
+    return [];
   }, [analytics]);
 
   const osTotal = osShareData.reduce((sum, item) => sum + item.value, 0);
@@ -418,71 +398,91 @@ export default function DashboardClient({
             </div>
 
             <div className={styles.chartContainer}>
-              <div className={styles.chartYAxis}>
-                {uniqueYLabels.map((label) => (
-                  <span key={label} className={styles.yLabel}>
-                    {label}
-                  </span>
-                ))}
-              </div>
-
-              <div
-                className={styles.barChart}
-                style={{
-                  gridTemplateColumns: `repeat(${visitorChartData.length}, minmax(0, 1fr))`,
-                }}
-                role="img"
-                aria-label={
-                  visitorRange === 1
-                    ? '최근 24시간 방문자 수 차트'
-                    : `최근 ${visitorRange}일 방문자 수 차트`
-                }
-              >
-                <div className={styles.chartGrid}>
-                  {uniqueYLabels.map((label) => (
-                    <div key={`grid-${label}`} className={styles.gridLine} />
-                  ))}
-                </div>
-
-                {visitorChartData.map((item) => (
-                  <div key={item.key} className={styles.barItem}>
-                    <div className={styles.barTrack}>
-                      <span
-                        className={styles.bar}
-                        style={{
-                          height: `${Math.max((item.value / chartMax) * 100, 4)}%`,
-                        }}
-                        onMouseMove={(e) => {
-                          const containerRect = e.currentTarget
-                            .closest(`.${styles.chartContainer}`)
-                            ?.getBoundingClientRect();
-                          if (containerRect) {
-                            setVisitorTooltip({
-                              label: item.label,
-                              value: item.value,
-                              x: e.clientX - containerRect.left,
-                              y: e.clientY - containerRect.top,
-                            });
-                          }
-                        }}
-                        onMouseLeave={() => setVisitorTooltip(null)}
-                      />
-                    </div>
-                    <span className={styles.barLabel}>{item.label}</span>
+              {/* API 호출 에러 등으로 인해 방문자 데이터가 없는 경우의 대체 UI */}
+              {visitorChartData.length > 0 ? (
+                <>
+                  <div className={styles.chartYAxis}>
+                    {uniqueYLabels.map((label) => (
+                      <span key={label} className={styles.yLabel}>
+                        {label}
+                      </span>
+                    ))}
                   </div>
-                ))}
-                {visitorTooltip && (
+
                   <div
-                    className={styles.donutTooltip}
+                    className={styles.barChart}
                     style={{
-                      left: `${visitorTooltip.x}px`,
-                      top: `${visitorTooltip.y}px`,
+                      gridTemplateColumns: `repeat(${visitorChartData.length}, minmax(0, 1fr))`,
                     }}
+                    role="img"
+                    aria-label={
+                      visitorRange === 1
+                        ? '최근 24시간 방문자 수 차트'
+                        : `최근 ${visitorRange}일 방문자 수 차트`
+                    }
                   >
-                    {visitorTooltip.label}: {visitorTooltip.value}명
+                    <div className={styles.chartGrid}>
+                      {uniqueYLabels.map((label) => (
+                        <div key={`grid-${label}`} className={styles.gridLine} />
+                      ))}
+                    </div>
+
+                    {visitorChartData.map((item) => (
+                      <div key={item.key} className={styles.barItem}>
+                        <div className={styles.barTrack}>
+                          <span
+                            className={styles.bar}
+                            style={{
+                              height: `${Math.max((item.value / chartMax) * 100, 4)}%`,
+                            }}
+                            onMouseMove={(e) => {
+                              const containerRect = e.currentTarget
+                                .closest(`.${styles.chartContainer}`)
+                                ?.getBoundingClientRect();
+                              if (containerRect) {
+                                setVisitorTooltip({
+                                  label: item.label,
+                                  value: item.value,
+                                  x: e.clientX - containerRect.left,
+                                  y: e.clientY - containerRect.top,
+                                });
+                              }
+                            }}
+                            onMouseLeave={() => setVisitorTooltip(null)}
+                          />
+                        </div>
+                        <span className={styles.barLabel}>{item.label}</span>
+                      </div>
+                    ))}
+                    {visitorTooltip && (
+                      <div
+                        className={styles.donutTooltip}
+                        style={{
+                          left: `${visitorTooltip.x}px`,
+                          top: `${visitorTooltip.y}px`,
+                        }}
+                      >
+                        {visitorTooltip.label}: {visitorTooltip.value}명
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#94a3b8',
+                    fontSize: '14px',
+                    minHeight: '200px',
+                  }}
+                >
+                  조회된 방문자 분석 데이터가 없습니다.
+                </div>
+              )}
             </div>
           </article>
 
@@ -568,45 +568,65 @@ export default function DashboardClient({
             </div>
 
             <div className={styles.osContent}>
-              <div className={styles.donutWrap}>
-                <div
-                  className={styles.donut}
-                  style={{ backgroundImage: donutGradient }}
-                  role="img"
-                  aria-label="방문자 OS 비율 차트"
-                  onMouseMove={handleDonutMouseMove}
-                  onMouseLeave={() => setOsTooltip(null)}
-                >
-                  <div className={styles.donutHole}>
-                    <strong>{osTotal}</strong>
+              {/* API 호출 에러 등으로 인해 OS 데이터가 없는 경우의 대체 UI */}
+              {osShareData.length > 0 ? (
+                <>
+                  <div className={styles.donutWrap}>
+                    <div
+                      className={styles.donut}
+                      style={{ backgroundImage: donutGradient }}
+                      role="img"
+                      aria-label="방문자 OS 비율 차트"
+                      onMouseMove={handleDonutMouseMove}
+                      onMouseLeave={() => setOsTooltip(null)}
+                    >
+                      <div className={styles.donutHole}>
+                        <strong>{osTotal}</strong>
+                      </div>
+                    </div>
+                    {osTooltip && (
+                      <div
+                        className={styles.donutTooltip}
+                        style={{
+                          left: `${osTooltip.x}px`,
+                          top: `${osTooltip.y}px`,
+                        }}
+                      >
+                        {osTooltip.label}: {osTooltip.value}명 ({osTooltip.percent}
+                        %)
+                      </div>
+                    )}
                   </div>
-                </div>
-                {osTooltip && (
-                  <div
-                    className={styles.donutTooltip}
-                    style={{
-                      left: `${osTooltip.x}px`,
-                      top: `${osTooltip.y}px`,
-                    }}
-                  >
-                    {osTooltip.label}: {osTooltip.value}명 ({osTooltip.percent}
-                    %)
-                  </div>
-                )}
-              </div>
 
-              <ul className={styles.osLegend}>
-                {osShareData.map((item) => (
-                  <li key={item.label} className={styles.osLegendItem}>
-                    <span
-                      className={styles.osLegendDot}
-                      style={{ backgroundColor: item.color }}
-                      aria-hidden
-                    />
-                    <span>{item.label}</span>
-                  </li>
-                ))}
-              </ul>
+                  <ul className={styles.osLegend}>
+                    {osShareData.map((item) => (
+                      <li key={item.label} className={styles.osLegendItem}>
+                        <span
+                          className={styles.osLegendDot}
+                          style={{ backgroundColor: item.color }}
+                          aria-hidden
+                        />
+                        <span>{item.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#94a3b8',
+                    fontSize: '14px',
+                    minHeight: '120px',
+                  }}
+                >
+                  조회된 OS 분석 데이터가 없습니다.
+                </div>
+              )}
             </div>
           </article>
         </div>
