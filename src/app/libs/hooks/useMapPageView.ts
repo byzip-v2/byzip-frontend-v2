@@ -28,5 +28,5 @@ export function useMapPageView(
     return () => {
       clearMapPageView();
     };
-  }, [center.lat, center.lng, zoom, setMapPageView, clearMapPageView]);
+  }, [center, zoom, setMapPageView, clearMapPageView]);
 }

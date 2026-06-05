@@ -21,6 +21,11 @@ export interface HousingListSectionProps {
    * 검색 결과 없음 등 페이지별 메시지를 바꿀 때 이 prop만 오버라이드하면 됩니다.
    */
   emptyMessage?: string;
+  /**
+   * 카드 개수가 적을 때 그리드를 왼쪽으로 정렬할지 여부
+   * true로 설정 시 justify-start가 적용되며, 기본값은 false(justify-center)입니다.
+   */
+  alignLeft?: boolean;
 }
 
 /**
@@ -31,10 +36,11 @@ export default function HousingListSection({
   items,
   isLoading = false,
   emptyMessage = '해당하는 분양 공고가 없습니다.',
+  alignLeft = false,
 }: HousingListSectionProps) {
   return (
     <section className="w-full flex-1 min-h-0 bg-[#f8faff] pt-6 overflow-y-auto">
-      <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-center px-4 md:px-0 gap-x-8 gap-y-0">
+      <div className={`w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] px-4 md:px-0 gap-x-8 gap-y-0 ${alignLeft ? 'justify-start' : 'justify-center'}`}>
         {isLoading ? (
           <div className="col-span-full min-h-[40vh] flex items-center justify-center">
             <Spinner />
