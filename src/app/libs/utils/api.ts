@@ -176,13 +176,30 @@ const createBugReport = async (
   bugReportData: BugReportCreateRequestDto,
 ): Promise<void> => {
   const apiBaseUrl = getApiBaseUrl();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  // 서버 사이드 환경인 경우, 쿠키에서 토큰 정보를 안전하게 추출하여 헤더에 Authorization을 탑재합니다.
+  // (클라이언트 환경에서는 window 객체가 존재하므로 이 로직을 건너뜁니다.)
+  const isServer = typeof window === 'undefined';
+  if (isServer) {
+    try {
+      const { getAccessToken, getGrantType } = await import('@/app/libs/utils/auth');
+      const accessToken = await getAccessToken();
+      const grantType = await getGrantType();
+      if (accessToken) {
+        headers.Authorization = `${grantType} ${accessToken}`;
+      }
+    } catch (authError) {
+      console.warn('🔍 [Error Logger] 서버 환경에서 토큰 로드 실패:', authError);
+    }
+  }
 
   // DB에 저장
   await axios
     .post(`${apiBaseUrl}/bug-reports`, bugReportData, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       timeout: 5000, // 5초 타임아웃
     })
     .catch((logError) => {

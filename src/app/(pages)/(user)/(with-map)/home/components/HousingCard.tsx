@@ -58,8 +58,10 @@ const HousingCard = ({ item }: HousingCardProps) => {
               alt={getStatusText()}
               width={28}
               height={22}
-              quality={100}
               priority={true}
+              // CSS로 크기가 조정될 때 이미지 비율이 왜곡되지 않도록 style={{ height: 'auto' }}를 추가합니다.
+              // 이는 Next.js 15+ 빌드 경고를 해결하기 위한 조치입니다.
+              style={{ height: 'auto' }}
               className="object-contain"
             />
           </div>

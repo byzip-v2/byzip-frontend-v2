@@ -25,6 +25,7 @@ export interface GetHousingSuppliesParams {
   limit?: number;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
+  recruiting?: boolean;
 }
 
 /**
@@ -69,7 +70,7 @@ export async function getPublicHousingSupplies(
       actionName: 'getPublicHousingSupplies',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
