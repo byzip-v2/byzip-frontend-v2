@@ -1,13 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Search, Menu, Bookmark } from 'lucide-react';
 
 const Header = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // 검색 버튼 클릭시 동작
+  const handleSearch = () => {
+    if(!searchQuery){
+      return;
+    }
+    const query = searchQuery.trim();
+    if (query !== '') {
+      router.push(`/search?query=${query}`);
+    }else{
+      return;
+    }
+  };
+  // input창에 검색어 변경시 state 업데이트
+  const onChangeSearchQuery = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+  // 엔터키 입력시 검색 되게끔 기능 구현
+  const handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-300 px-4 md:px-8 flex items-center justify-between md:grid md:grid-cols-3">
@@ -29,11 +54,16 @@ const Header = () => {
       <div className="hidden md:flex w-full items-center justify-center">
         <div className="relative w-full max-w-lg">
           <input
+            onChange={(e) => onChangeSearchQuery(e)}
+            onKeyDown={handleEnterKey}
+            value={searchQuery}
             type="text"
-            placeholder="지역, 분양단계, 아파트명을 검색해보세요."
+            placeholder="지역, 분양단지, 공고명을 검색해보세요."
             className="w-full h-10 px-4 pr-12 border border-gray-200 rounded-full text-sm! leading-4 font-medium outline-none focus:border-brand-blue transition-all"
           />
-          <button className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-brand-blue transition-colors">
+          <button className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-brand-blue transition-colors"
+          onClick={handleSearch}
+          >
             <Search size={20} />
           </button>
         </div>
