@@ -24,10 +24,10 @@ const DETAIL_BOOKMARK_STORAGE_KEY = 'byzip:detail-bookmarks';
  */
 export default function BookmarkPageClient() {
   const { housingData, setHousingData } = useHousingStore();
-  
+
   // 가공 완료되어 UI에 전달할 북마크 카드 리스트
   const [bookmarkItems, setBookmarkItems] = useState<HousingItem[]>([]);
-  
+
   // 하이드레이션(Hydration) 방지를 위한 마운트 상태값
   const [isMounted, setIsMounted] = useState(false);
 
@@ -99,7 +99,11 @@ export default function BookmarkPageClient() {
       // 오류 시 빈 배열 유지
     }
 
-    if (!savedBookmarkIds || savedBookmarkIds.length === 0 || housingData.length === 0) {
+    if (
+      !savedBookmarkIds ||
+      savedBookmarkIds.length === 0 ||
+      housingData.length === 0
+    ) {
       setBookmarkItems([]);
       return;
     }

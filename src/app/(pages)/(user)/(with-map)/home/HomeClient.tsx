@@ -1,25 +1,20 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
 import {
   DEFAULT_MAP_PAGE_VIEW,
   useMapStore,
 } from '@/app/libs/stores/zustand/useMapStore';
+import { useEffect, useMemo, useState } from 'react';
 // 홈 전용 UI는 라우트 폴더 `home/components/`에 두고, 존재하지 않는 `@/components/home/*` 별칭은 쓰지 않습니다.
 // 같은 트리 안의 상대 경로로 두면 `(pages)` 이동 등 디렉터리 구조 변경 시에도 import가 깨지지 않습니다.
-import HousingStatusTab from './components/HousingStatusTab';
-import CategoryBar from './components/CategoryBar';
-import { type HousingItem } from './components/HousingCard';
-import {
-  formatDateRange,
-  formatDateString,
-  determineHousingType,
-} from '@/app/libs/utils/date';
 import { useMapPageView } from '@/app/libs/hooks/useMapPageView';
+import { determineHousingType } from '@/app/libs/utils/date';
+import CategoryBar from './components/CategoryBar';
+import HousingStatusTab from './components/HousingStatusTab';
 // 리스트 섹션은 `components/home/`가 아니라 `components/` 바로 아래에 있습니다.
-import HousingListSection from './components/HousingListSection';
 import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 import { useHousingStore } from '@/app/libs/stores/zustand/useHousingStore';
+import HousingListSection from '../../global/components/HousingListSection';
 interface HomeClientProps {
   /**
    * 서버에서 미리 가져온 public housing-supplies 목록.
@@ -56,8 +51,8 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
       (acc, item) => {
         const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
         acc.all += 1;
-        if (type === 'today') acc.today += 1;
-        if (type === 'coming') acc.coming += 1;
+        if (type === 'today' && item.houseSecd !== '04') acc.today += 1;
+        if (type === 'coming' && item.houseSecd !== '04') acc.coming += 1;
         // 무순위: 기존 규칙 유지 (houseSecd === '04')
         if (item.houseSecd === '04') acc.random += 1;
         return acc;
@@ -102,30 +97,15 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
   }, [housingData, activeTab, setMarkers]);
 
   // 탭에 따른 카드 데이터 가공
-  const filteredData = useMemo((): HousingItem[] => {
-    return housingData
-      .filter((item) => {
-        const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
-        if (activeTab === 0) return true;
-        if (activeTab === 1) return type === 'today';
-        if (activeTab === 2) return type === 'coming';
-        if (activeTab === 3) return item.houseSecd === '04';
-        return true;
-      })
-      .map((item) => ({
-        id: String(item.id),
-        type: determineHousingType(item.rceptBgnde, item.rceptEndde),
-        title: item.houseName || '-',
-        // houseDtlSecdNm가 '민영'인 경우 v1 표기 규칙에 맞춰 'APT'로 노출
-        subTitle:
-          item.houseDtlSecdNm === '민영' ? 'APT' : item.houseDtlSecdNm || '-',
-        region: item.subscrptAreaCodeNm || '-',
-        area: '-',
-        price: '공고문 확인',
-        regularDate: formatDateRange(item.rceptBgnde, item.rceptEndde),
-        // 특별 청약일은 기간이 아니라 시작일 1개만 노출 (v1 UI와 동일)
-        specialDate: formatDateString(item.spsplyRceptBgnde),
-      }));
+  const filteredData = useMemo((): HousingSupplyResponseDto[] => {
+    return housingData.filter((item) => {
+      const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
+      if (activeTab === 0) return true;
+      if (activeTab === 1) return type === 'today' && item.houseSecd !== '04';
+      if (activeTab === 2) return type === 'coming' && item.houseSecd !== '04';
+      if (activeTab === 3) return item.houseSecd === '04';
+      return true;
+    });
   }, [housingData, activeTab]);
 
   // 서버에서 데이터를 못 가져온 경우에도 UI는 안전하게 동작하도록 처리
@@ -143,7 +123,7 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
       </div>
 
       <div className="w-full flex-1 flex flex-col min-h-0 border-t border-[rgba(0,0,0,0.25)]">
-        <HousingListSection items={filteredData} isLoading={isLoading} />
+        <HousingListSection housingData={filteredData} isLoading={isLoading} />
       </div>
     </div>
   );
