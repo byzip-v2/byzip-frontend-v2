@@ -237,6 +237,84 @@ const LAWD_CD_MAP = new Map(
   }),
 );
 
+const LAWD_CD_ITEMS = LAWD_CD_ENTRIES.map((entry) => {
+  const [code, district] = entry.split(':');
+  return { code, district };
+});
+
+const SIDO_CODE_ALIASES = new Map([
+  ['서울', '11'],
+  ['서울시', '11'],
+  ['서울특별시', '11'],
+  ['부산', '26'],
+  ['부산시', '26'],
+  ['부산광역시', '26'],
+  ['대구', '27'],
+  ['대구시', '27'],
+  ['대구광역시', '27'],
+  ['인천', '28'],
+  ['인천시', '28'],
+  ['인천광역시', '28'],
+  ['광주', '29'],
+  ['광주시', '29'],
+  ['광주광역시', '29'],
+  ['대전', '30'],
+  ['대전시', '30'],
+  ['대전광역시', '30'],
+  ['울산', '31'],
+  ['울산시', '31'],
+  ['울산광역시', '31'],
+  ['세종', '36'],
+  ['세종시', '36'],
+  ['세종특별자치시', '36'],
+  ['경기', '41'],
+  ['경기도', '41'],
+  ['강원', '42'],
+  ['강원도', '42'],
+  ['충북', '43'],
+  ['충청북도', '43'],
+  ['충남', '44'],
+  ['충청남도', '44'],
+  ['전북', '45'],
+  ['전라북도', '45'],
+  ['전남', '46'],
+  ['전라남도', '46'],
+  ['경북', '47'],
+  ['경상북도', '47'],
+  ['경남', '48'],
+  ['경상남도', '48'],
+  ['제주', '50'],
+  ['제주도', '50'],
+  ['제주특별자치도', '50'],
+]);
+
+function normalizeAddressToken(token: string) {
+  return token.replace(/[()[\],]/g, '').trim();
+}
+
+function getAddressTokens(address?: string | null) {
+  if (!address) {
+    return [];
+  }
+
+  return address
+    .split(/\s+/)
+    .map(normalizeAddressToken)
+    .filter(Boolean);
+}
+
+function getSidoCodeFromTokens(tokens: string[]) {
+  for (const token of tokens) {
+    const code = SIDO_CODE_ALIASES.get(token);
+
+    if (code) {
+      return code;
+    }
+  }
+
+  return null;
+}
+
 export function getPreviousMonth() {
   const today = new Date();
   const year = today.getFullYear();
@@ -250,14 +328,7 @@ export function getPreviousMonth() {
 }
 
 export function extractDistrictFromAddress(address?: string | null) {
-  if (!address) {
-    return null;
-  }
-
-  const tokens = address
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter(Boolean);
+  const tokens = getAddressTokens(address);
 
   if (!tokens.length) {
     return null;
@@ -267,14 +338,33 @@ export function extractDistrictFromAddress(address?: string | null) {
     return tokens[0];
   }
 
+  const matchedToken = tokens.find((token) => LAWD_CD_MAP.has(token));
+
+  if (matchedToken) {
+    return matchedToken;
+  }
+
   return tokens[1] ?? null;
 }
 
 export function getLawdCdByAddress(address?: string | null) {
+  const tokens = getAddressTokens(address);
   const district = extractDistrictFromAddress(address);
 
   if (!district) {
     return null;
+  }
+
+  const sidoCode = getSidoCodeFromTokens(tokens);
+
+  if (sidoCode) {
+    const matchedItem = LAWD_CD_ITEMS.find(
+      (item) => item.district === district && item.code.startsWith(sidoCode),
+    );
+
+    if (matchedItem) {
+      return matchedItem.code;
+    }
   }
 
   return LAWD_CD_MAP.get(district) ?? null;
