@@ -19,6 +19,7 @@ import { useMapPageView } from '@/app/libs/hooks/useMapPageView';
 // 리스트 섹션은 `components/home/`가 아니라 `components/` 바로 아래에 있습니다.
 import HousingListSection from './components/HousingListSection';
 import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
+import { useHousingStore } from '@/app/libs/stores/zustand/useHousingStore';
 interface HomeClientProps {
   /**
    * 서버에서 미리 가져온 public housing-supplies 목록.
@@ -35,8 +36,16 @@ interface HomeClientProps {
 export default function HomeClient({ initialHousingData }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState(0);
   const { setMarkers } = useMapStore();
+  const { setHousingData } = useHousingStore();
 
   useMapPageView(DEFAULT_MAP_PAGE_VIEW.center, DEFAULT_MAP_PAGE_VIEW.zoom);
+
+  // 서버에서 전달받은 원본 공고 데이터를 북마크 등 다른 페이지와 공유하기 위해 전역 스토어에 캐싱합니다.
+  useEffect(() => {
+    if (initialHousingData && initialHousingData.length > 0) {
+      setHousingData(initialHousingData);
+    }
+  }, [initialHousingData, setHousingData]);
 
   // 서버에서 주입받은 원본 데이터
   const housingData = initialHousingData;

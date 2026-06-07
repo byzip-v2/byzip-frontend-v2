@@ -12,6 +12,7 @@ export default async function Page() {
     limit: 100,
     sortBy: 'rcritPblancDe',
     sortOrder: 'DESC',
+    recruiting: true,
   });
 
   return <HomeClient initialHousingData={result.success && result.data ? result.data.items : []} />;

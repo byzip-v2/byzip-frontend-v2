@@ -61,7 +61,7 @@ export async function getUserInfo(): Promise<ActionResult<MemberResponseDto>> {
       actionName: 'getUserInfo',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error)) {
       // HTTP 에러 응답
@@ -145,7 +145,7 @@ export async function triggerTestError(
       actionName: 'triggerTestError',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     // 에러가 정상적으로 발생한 경우
     if (axios.isAxiosError(error)) {
@@ -187,7 +187,7 @@ export async function testGetUserInfoError(): Promise<ActionResult> {
       actionName: 'testGetUserInfoError',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     // 에러가 정상적으로 발생한 경우
     if (axios.isAxiosError(error)) {

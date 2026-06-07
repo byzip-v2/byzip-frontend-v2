@@ -22,6 +22,24 @@ export async function getAccessToken(): Promise<string | undefined> {
 }
 
 /**
+ * 현재 사용자의 grantType을 반환 (기본값 'Bearer')
+ *
+ * @returns grantType 값 (string)
+ *
+ * @description
+ * 쿠키 저장소(cookies)에서 'grant_type' 키에 매핑된 값을 조회합니다.
+ * 백엔드 API와의 통신 규격에 맞춰 Bearer 혹은 다른 권한 부여 방식을 동적으로 적용하기 위함입니다.
+ * 만약 쿠키에 값이 존재하지 않는 경우, 안전한 기본 인증 방식인 'Bearer'를 반환합니다.
+ */
+export async function getGrantType(): Promise<string> {
+  const cookieStore = await cookies();
+  const grantType = cookieStore.get('grant_type');
+
+  // 쿠키에 저장된 grant_type이 없을 경우 기본값으로 'Bearer'를 지정하여 인증이 끊기지 않도록 함
+  return grantType?.value || 'Bearer';
+}
+
+/**
  * JWT 토큰에서 userId를 추출
  *
  * @param token - JWT 토큰

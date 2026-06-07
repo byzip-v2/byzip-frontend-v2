@@ -85,6 +85,12 @@ export async function middleware(request: NextRequest) {
           refreshedTokens.refreshToken,
           refreshTokenMaxAge,
         );
+        setCookie(
+          response,
+          'grant_type',
+          refreshedTokens.grantType,
+          accessTokenMaxAge,
+        );
       }
       return response;
     }
@@ -104,6 +110,12 @@ export async function middleware(request: NextRequest) {
         'refresh_token',
         refreshedTokens.refreshToken,
         refreshTokenMaxAge,
+      );
+      setCookie(
+        response,
+        'grant_type',
+        refreshedTokens.grantType,
+        accessTokenMaxAge,
       );
       return response;
     }
@@ -130,6 +142,7 @@ export async function middleware(request: NextRequest) {
 type TokenData = {
   accessToken: string; // 액세스 토큰 (짧은 만료 시간)
   refreshToken: string; // 리프레시 토큰 (긴 만료 시간)
+  grantType: string; // 권한 부여 타입 (예: Bearer)
 };
 
 /**
@@ -308,11 +321,16 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     // ========== 4단계: 응답 데이터 파싱 ==========
     const json = (await refreshResponse.json()) as {
       success?: boolean;
-      data?: { accessToken?: string; refreshToken?: string };
+      data?: { accessToken?: string; refreshToken?: string; grantType?: string };
     };
 
     // ========== 5단계: 응답 데이터 검증 ==========
-    if (!json.success || !json.data?.accessToken || !json.data.refreshToken) {
+    if (
+      !json.success ||
+      !json.data?.accessToken ||
+      !json.data.refreshToken ||
+      !json.data.grantType
+    ) {
       const error = new Error('토큰 갱신 응답 형식이 올바르지 않습니다.');
       console.error('🔐 [Middleware]', error.message);
       await logErrorToDatabase(error, {
@@ -327,6 +345,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     return {
       accessToken: json.data.accessToken,
       refreshToken: json.data.refreshToken,
+      grantType: json.data.grantType,
     };
   } catch (error) {
     // 네트워크 오류 등 예외 상황 처리

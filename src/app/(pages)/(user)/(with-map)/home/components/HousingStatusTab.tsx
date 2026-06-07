@@ -87,7 +87,6 @@ const HousingStatusTab = ({
                   alt={tab.label}
                   width={28}
                   height={22}
-                  quality={100}
                   priority={true}
                   className="object-contain"
                 />

@@ -28,15 +28,6 @@ interface LegacyIconProps {
   size?: number;
 }
 
-interface DetailBookmarkItem {
-  detailId: string;
-  apiId: number;
-  houseName: string;
-  address: string;
-  sourceSystem: DetailPageData['sourceSystem'];
-  savedAt: string;
-}
-
 function LegacyBackIcon({ className, size = 24 }: LegacyIconProps) {
   return (
     <svg
@@ -258,27 +249,33 @@ function getHeaderTags(detail: DetailPageData) {
   ].filter(Boolean);
 }
 
+/**
+ * 로컬스토리지로부터 북마크 목록(ID 문자열 배열)을 파싱해옵니다.
+ */
 function readBookmarksFromStorage() {
   if (typeof window === 'undefined') {
-    return [] as DetailBookmarkItem[];
+    return [] as string[];
   }
 
   try {
     const raw = window.localStorage.getItem(DETAIL_BOOKMARK_STORAGE_KEY);
 
     if (!raw) {
-      return [] as DetailBookmarkItem[];
+      return [] as string[];
     }
 
-    const parsed = JSON.parse(raw) as DetailBookmarkItem[];
+    const parsed = JSON.parse(raw) as string[];
 
     return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return [] as DetailBookmarkItem[];
+    return [] as string[];
   }
 }
 
-function writeBookmarksToStorage(bookmarks: DetailBookmarkItem[]) {
+/**
+ * 로컬스토리지에 북마크 목록(ID 문자열 배열)을 직렬화하여 저장합니다.
+ */
+function writeBookmarksToStorage(bookmarks: string[]) {
   if (typeof window === 'undefined') {
     return;
   }
@@ -289,18 +286,10 @@ function writeBookmarksToStorage(bookmarks: DetailBookmarkItem[]) {
   );
 }
 
-function buildBookmarkItem(detailId: string, detail: DetailPageData): DetailBookmarkItem {
-  return {
-    detailId,
-    apiId: detail.id,
-    houseName: detail.houseName || '',
-    address: detail.hssplyAdres || '',
-    sourceSystem: detail.sourceSystem,
-    savedAt: new Date().toISOString(),
-  };
-}
-
-function logBookmarkList(action: 'added' | 'removed', bookmarks: DetailBookmarkItem[]) {
+/**
+ * 북마크 저장 내역을 디버그용 콘솔에 기록합니다.
+ */
+function logBookmarkList(action: 'added' | 'removed', bookmarks: string[]) {
   console.log(`[Detail Bookmark] ${action}`, bookmarks);
 }
 
@@ -332,9 +321,8 @@ function DetailHeader({
         </button>
         <button
           type="button"
-          className={`${styles.bookmarkButton} ${
-            isBookmarked ? styles.bookmarkButtonActive : ''
-          }`}
+          className={`${styles.bookmarkButton} ${isBookmarked ? styles.bookmarkButtonActive : ''
+            }`}
           aria-label={bookmarkLabel}
           data-detail-id={detailId}
           onClick={onToggleBookmark}
@@ -359,9 +347,8 @@ function DetailHeader({
         </button>
         <button
           type="button"
-          className={`${styles.bookmarkButtonMobile} ${
-            isBookmarked ? styles.bookmarkButtonActive : ''
-          }`}
+          className={`${styles.bookmarkButtonMobile} ${isBookmarked ? styles.bookmarkButtonActive : ''
+            }`}
           aria-label={bookmarkLabel}
           data-detail-id={detailId}
           onClick={onToggleBookmark}
@@ -415,9 +402,8 @@ function TableCell({
   return (
     <td
       colSpan={colSpan}
-      className={`${align === 'center' ? styles.tableCellCenter : styles.tableCell} ${
-        className ?? ''
-      }`.trim()}
+      className={`${align === 'center' ? styles.tableCellCenter : styles.tableCell} ${className ?? ''
+        }`.trim()}
     >
       {children}
     </td>
@@ -944,22 +930,25 @@ export default function DetailPageClient({
 
   useEffect(() => {
     const bookmarks = readBookmarksFromStorage();
-    setIsBookmarked(bookmarks.some((item) => item.detailId === detailId));
+    // 로컬스토리지 문자열 배열 내에 현재 공고의 detailId가 포함되어 있는지로 북마크 여부를 판단합니다.
+    setIsBookmarked(bookmarks.includes(detailId));
   }, [detailId]);
 
   const handleToggleBookmark = () => {
     const bookmarks = readBookmarksFromStorage();
-    const exists = bookmarks.some((item) => item.detailId === detailId);
+    const exists = bookmarks.includes(detailId);
 
     if (exists) {
-      const nextBookmarks = bookmarks.filter((item) => item.detailId !== detailId);
+      // 이미 북마크된 상태인 경우, 해당 ID를 제외한 목록을 저장합니다.
+      const nextBookmarks = bookmarks.filter((id) => id !== detailId);
       writeBookmarksToStorage(nextBookmarks);
       setIsBookmarked(false);
       logBookmarkList('removed', nextBookmarks);
       return;
     }
 
-    const nextBookmarks = [...bookmarks, buildBookmarkItem(detailId, detail)];
+    // 북마크되지 않은 상태인 경우, 목록 끝에 ID를 추가하여 저장합니다.
+    const nextBookmarks = [...bookmarks, detailId];
     writeBookmarksToStorage(nextBookmarks);
     setIsBookmarked(true);
     logBookmarkList('added', nextBookmarks);
