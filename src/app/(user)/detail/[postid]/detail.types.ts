@@ -17,6 +17,8 @@ export interface DetailRow {
   lfeFrstHshldco?: string | number | null;
   oldParntsSuportHshldco?: string | number | null;
   insttRecomendHshldco?: string | number | null;
+  nwBbHshldco?: string | number | null;
+  ygmnHshldco?: string | number | null;
   etcHshldco?: string | number | null;
   transrInsttEnfsnHshldco?: string | number | null;
 }

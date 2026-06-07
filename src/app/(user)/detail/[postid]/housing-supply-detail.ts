@@ -1,7 +1,11 @@
 import 'server-only';
 
 import axios from 'axios';
-import type { ApiResponse, HousingSupplyResponseDto } from 'byzip-v2-sdk';
+import type {
+  ApiResponse,
+  HousingSupplyDetailResponseDto,
+  HousingSupplyResponseDto,
+} from 'byzip-v2-sdk';
 
 import { getApiBaseUrl } from '@/app/libs/utils/api';
 import type {
@@ -28,13 +32,89 @@ function inferSourceSystem(
   return '청약홈';
 }
 
+function formatDateText(value?: Date | string) {
+  if (!value) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime())
+      ? ''
+      : value.toISOString().slice(0, 10);
+  }
+
+  return String(value).slice(0, 10);
+}
+
+function formatDateRangeText(start?: Date | string, end?: Date | string) {
+  const startText = formatDateText(start);
+  const endText = formatDateText(end);
+
+  if (startText && endText) {
+    return `${startText}~${endText}`;
+  }
+
+  return startText || endText || undefined;
+}
+
+function mapDetailRows(
+  details: HousingSupplyDetailResponseDto[] | undefined,
+): DetailRow[] {
+  if (!Array.isArray(details)) {
+    return [];
+  }
+
+  return details.map((item) => ({
+    modelNo: item.modelNo,
+    houseTy: item.houseType,
+    excluseAr: item.area,
+    suplyAr: item.area,
+    suplyHshldco: item.suplyHshldco,
+    spsplyHshldco: item.spSplyHshldco,
+    suplyAmount: item.supplyAmount,
+    mnychHshldco: item.mnYchHshldco,
+    nwwdsHshldco: item.nwWdsHshldco,
+    lfeFrstHshldco: item.lfeFrstHshldco,
+    oldParntsSuportHshldco: item.oldParntsSuportHshldco,
+    insttRecomendHshldco: item.insttRecomendHshldco,
+    nwBbHshldco: item.nwBbHshldco,
+    ygmnHshldco: item.ygmnHshldco,
+    transrInsttEnfsnHshldco: item.transrInsttEnfsnHshldco,
+    etcHshldco: item.etcHshldco,
+  }));
+}
+
 function mapApiDetailToPageData(
   detail: HousingSupplyResponseDto,
 ): DetailPageData {
   return {
     ...detail,
     sourceSystem: inferSourceSystem(detail),
-    detailRows: [],
+    detailRows: mapDetailRows(detail.details),
+    gnrlRnk1CrspareaRceptPd: formatDateRangeText(
+      detail.gnrlRnk1CrspareaRcptde,
+      detail.gnrlRnk1CrspareaEndde,
+    ),
+    gnrlRnk1EtcGgRcptdePd: formatDateRangeText(
+      detail.gnrlRnk1EtcGgRcptde,
+      detail.gnrlRnk1EtcGgEndde,
+    ),
+    gnrlRnk1EtcAreaRcptdePd: formatDateRangeText(
+      detail.gnrlRnk1EtcAreaRcptde,
+      detail.gnrlRnk1EtcAreaEndde,
+    ),
+    gnrlRnk2CrspareaRceptPd: formatDateRangeText(
+      detail.gnrlRnk2CrspareaRcptde,
+      detail.gnrlRnk2CrspareaEndde,
+    ),
+    gnrlRnk2EtcGgRcptdePd: formatDateRangeText(
+      detail.gnrlRnk2EtcGgRcptde,
+      detail.gnrlRnk2EtcGgEndde,
+    ),
+    gnrlRnk2EtcAreaRcptdePd: formatDateRangeText(
+      detail.gnrlRnk2EtcAreaRcptde,
+      detail.gnrlRnk2EtcAreaEndde,
+    ),
   };
 }
 
