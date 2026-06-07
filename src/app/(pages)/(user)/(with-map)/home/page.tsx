@@ -15,5 +15,11 @@ export default async function Page() {
     recruiting: true,
   });
 
-  return <HomeClient initialHousingData={result.success && result.data ? result.data.items : []} />;
+  return (
+    <HomeClient
+      initialHousingData={
+        result.success && result.data ? result.data.items : []
+      }
+    />
+  );
 }

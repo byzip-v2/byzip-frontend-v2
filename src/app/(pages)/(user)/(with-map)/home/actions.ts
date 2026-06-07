@@ -25,7 +25,7 @@ export interface GetHousingSuppliesParams {
   limit?: number;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
-  recruiting?: boolean;
+  recruiting?:boolean
 }
 
 /**
