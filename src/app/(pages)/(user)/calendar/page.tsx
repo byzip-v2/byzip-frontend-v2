@@ -1,5 +1,20 @@
-export default function CalendarPage() {
+import { getPublicHousingSupplies } from '../(with-map)/home/actions';
+import CalendarClient from './components/CalendarClient';
+
+export default async function CalendarPage() {
+  const result = await getPublicHousingSupplies({
+    page: 1,
+    limit: 500,
+    sortBy: 'rcritPblancDe',
+    sortOrder: 'DESC',
+  });
   return (
-    <h2 className="text-xl font-bold p-6 font-pyeongchang">캘린더 페이지</h2>
+    <div className="flex justify-center w-full overflow-hidden">
+      <CalendarClient
+        initialHousingData={
+          result.success && result.data ? result.data.items : []
+        }
+      />
+    </div>
   );
 }
