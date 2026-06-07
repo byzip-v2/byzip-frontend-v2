@@ -1,4 +1,4 @@
-import { getPublicHousingSupplies } from '../(with-map)/home/actions';
+import { getPublicHousingSupplies } from '../(with-map)/actions';
 import CalendarClient from './components/CalendarClient';
 
 export default async function CalendarPage() {

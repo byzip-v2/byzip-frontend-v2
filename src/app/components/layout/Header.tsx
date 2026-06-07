@@ -37,7 +37,7 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-300 px-4 md:px-8 flex items-center justify-between md:grid md:grid-cols-3">
       {/* 로고 영역 */}
-      <Link href="/home" className="flex items-center gap-1 cursor-pointer">
+      <Link href="/" className="flex items-center gap-1 cursor-pointer">
         <Image
           src="/images/byzip_logo.png"
           alt="logoImg"

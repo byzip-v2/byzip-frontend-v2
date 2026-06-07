@@ -1,5 +1,5 @@
 import SearchingClient from "./components/SearchingClient";
-import { getPublicHousingSupplies } from "../home/actions";
+import { getPublicHousingSupplies } from "../actions";
 
 export default async function SearchPage({
   searchParams,

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-// HousingCard는 이 파일과 같은 디렉터리에 있으므로 `@/components/home`(미존재) 대신 상대 경로로 가져옵니다.
 import HousingCard, { type HousingItem } from './HousingCard';
 import Spinner from '@/app/components/common/Spinner/Spinner';
 

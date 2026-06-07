@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import type { HousingItem } from '@/app/(pages)/(user)/(with-map)/home/components/HousingCard';
-import HousingListSection from '@/app/(pages)/(user)/(with-map)/home/components/HousingListSection';
+import type { HousingItem } from '@/app/(pages)/(user)/(with-map)/components/HousingCard';
+import HousingListSection from '@/app/(pages)/(user)/(with-map)/components/HousingListSection';
+import { getPublicHousingSupplies } from '@/app/(pages)/(user)/(with-map)/actions';
 import { useHousingStore } from '@/app/libs/stores/zustand/useHousingStore';
 import Spinner from '@/app/components/common/Spinner/Spinner';
-import { getPublicHousingSupplies } from '@/app/(pages)/(user)/(with-map)/home/actions';
 import {
   determineHousingType,
   formatDateRange,
