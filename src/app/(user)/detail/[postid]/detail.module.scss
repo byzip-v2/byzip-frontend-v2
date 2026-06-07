@@ -229,6 +229,28 @@
   overflow-x: auto;
 }
 
+.specialSupplyScroll {
+  scrollbar-width: thin;
+  scrollbar-color: #c9c9c9 transparent;
+}
+
+.specialSupplyScroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.specialSupplyScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.specialSupplyScroll::-webkit-scrollbar-thumb {
+  background-color: #c9c9c9;
+  border-radius: 999px;
+}
+
+.specialSupplyScroll::-webkit-scrollbar-thumb:hover {
+  background-color: #b7b7b7;
+}
+
 .articleTable {
   width: 100%;
   min-width: 680px;
@@ -274,6 +296,31 @@
 
 .tableHeadCompact {
   width: 10%;
+}
+
+.specialSupplyTable {
+  min-width: 960px;
+  margin-bottom: 6px;
+}
+
+.areaHeaderCell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.areaHeaderText {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+
+.nowrapHeader {
+  min-width: 72px;
+  white-space: nowrap;
+  word-break: keep-all;
 }
 
 .tableHeadLh {

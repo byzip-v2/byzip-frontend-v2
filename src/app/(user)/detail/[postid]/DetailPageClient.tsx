@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/app/components/common/Spinner/Spinner';
-import { getLawdCdByAddress, getPreviousMonth } from '@/app/libs/utils/apt-real-price';
+import {
+  getLawdCdByAddress,
+  getPreviousMonth,
+} from '@/app/libs/utils/apt-real-price';
 
 import styles from './detail.module.scss';
 import type {
@@ -321,14 +324,18 @@ function DetailHeader({
         </button>
         <button
           type="button"
-          className={`${styles.bookmarkButton} ${isBookmarked ? styles.bookmarkButtonActive : ''
-            }`}
+          className={`${styles.bookmarkButton} ${
+            isBookmarked ? styles.bookmarkButtonActive : ''
+          }`}
           aria-label={bookmarkLabel}
           data-detail-id={detailId}
           onClick={onToggleBookmark}
         >
           {isBookmarked ? (
-            <LegacyStarFilledIcon className={styles.bookmarkActiveIcon} size={16} />
+            <LegacyStarFilledIcon
+              className={styles.bookmarkActiveIcon}
+              size={16}
+            />
           ) : (
             <LegacyStarOutlineIcon />
           )}
@@ -347,14 +354,18 @@ function DetailHeader({
         </button>
         <button
           type="button"
-          className={`${styles.bookmarkButtonMobile} ${isBookmarked ? styles.bookmarkButtonActive : ''
-            }`}
+          className={`${styles.bookmarkButtonMobile} ${
+            isBookmarked ? styles.bookmarkButtonActive : ''
+          }`}
           aria-label={bookmarkLabel}
           data-detail-id={detailId}
           onClick={onToggleBookmark}
         >
           {isBookmarked ? (
-            <LegacyStarFilledIcon className={styles.bookmarkActiveIcon} size={14} />
+            <LegacyStarFilledIcon
+              className={styles.bookmarkActiveIcon}
+              size={14}
+            />
           ) : (
             <LegacyStarOutlineIcon size={14} />
           )}
@@ -375,8 +386,12 @@ function DetailHeader({
           ))}
         </div>
 
-        <h1 className={styles.headerTitle}>{detail.houseName || '상세페이지'}</h1>
-        <p className={styles.headerAddress}>{displayText(detail.hssplyAdres)}</p>
+        <h1 className={styles.headerTitle}>
+          {detail.houseName || '상세페이지'}
+        </h1>
+        <p className={styles.headerAddress}>
+          {displayText(detail.hssplyAdres)}
+        </p>
         <div className={styles.headerInterestBadge}>
           <LegacyStarFilledIcon className={styles.headerInterestIcon} />
           <span>0명이 관심을 갖고 있어요</span>
@@ -402,8 +417,9 @@ function TableCell({
   return (
     <td
       colSpan={colSpan}
-      className={`${align === 'center' ? styles.tableCellCenter : styles.tableCell} ${className ?? ''
-        }`.trim()}
+      className={`${align === 'center' ? styles.tableCellCenter : styles.tableCell} ${
+        className ?? ''
+      }`.trim()}
     >
       {children}
     </td>
@@ -430,7 +446,9 @@ function KeyInfoSection({ detail }: { detail: DetailPageData }) {
             </tr>
             <tr>
               <td className={styles.tableHead}>공급규모</td>
-              <TableCell>{formatHouseholdCount(detail.totSuplyHshldco)}</TableCell>
+              <TableCell>
+                {formatHouseholdCount(detail.totSuplyHshldco)}
+              </TableCell>
             </tr>
             <tr>
               <td className={styles.tableHead}>관련문의</td>
@@ -461,7 +479,9 @@ function KeyInfoSection({ detail }: { detail: DetailPageData }) {
 }
 
 function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
-  const hideDetailedSchedule = ['02', '03', '04', '06'].includes(detail.houseSecd || '');
+  const hideDetailedSchedule = ['02', '03', '04', '06'].includes(
+    detail.houseSecd || '',
+  );
 
   return (
     <section>
@@ -471,7 +491,9 @@ function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
           <tbody>
             <tr>
               <td className={styles.tableHead}>모집공고일</td>
-              <TableCell colSpan={4}>{formatRawDate(detail.rcritPblancDe)}</TableCell>
+              <TableCell colSpan={4}>
+                {formatRawDate(detail.rcritPblancDe)}
+              </TableCell>
             </tr>
 
             {!hideDetailedSchedule ? (
@@ -488,7 +510,10 @@ function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
                 <tr>
                   <TableCell align="center">특별공급</TableCell>
                   <TableCell align="center" colSpan={3}>
-                    {formatDateRange(detail.spsplyRceptBgnde, detail.spsplyRceptEndde)}
+                    {formatDateRange(
+                      detail.spsplyRceptBgnde,
+                      detail.spsplyRceptEndde,
+                    )}
                   </TableCell>
                 </tr>
                 <tr>
@@ -520,12 +545,17 @@ function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
 
             <tr>
               <td className={styles.tableHead}>당첨자 발표일</td>
-              <TableCell colSpan={4}>{formatRawDate(detail.przwnerPresnatnDe)}</TableCell>
+              <TableCell colSpan={4}>
+                {formatRawDate(detail.przwnerPresnatnDe)}
+              </TableCell>
             </tr>
             <tr>
               <td className={styles.tableHead}>계약일</td>
               <TableCell colSpan={4}>
-                {formatDateRange(detail.cntrctCnclsBgnde, detail.cntrctCnclsEndde)}
+                {formatDateRange(
+                  detail.cntrctCnclsBgnde,
+                  detail.cntrctCnclsEndde,
+                )}
               </TableCell>
             </tr>
           </tbody>
@@ -566,14 +596,19 @@ function SupplyInfoSection({ detail }: { detail: DetailPageData }) {
               <td className={styles.tableHeadCompact}>(최고가 기준)</td>
             </tr>
             {rows.map((row, index) => {
-              const exclusiveArea = displayText(row.houseTy) || formatArea(row.excluseAr);
-              const supplyAreaValue = hasValue(row.suplyAr) ? row.suplyAr : row.excluseAr;
+              const exclusiveArea =
+                displayText(row.houseTy) || formatArea(row.excluseAr);
+              const supplyAreaValue = hasValue(row.suplyAr)
+                ? row.suplyAr
+                : row.excluseAr;
               const supplyArea = formatArea(supplyAreaValue);
               const pyeong = toPyeong(supplyAreaValue);
 
               return (
                 <tr key={`${displayText(row.modelNo) || 'empty'}-${index}`}>
-                  <td className={styles.tableHeadCompact}>{displayText(row.modelNo)}</td>
+                  <td className={styles.tableHeadCompact}>
+                    {displayText(row.modelNo)}
+                  </td>
                   <TableCell align="center">{exclusiveArea}</TableCell>
                   <TableCell align="center">
                     <div>{supplyArea}</div>
@@ -581,8 +616,12 @@ function SupplyInfoSection({ detail }: { detail: DetailPageData }) {
                       <div className={styles.subText}>({pyeong}평)</div>
                     ) : null}
                   </TableCell>
-                  <TableCell align="center">{displayText(row.suplyHshldco)}</TableCell>
-                  <TableCell align="center">{displayText(row.spsplyHshldco)}</TableCell>
+                  <TableCell align="center">
+                    {displayText(row.suplyHshldco)}
+                  </TableCell>
+                  <TableCell align="center">
+                    {displayText(row.spsplyHshldco)}
+                  </TableCell>
                   <TableCell align="center">
                     {sumCounts(row.suplyHshldco, row.spsplyHshldco)}
                   </TableCell>
@@ -600,35 +639,88 @@ function SupplyInfoSection({ detail }: { detail: DetailPageData }) {
 }
 
 function SpecialSupplySection({ detail }: { detail: DetailPageData }) {
-  if (['06', '04', '03', '02'].includes(detail.houseSecd || '')) {
+  const rows = detail.detailRows;
+  const hasSpecialSupply = rows.some(
+    (row) => (parseNumericValue(row.spsplyHshldco) ?? 0) > 0,
+  );
+
+  if (!hasSpecialSupply) {
     return null;
   }
-
-  const rows = detail.detailRows.length ? detail.detailRows : [EMPTY_ROW];
 
   return (
     <section>
       <h2 className={styles.sectionTitle}>특별공급</h2>
-      <div className={styles.tableScroll}>
-        <table className={styles.articleTable}>
+      <div className={`${styles.tableScroll} ${styles.specialSupplyScroll}`}>
+        <table
+          className={`${styles.articleTable} ${styles.specialSupplyTable}`}
+        >
           <tbody>
             <tr>
-              <td className={styles.tableHeadCompact} rowSpan={2}>
-                주거전용면적
+              <td
+                className={`${styles.tableHeadCompact} ${styles.areaHeaderCell}`}
+                rowSpan={2}
+              >
+                <span className={styles.areaHeaderText}>
+                  <span>주거전용</span>
+                  <span>면적</span>
+                </span>
               </td>
-              <td className={styles.tableHeadCompact} colSpan={8}>
+              <td className={styles.tableHeadCompact} colSpan={10}>
                 공급세대수
               </td>
             </tr>
             <tr>
-              <td className={styles.tableHeadCompact}>다자녀</td>
-              <td className={styles.tableHeadCompact}>신혼부부</td>
-              <td className={styles.tableHeadCompact}>생애최초</td>
-              <td className={styles.tableHeadCompact}>노부모</td>
-              <td className={styles.tableHeadCompact}>기관추천</td>
-              <td className={styles.tableHeadCompact}>기타</td>
-              <td className={styles.tableHeadCompact}>이전기관</td>
-              <td className={styles.tableHeadCompact}>총계</td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                다자녀
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                신혼부부
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                생애최초
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                노부모
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                기관추천
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                신생아
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                청년
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                이전기관
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                기타
+              </td>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.nowrapHeader}`}
+              >
+                총계
+              </td>
             </tr>
 
             {rows.map((row, index) => (
@@ -636,23 +728,46 @@ function SpecialSupplySection({ detail }: { detail: DetailPageData }) {
                 <TableCell align="center">
                   {displayText(row.houseTy) || formatArea(row.excluseAr)}
                 </TableCell>
-                <TableCell align="center">{displayText(row.mnychHshldco)}</TableCell>
-                <TableCell align="center">{displayText(row.nwwdsHshldco)}</TableCell>
-                <TableCell align="center">{displayText(row.lfeFrstHshldco)}</TableCell>
-                <TableCell align="center">{displayText(row.oldParntsSuportHshldco)}</TableCell>
-                <TableCell align="center">{displayText(row.insttRecomendHshldco)}</TableCell>
-                <TableCell align="center">{displayText(row.etcHshldco)}</TableCell>
-                <TableCell align="center">{displayText(row.transrInsttEnfsnHshldco)}</TableCell>
-                <TableCell align="center">{displayText(row.spsplyHshldco)}</TableCell>
+                <TableCell align="center">
+                  {displayText(row.mnychHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.nwwdsHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.lfeFrstHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.oldParntsSuportHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.insttRecomendHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.nwBbHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.ygmnHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.transrInsttEnfsnHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.etcHshldco)}
+                </TableCell>
+                <TableCell align="center">
+                  {displayText(row.spsplyHshldco)}
+                </TableCell>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <p className={styles.sectionInfo}>
-        *공급세대수는 사업주체의 최초 입주자모집 공고문 기준입니다. 특별공급 신청 미달 시 잔여물량은
-        일반공급으로 전환됨에 따라 일반공급 세대 수가 변경될 수 있으므로 최종 일반공급 세대수는 일반공급
-        신청일에 청약접수 경쟁률에서 확인 또는 사업주체에 문의하시기 바랍니다.
+        *공급세대수는 사업주체의 최초 입주자모집 공고문 기준입니다. 특별공급
+        신청 미달 시 잔여물량은 일반공급으로 전환됨에 따라 일반공급 세대 수가
+        변경될 수 있으므로 최종 일반공급 세대수는 일반공급 신청일에 청약접수
+        경쟁률에서 확인 또는 사업주체에 문의하시기 바랍니다.
       </p>
     </section>
   );
@@ -671,9 +786,15 @@ function ExtraInfoSection({ detail }: { detail: DetailPageData }) {
               <td className={styles.tableHeadCompact}>사업주체 전화번호</td>
             </tr>
             <tr>
-              <TableCell align="center">{displayText(detail.bsnsMbyNm)}</TableCell>
-              <TableCell align="center">{displayText(detail.cnstrctEntrpsNm)}</TableCell>
-              <TableCell align="center">{formatPhoneNumber(detail.mdhsTelno)}</TableCell>
+              <TableCell align="center">
+                {displayText(detail.bsnsMbyNm)}
+              </TableCell>
+              <TableCell align="center">
+                {displayText(detail.cnstrctEntrpsNm)}
+              </TableCell>
+              <TableCell align="center">
+                {formatPhoneNumber(detail.mdhsTelno)}
+              </TableCell>
             </tr>
           </tbody>
         </table>
@@ -792,7 +913,9 @@ function RealPricePanel({
   useEffect(() => {
     if (!isRealPriceEnabled) {
       setItems([]);
-      setMessage('현재 v2 환경에는 실거래가 API 키가 없어 탭 UI만 우선 복원했습니다.');
+      setMessage(
+        '현재 v2 환경에는 실거래가 API 키가 없어 탭 UI만 우선 복원했습니다.',
+      );
       return;
     }
 
@@ -804,7 +927,9 @@ function RealPricePanel({
 
     if (!lawdCd) {
       setItems([]);
-      setMessage('상세 주소 기준 지역코드를 찾지 못해 실거래가를 조회할 수 없습니다.');
+      setMessage(
+        '상세 주소 기준 지역코드를 찾지 못해 실거래가를 조회할 수 없습니다.',
+      );
       return;
     }
 
@@ -824,7 +949,9 @@ function RealPricePanel({
         const data = (await response.json()) as AptRealPriceResponse;
 
         if (!response.ok || !data.success) {
-          throw new Error(data.message || '실거래가 데이터를 불러오지 못했습니다.');
+          throw new Error(
+            data.message || '실거래가 데이터를 불러오지 못했습니다.',
+          );
         }
 
         const nextItems = sortRealPriceItems(data.items ?? []);
@@ -890,8 +1017,12 @@ function RealPricePanel({
             </thead>
             <tbody>
               {items.map((item, index) => (
-                <tr key={`${displayText(item.aptNm)}-${formatDealDate(item)}-${index}`}>
-                  <td className={styles.realPriceCell}>{formatDealDate(item)}</td>
+                <tr
+                  key={`${displayText(item.aptNm)}-${formatDealDate(item)}-${index}`}
+                >
+                  <td className={styles.realPriceCell}>
+                    {formatDealDate(item)}
+                  </td>
                   <td className={styles.realPriceCell}>
                     <div>{displayText(item.aptNm)}</div>
                     {displayText(item.floor) ? (
@@ -900,12 +1031,18 @@ function RealPricePanel({
                       </span>
                     ) : null}
                   </td>
-                  <td className={styles.realPriceCell}>{displayText(item.umdNm)}</td>
                   <td className={styles.realPriceCell}>
-                    {displayText(item.excluUseAr) ? `${displayText(item.excluUseAr)}㎡` : ''}
+                    {displayText(item.umdNm)}
                   </td>
                   <td className={styles.realPriceCell}>
-                    {displayText(item.dealAmount) ? `${displayText(item.dealAmount)}만 원` : ''}
+                    {displayText(item.excluUseAr)
+                      ? `${displayText(item.excluUseAr)}㎡`
+                      : ''}
+                  </td>
+                  <td className={styles.realPriceCell}>
+                    {displayText(item.dealAmount)
+                      ? `${displayText(item.dealAmount)}만 원`
+                      : ''}
                   </td>
                 </tr>
               ))}
@@ -997,7 +1134,10 @@ export default function DetailPageClient({
             )}
           </section>
         ) : (
-          <RealPricePanel detail={detail} isRealPriceEnabled={isRealPriceEnabled} />
+          <RealPricePanel
+            detail={detail}
+            isRealPriceEnabled={isRealPriceEnabled}
+          />
         )}
       </div>
     </div>
