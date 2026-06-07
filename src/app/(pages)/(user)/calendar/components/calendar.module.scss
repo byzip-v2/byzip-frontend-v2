@@ -1,0 +1,120 @@
+.calendarWrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+
+  :global {
+    .fc {
+      width: 100%;
+
+      .fc-toolbar.fc-header-toolbar {
+        margin: 0;
+        padding: 0 40px;
+        background-color: #356eff;
+        height: 63px;
+        font-weight: 600;
+        font-size: 12px;
+        line-height: 29px;
+        color: white;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        z-index: 2;
+
+        @media (max-width: 730px) {
+          padding: 0 10px;
+          height: 47px;
+        }
+      }
+
+      .fc-toolbar-title {
+        @media (max-width: 730px) {
+          font-size: 14px;
+        }
+      }
+
+      .fc-button-primary {
+        background-color: transparent;
+        border: none;
+        color: white;
+
+        &:hover {
+          background-color: transparent;
+        }
+        &:focus {
+          box-shadow: none;
+        }
+        &:not(:disabled):active {
+          background-color: transparent;
+          box-shadow: none;
+        }
+
+        span {
+          font-size: 28px;
+          font-weight: 500;
+
+          @media (max-width: 730px) {
+            font-size: 20px;
+          }
+        }
+      }
+
+      .fc-theme-standard th {
+        height: 32px;
+        padding-top: 3.5px;
+        background-color: #e5edff;
+        border-color: #dddee0;
+        font-weight: 500;
+        font-size: 16px;
+        color: #7b7b7b;
+
+        @media (max-width: 730px) {
+          height: 29px;
+          font-size: 14px;
+        }
+      }
+
+      .fc-daygrid-day.fc-day-today {
+        background-color: #fff8bd !important;
+        color: #356eff;
+        font-weight: bold;
+        text-decoration: underline;
+        text-underline-offset: auto;
+      }
+
+      .fc-daygrid-day-frame {
+        padding: 10px;
+        background-color: white;
+
+        @media (max-width: 730px) {
+          padding: 3px;
+        }
+      }
+
+      .fc-daygrid-day-top {
+        flex-direction: row;
+        margin-bottom: 8px;
+
+        @media (max-width: 730px) {
+          font-size: 12px;
+        }
+      }
+
+      .fc-event {
+        cursor: pointer;
+        padding: 5px 8px;
+        margin-bottom: 5px;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 14px;
+
+        @media (max-width: 730px) {
+          padding: 3px 2px;
+          font-weight: 600;
+          font-size: 12px;
+          line-height: 11px;
+        }
+      }
+    }
+  }
+}
