@@ -37,36 +37,36 @@ export default function HousingListSection({
 
   const calculateArea = (details?: HousingSupplyDetailResponseDto[]) => {
     if (!details || details.length === 0) return '-';
-    if(!details[0].area){
+    if (!details[0].area) {
       return '-'
     }
-    
+
     const areas = details
       .map((d) => Number(d.area))
       .filter((val) => !isNaN(val))
       .sort((a, b) => a - b);
     if (areas.length === 0) return '-';
-    
+
     const minArea = areas[0].toFixed(2);
     const maxArea = areas[areas.length - 1].toFixed(2);
-    
+
     if (minArea === maxArea) {
       return `${minArea}m²`;
     }
-    
+
     return `${minArea}m² ~ ${maxArea}m²`;
   };
 
   const calculatePrice = (details?: HousingSupplyDetailResponseDto[]) => {
     if (!details || details.length === 0) return '공고문 확인';
-    
+
     const prices = details
       .map((d) => Number(d.supplyAmount))
       .filter((val) => !isNaN(val) && val > 0)
       .sort((a, b) => a - b);
-      
+
     if (prices.length === 0) return '공고문 확인';
-    
+
     const formatValue = (amount: number) => {
       const uk = Math.floor(amount / 10000);
       const man = amount % 10000;
@@ -75,14 +75,14 @@ export default function HousingListSection({
       }
       return `${man.toLocaleString()}`;
     };
-    
+
     const minPrice = prices[0];
     const maxPrice = prices[prices.length - 1];
-    
+
     if (minPrice === maxPrice) {
       return `${formatValue(minPrice)}만`;
     }
-    
+
     return `${formatValue(minPrice)}만 ~ ${formatValue(maxPrice)}만`;
   };
 
@@ -90,13 +90,13 @@ export default function HousingListSection({
     return housingData
       .map((item) => ({
         id: String(item.id),
-        type: item.houseSecd ==='04' ? 'random': determineHousingType(item.rceptBgnde, item.rceptEndde),
+        type: item.houseSecd === '04' ? 'random' : determineHousingType(item.rceptBgnde, item.rceptEndde),
         title: item.houseName || '-',
-               subTitle:
+        subTitle:
           item.houseSecdNm || '-',
         region: item.subscrptAreaCodeNm || '-',
         area: item.details ? calculateArea(item.details) : '-',
-        price:  item.details ? calculatePrice(item.details) : '공고문 확인',
+        price: item.details ? calculatePrice(item.details) : '공고문 확인',
         regularDate: formatDateRange(item.rceptBgnde, item.rceptEndde),
         // 특별 청약일은 기간이 아니라 시작일 1개만 노출 (v1 UI와 동일)
         specialDate: formatDateString(item.spsplyRceptBgnde),
@@ -105,7 +105,7 @@ export default function HousingListSection({
 
   return (
     <section className="w-full flex-1 min-h-0 bg-[#f8faff] pt-6 overflow-y-auto">
-      <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-center px-4 md:px-0 gap-x-8 gap-y-0">
+      <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-start px-4 gap-x-8 gap-y-0">
         {isLoading ? (
           <div className="col-span-full min-h-[40vh] flex items-center justify-center">
             <Spinner />

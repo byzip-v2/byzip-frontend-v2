@@ -49,7 +49,7 @@ const HousingCard = ({ item }: HousingCardProps) => {
 
   return (
     <Link href={`/detail/${item.id}`} className="block">
-      <article className="w-58 bg-white flex flex-col items-center justify-center mb-10 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
+      <article className="w-58 bg-white flex flex-col items-center justify-center mb-8 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
         {/* 리스트 분류 (상태 정보) */}
         <div className="w-full flex flex-row justify-start items-end px-3 pt-4 pb-1.5 gap-1.5">
           <div className="w-7 relative flex items-center justify-center">
@@ -78,7 +78,7 @@ const HousingCard = ({ item }: HousingCardProps) => {
         </div>
 
         {/* 분양형태 / 지역 */}
-        <div className="w-full h-3 flex flex-row justify-start items-center pl-3 mt-1 mb-3 gap-1">
+        <div className="w-full h-3 flex flex-row justify-start items-center pl-3 mt-1 mb-2 gap-1">
           <span className="text-xs font-medium text-[#7b7b7b] leading-3">
             {item.subTitle} |
           </span>
@@ -114,13 +114,12 @@ const HousingCard = ({ item }: HousingCardProps) => {
               특별 청약일
             </span>
             <span
-              className={`text-white text-xs leading-4 ${
-                item.specialDate &&
+              className={`text-white text-xs leading-4 ${item.specialDate &&
                 item.specialDate !== '정보가 없습니다.' &&
                 item.specialDate !== '데이터 오류'
-                  ? 'font-bold'
-                  : 'font-normal'
-              }`}
+                ? 'font-bold'
+                : 'font-normal'
+                }`}
             >
               {item.specialDate || '정보가 없습니다.'}
             </span>
