@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, RotateCcw, CheckCircle2 } from 'lucide-react';
 import InfoLinkBtn from './InfoLinkBtn';
 
+// 지역 옵션
 const REGIONS = [
   '서울',
   '경기',
@@ -24,25 +25,33 @@ const REGIONS = [
   '제주',
 ];
 
+// 분양형태 옵션
 const TYPES = [
-  '도시형생활주택',
-  '영구임대',
-  '분양주택',
-  '공공지원민간임대',
+  'APT',
+  '오피스텔/빌라',
   '민간임대',
-  '공공임대',
-  '신혼희망타운',
-  '국민임대',
-  '행복주택',
-  '계약취소',
-  '민영',
-  '국민',
+  '잔여세대',
+  '임의공급',
 ];
 
-const CategoryBar = () => {
+interface CategoryBarProps {
+  /**
+   * 부모 컴포넌트(HomeClient)와 선택된 필터 상태를 양방향으로 공유하기 위한 Props 인터페이스입니다.
+   * 로컬 스토리지 보존 및 API 재조회를 부모 컴포넌트에서 일괄 제어하기 위해 상태를 위임받습니다.
+   */
+  selectedRegions: string[];
+  setSelectedRegions: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedTypes: string[];
+  setSelectedTypes: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+const CategoryBar = ({
+  selectedRegions,
+  setSelectedRegions,
+  selectedTypes,
+  setSelectedTypes,
+}: CategoryBarProps) => {
   const [openFilter, setOpenFilter] = useState<'region' | 'type' | null>(null);
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
   const toggleFilter = (filter: 'region' | 'type') => {
     setOpenFilter(openFilter === filter ? null : filter);
@@ -132,18 +141,10 @@ const CategoryBar = () => {
       {/* 드롭다운 패널 (V1 스타일) */}
       {openFilter && (
         <div
-          className={`
-            absolute top-10 z-20 p-2.5 bg-white border border-[#e8eaef] rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] flex flex-col items-center
-            ${openFilter === 'region' ? 'w-72 h-56' : 'w-72 h-56'}
-          `}
+          className="absolute top-10 z-20 w-72 p-2.5 bg-white border border-[#e8eaef] rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] flex flex-col items-center h-auto"
         >
           <div
-            className={`grid w-full pb-4 gap-x-2 gap-y-3 ${openFilter === 'region' ? 'grid-cols-5' : ''}`}
-            style={
-              openFilter === 'type'
-                ? { gridTemplateColumns: 'repeat(3, auto)' }
-                : {}
-            }
+            className={`grid w-full pb-2 gap-x-2 gap-y-3 ${openFilter === 'region' ? 'grid-cols-5' : 'grid-cols-6'}`}
           >
             {(openFilter === 'region' ? REGIONS : TYPES).map((item) => (
               <button
@@ -151,6 +152,12 @@ const CategoryBar = () => {
                 onClick={() => toggleSelection(item, openFilter)}
                 className={`
                   w-full h-8 flex justify-center items-center px-1 py-2.5 rounded-md text-sm! font-medium border whitespace-nowrap
+                  /* 
+                    분양형태 필터일 때 첫 행의 두 항목(APT, 오피스텔/빌라)은 3열씩 차지(합계 6열)하게 하고, 
+                    두 번째 행의 나머지 세 항목은 2열씩 차지(합계 6열)하게 하여 2줄 배치를 완성합니다.
+                  */
+                  ${openFilter === 'type' && (item === 'APT' || item === '오피스텔/빌라') ? 'col-span-3' : ''}
+                  ${openFilter === 'type' && item !== 'APT' && item !== '오피스텔/빌라' ? 'col-span-2' : ''}
                   ${(openFilter === 'region'
                     ? selectedRegions
                     : selectedTypes
@@ -164,8 +171,7 @@ const CategoryBar = () => {
               </button>
             ))}
           </div>
-
-          <div className="w-full flex justify-between items-center px-3 pb-3 absolute bottom-0 left-0">
+          <div className="w-full flex justify-between items-center px-3 pt-2 pb-1 bg-white">
             <button
               onClick={() => selectAll(openFilter)}
               className="flex flex-row items-end gap-1.5 text-sm! font-semibold underline text-[#505050] hover:text-[#3d7fff] hover:decoration-[#3d7fff]"
@@ -185,9 +191,9 @@ const CategoryBar = () => {
               초기화
             </button>
           </div>
-        </div >
+        </div>
       )}
-    </section >
+    </section>
   );
 };
 

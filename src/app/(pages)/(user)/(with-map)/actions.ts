@@ -16,6 +16,7 @@ import { Meta } from '@storybook/nextjs';
 export interface GetHousingSuppliesParams {
   search?: string;
   houseSecd?: string;
+  subscrptAreaCode?: string;
   subscrptAreaCodeNm?: string;
   rcritPblancDeFrom?: string;
   rcritPblancDeTo?: string;
