@@ -105,10 +105,10 @@ export default function HousingListSection({
 
   return (
     <section className="w-full flex-1 min-h-0 bg-[#f8faff] pt-6 overflow-y-auto">
-      <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-start px-4 gap-x-8 gap-y-0">
+      <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-start pl-5 pr-4 gap-x-8 gap-y-0">
         {isLoading ? (
           <div className="col-span-full min-h-[40vh] flex items-center justify-center">
-            <Spinner />
+            <Spinner size={36} strokeWidth={3.5} className="text-[#356EFF]" />
           </div>
         ) : (
           <>

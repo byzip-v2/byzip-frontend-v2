@@ -9,43 +9,6 @@ import HousingStatusTab from './components/HousingStatusTab';
 import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 import { useHousingStore } from '@/app/libs/stores/zustand/useHousingStore';
 import HousingListSection from '../global/components/HousingListSection';
-import { getPublicHousingSupplies, GetHousingSuppliesParams } from './actions';
-
-/**
- * 공급지역 명칭과 공급지역 코드(subscrptAreaCode) 간의 매핑 테이블입니다.
- * API 호출 시 지역 명칭을 숫자로 된 코드로 치환하여 전송합니다.
- */
-const REGION_CODE_MAP: Record<string, string> = {
-  '서울': '100',
-  '강원': '200',
-  '대전': '300',
-  '충남': '312',
-  '광주': '500',
-  '대구': '700',
-  '세종': '338',
-  '충북': '360',
-  '인천': '400',
-  '경기': '410',
-  '울산': '680',
-  '경북': '712',
-  '전남': '513',
-  '전북': '560',
-  '부산': '600',
-  '경남': '621',
-  '제주': '690',
-};
-
-/**
- * 분양형태 명칭과 주택구분 코드(houseSecd) 간의 매핑 테이블입니다.
- * 잔여세대의 경우 '04,06' 형태로 매핑하여 API 다중 쿼리를 지원합니다.
- */
-const TYPE_CODE_MAP: Record<string, string> = {
-  'APT': '01',
-  '오피스텔/빌라': '02',
-  '민간임대': '03',
-  '잔여세대': '04,06',
-  '임의공급': '11',
-};
 
 interface HomeClientProps {
   /**
@@ -57,31 +20,37 @@ interface HomeClientProps {
 
 /**
  * HomeClient
- * - 최초 데이터 fetch는 서버에서 수행(토큰 없이 public)
- * - 클라이언트는 탭 전환 및 필터 상태(지역, 분양형태) 변경 시 API를 재호출하여 리스트 가공 렌더링을 처리합니다.
+ * - 최초 데이터 fetch는 서버에서 수행(Server Component)
+ * - 클라이언트는 추가적인 API 호출 없이, 사용자가 선택한 지역/분양형태 상태값에 따라 
+ *   브라우저단(클라이언트)에서 자체적으로 실시간 필터링을 수행하여 UI와 마커를 갱신합니다.
  */
 export default function HomeClient({ initialHousingData }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState(0);
   const { setMarkers } = useMapStore();
-  
-  // UI 렌더링에 사용될 전역 스토어의 데이터와 업데이트 액션입니다.
+
+  // UI 렌더링에 사용되는 전역 스토어의 전체 데이터입니다.
   const { housingData, setHousingData } = useHousingStore();
 
-  // 사용자가 선택한 지역 및 분양형태 옵션 상태값입니다.
+  // 사용자가 선택한 지역 및 분양형태 필터의 상태값입니다.
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  
+
   // 로컬스토리지 필터 상태 복원이 완료되었는지 감시하는 플래그입니다.
   const [isFilterLoaded, setIsFilterLoaded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
+  // 서버로부터 가져온 데이터를 클라이언트의 전역 스토어에 동기화 완료했는지 판별하는 상태값입니다.
+  // 이 값이 true가 되기 전(첫 렌더링)에는 로딩 스피너만 보이게 제어합니다.
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useMapPageView(DEFAULT_MAP_PAGE_VIEW.center, DEFAULT_MAP_PAGE_VIEW.zoom);
 
   // 서버에서 전달받은 원본 공고 데이터를 최초 1회 전역 스토어에 세팅합니다.
+  // 세팅이 완료되면 isDataLoaded를 true로 세팅하여 화면에 목록이 그려지도록 유도합니다.
   useEffect(() => {
     if (initialHousingData && initialHousingData.length > 0) {
       setHousingData(initialHousingData);
     }
+    setIsDataLoaded(true);
   }, [initialHousingData, setHousingData]);
 
   // 1. 마운트 시 로컬스토리지에 저장된 이전 필터 상태를 복원합니다.
@@ -102,77 +71,44 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
     }
   }, []);
 
-  // 2. 필터 상태가 변경되면 로컬스토리지에 기록하고, 해당 조건으로 API 데이터를 다시 가져옵니다.
+  // 2. 필터 상태가 변경되면 로컬스토리지에 기록하여 상태를 영속화합니다.
   useEffect(() => {
     if (!isFilterLoaded) return;
-
-    // 로컬스토리지 저장
     try {
       localStorage.setItem('byzip:filter-regions', JSON.stringify(selectedRegions));
       localStorage.setItem('byzip:filter-types', JSON.stringify(selectedTypes));
     } catch (error) {
       console.error('🔍 [Filter] 로컬스토리지 필터 상태 저장 실패:', error);
     }
+  }, [selectedRegions, selectedTypes, isFilterLoaded]);
 
-    // 최적화: 최초 로드 시 필터가 아예 비어있고, 서버에서 받은 데이터 개수와 현재 스토어 데이터 개수가 같다면 
-    // 불필요한 API 재조회를 생략합니다.
-    const isFilterEmpty = selectedRegions.length === 0 && selectedTypes.length === 0;
-    if (isFilterEmpty && housingData.length === initialHousingData.length) {
-      return;
-    }
+  // 3. 탭 카운트를 표시하기 위해, 탭 필터를 제외한 '지역 및 분양형태' 필터만 반영된 데이터셋을 생성합니다.
+  const filteredForCounts = useMemo(() => {
+    return housingData
+      .filter((item) => {
+        // 지역 필터가 비어있으면 전체 허용, 선택되어 있으면 subscrptAreaCodeNm 포함 여부 확인
+        if (selectedRegions.length === 0) return true;
+        return selectedRegions.includes(item.subscrptAreaCodeNm || '');
+      })
+      .filter((item) => {
+        // 분양형태 필터가 비어있으면 전체 허용, 선택되어 있으면 매핑된 houseSecd 확인
+        if (selectedTypes.length === 0) return true;
+        return selectedTypes.some((type) => {
+          // 각 주택 구분 코드(houseSecd)에 매칭하여 필터링을 수행합니다.
+          if (type === 'APT') return item.houseSecd === '01';
+          if (type === '오피스텔/빌라') return item.houseSecd === '02';
+          if (type === '민간임대') return item.houseSecd === '03';
+          if (type === '잔여세대') return item.houseSecd === '04' || item.houseSecd === '06';
+          if (type === '신혼희망타운') return item.houseSecd === '10';
+          if (type === '임의공급') return item.houseSecd === '11';
+          return false;
+        });
+      });
+  }, [housingData, selectedRegions, selectedTypes]);
 
-    const fetchFilteredData = async () => {
-      setIsLoading(true);
-
-      // 지역 한글 명칭을 코드로 변환
-      const regionCodes = selectedRegions
-        .map((r) => REGION_CODE_MAP[r])
-        .filter(Boolean);
-
-      // 분양형태 한글 명칭을 코드로 변환
-      const typeCodes = selectedTypes
-        .flatMap((t) => {
-          const code = TYPE_CODE_MAP[t];
-          return code ? code.split(',') : [];
-        })
-        .filter(Boolean);
-
-      const params: GetHousingSuppliesParams = {
-        page: 1,
-        limit: 100,
-        sortBy: 'rcritPblancDe',
-        sortOrder: 'DESC',
-        recruiting: true,
-      };
-
-      // 전체 선택 혹은 아무것도 선택하지 않았을 때는 필터링 파라미터를 넘기지 않고 전체를 불러옵니다.
-      if (regionCodes.length > 0 && selectedRegions.length < Object.keys(REGION_CODE_MAP).length) {
-        params.subscrptAreaCode = regionCodes.join(',');
-      }
-      if (typeCodes.length > 0 && selectedTypes.length < Object.keys(TYPE_CODE_MAP).length) {
-        params.houseSecd = typeCodes.join(',');
-      }
-
-      try {
-        const result = await getPublicHousingSupplies(params);
-        if (result.success && result.data) {
-          setHousingData(result.data.items);
-        } else {
-          setHousingData([]);
-        }
-      } catch (error) {
-        console.error('🔍 [Filter] API 재페치 조회 중 오류:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFilteredData();
-  }, [selectedRegions, selectedTypes, isFilterLoaded, setHousingData, initialHousingData.length, housingData.length]);
-
-  // 탭 카운트 계산 (원본 데이터 기준)
+  // filteredForCounts를 기반으로 탭 카운트를 동적으로 계산합니다.
   const counts = useMemo(() => {
-    return housingData.reduce(
+    return filteredForCounts.reduce(
       (acc, item) => {
         const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
         acc.all += 1;
@@ -184,27 +120,47 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
       },
       { all: 0, today: 0, coming: 0, random: 0 },
     );
-  }, [housingData]);
+  }, [filteredForCounts]);
 
-  // 스토어의 markers 데이터 동기화
+  // 4. 지도의 마커 데이터를 활성화된 탭 및 사용자가 선택한 지역/유형 필터와 실시간 동기화합니다.
   useEffect(() => {
-    // 필터링된 데이터에서 좌표가 있는 항목만 마커로 생성
     const markers = housingData
       .filter((item) => {
+        // 1) 탭 필터링
         const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
         if (activeTab === 0) return true;
-        if (activeTab === 1) return type === 'today';
-        if (activeTab === 2) return type === 'coming';
+        if (activeTab === 1) return type === 'today' && item.houseSecd !== '04';
+        if (activeTab === 2) return type === 'coming' && item.houseSecd !== '04';
         if (activeTab === 3) return item.houseSecd === '04';
         return true;
       })
       .filter((item) => {
-        const hasCoords =
+        // 2) 지역 필터링
+        if (selectedRegions.length === 0) return true;
+        return selectedRegions.includes(item.subscrptAreaCodeNm || '');
+      })
+      .filter((item) => {
+        // 3) 분양형태 필터링
+        if (selectedTypes.length === 0) return true;
+        return selectedTypes.some((type) => {
+          // 각 주택 구분 코드(houseSecd)에 매칭하여 필터링을 수행합니다.
+          if (type === 'APT') return item.houseSecd === '01';
+          if (type === '오피스텔/빌라') return item.houseSecd === '02';
+          if (type === '민간임대') return item.houseSecd === '03';
+          if (type === '잔여세대') return item.houseSecd === '04' || item.houseSecd === '06';
+          if (type === '신혼희망타운') return item.houseSecd === '10';
+          if (type === '임의공급') return item.houseSecd === '11';
+          return false;
+        });
+      })
+      .filter((item) => {
+        // 4) 좌표 유효성 검증
+        return (
           item.latitude !== undefined &&
           item.latitude !== null &&
           item.longitude !== undefined &&
-          item.longitude !== null;
-        return hasCoords;
+          item.longitude !== null
+        );
       })
       .map((item) => ({
         id: String(item.id),
@@ -215,23 +171,48 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
 
     setMarkers(markers);
 
-    // 컴포넌트 언마운트 시 마커 초기화 (다른 페이지 이동 시 지도의 마커를 비움)
+    // 컴포넌트 언마운트 시 마커 초기화
     return () => {
       setMarkers([]);
     };
-  }, [housingData, activeTab, setMarkers]);
+  }, [housingData, activeTab, selectedRegions, selectedTypes, setMarkers]);
 
-  // 탭에 따른 카드 데이터 가공
+  // 5. 탭과 필터(지역/분양형태) 조건이 모두 적용된 최종 카드용 리스트 데이터입니다.
   const filteredData = useMemo((): HousingSupplyResponseDto[] => {
-    return housingData.filter((item) => {
-      const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
-      if (activeTab === 0) return true;
-      if (activeTab === 1) return type === 'today' && item.houseSecd !== '04';
-      if (activeTab === 2) return type === 'coming' && item.houseSecd !== '04';
-      if (activeTab === 3) return item.houseSecd === '04';
-      return true;
-    });
-  }, [housingData, activeTab]);
+    return housingData
+      .filter((item) => {
+        // 1) 탭 필터링
+        const type = determineHousingType(item.rceptBgnde, item.rceptEndde);
+        if (activeTab === 0) return true;
+        if (activeTab === 1) return type === 'today' && item.houseSecd !== '04';
+        if (activeTab === 2) return type === 'coming' && item.houseSecd !== '04';
+        if (activeTab === 3) return item.houseSecd === '04';
+        return true;
+      })
+      .filter((item) => {
+        // 2) 지역 필터링
+        if (selectedRegions.length === 0) return true;
+        return selectedRegions.includes(item.subscrptAreaCodeNm || '');
+      })
+      .filter((item) => {
+        // 3) 분양형태 필터링
+        if (selectedTypes.length === 0) return true;
+        return selectedTypes.some((type) => {
+          // 각 주택 구분 코드(houseSecd)에 매칭하여 필터링을 수행합니다.
+          if (type === 'APT') return item.houseSecd === '01';
+          if (type === '오피스텔/빌라') return item.houseSecd === '02';
+          if (type === '민간임대') return item.houseSecd === '03';
+          if (type === '잔여세대') return item.houseSecd === '04' || item.houseSecd === '06';
+          if (type === '신혼희망타운') return item.houseSecd === '10';
+          if (type === '임의공급') return item.houseSecd === '11';
+          return false;
+        });
+      });
+  }, [housingData, activeTab, selectedRegions, selectedTypes]);
+
+  // 최초에 서버 데이터가 클라이언트 전역 스토어에 바인딩되기 전까지는
+  // '해당하는 분양 공고가 없습니다' 등의 빈 상태 UI 대신 로딩 스피너를 보여주도록 처리합니다.
+  const isLoading = !isDataLoaded;
 
   return (
     <div className="w-full h-full bg-white flex flex-col items-center">
