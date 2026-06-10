@@ -8,6 +8,8 @@ export interface MapMarker {
   lat: number;
   lng: number;
   title: string;
+  /** (한국어) 마커 타입: 오늘 청약('today'), 예정 청약('coming'), 무순위('random'), 전체('all') */
+  type?: 'today' | 'coming' | 'random' | 'all';
 }
 
 /**
