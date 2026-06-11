@@ -167,6 +167,13 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
         lat: Number(item.latitude),
         lng: Number(item.longitude),
         title: item.houseName || '',
+        // (한국어) 마커마다 청약 상태 아이콘을 분기하기 위해 타입을 추가 매핑합니다.
+        // houseSecd가 '04'이면 무순위('random'), 그 외에는 접수일에 따라 오늘('today') 혹은 예정('coming')으로 분류됩니다.
+        type: (item.houseSecd === '04' ? 'random' : determineHousingType(item.rceptBgnde, item.rceptEndde)) as 'today' | 'coming' | 'random' | 'all',
+        houseSecdNm: item.houseSecdNm || '', // 주택 공급 유형 (마커에 노출)
+        // (한국어) 툴팁에 날짜 정보를 노출할 수 있도록 접수 시작일/종료일 데이터를 매핑해 전달합니다.
+        rceptBgnde: item.rceptBgnde || '',
+        rceptEndde: item.rceptEndde || '',
       }));
 
     setMarkers(markers);

@@ -62,8 +62,8 @@ export default function BookmarkPageClient() {
           const result = await getPublicHousingSupplies({
             page: 1,
             limit: 100,
-            sortBy: 'rcritPblancDe',
-            sortOrder: 'DESC',
+            sortBy: 'rceptEndde',
+            sortOrder: 'ASC',
             // 현재 진행 중이거나 예정된 공고만 필터링하여 가져옵니다.
             recruiting: true,
           });

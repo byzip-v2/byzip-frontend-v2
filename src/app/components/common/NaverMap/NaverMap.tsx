@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Script from 'next/script';
+import { useRouter } from 'next/navigation';
 import {
   DEFAULT_MAP_PAGE_VIEW,
   useMapStore,
@@ -122,6 +123,11 @@ const NaverMap = ({
   center = DEFAULT_MAP_PAGE_VIEW.center,
   zoom = DEFAULT_MAP_PAGE_VIEW.zoom,
 }: NaverMapProps) => {
+  const router = useRouter();
+
+  // 지도의 단일 정보창(InfoWindow) 인스턴스를 재사용하기 위한 ref
+  const infoWindowRef = useRef<naver.maps.InfoWindow | null>(null);
+
   // 지도 인스턴스를 상태로 관리하여, 인스턴스가 생성된 후 마커 렌더링 Effect가 실행되도록 함
   const [map, setMap] = React.useState<naver.maps.Map | null>(null);
 
@@ -162,6 +168,16 @@ const NaverMap = ({
         },
       });
       setMap(newMap);
+
+      // (한국어) 툴팁으로 활용할 커스텀 정보창(InfoWindow)을 지도 초기화 시점에 생성해 둡니다.
+      const newInfoWindow = new naver.maps.InfoWindow({
+        content: '',
+        borderWidth: 0,
+        backgroundColor: 'transparent',
+        disableAnchor: true,
+        pixelOffset: new naver.maps.Point(0, -1), // 마커 상단 머리 위에 살짝 떨어지도록 배치
+      });
+      infoWindowRef.current = newInfoWindow;
     }
   }, [resolvedCenter.lat, resolvedCenter.lng, resolvedZoom, map]);
 
@@ -214,11 +230,81 @@ const NaverMap = ({
     const newMarkers = markers
       .filter((m) => m.lat && m.lng)
       .map((m) => {
-        return new naver.maps.Marker({
+        // (한국어) 마커 타입별로 상응하는 Apply_ 아이콘 이미지 경로를 매핑합니다.
+        let iconUrl = '/images/icons/Apply_today.png';
+        if (m.type === 'coming') {
+          iconUrl = '/images/icons/Apply_upcomming.png';
+        } else if (m.type === 'random') {
+          iconUrl = '/images/icons/Apply_random.png';
+        }
+        // (한국어) 기획 및 이미지 비율(222x193)에 맞게 마커의 크기를 75x65로 조절하고, 
+        // 내부에 분양 유형 명칭(houseSecdNm)을 텍스트로 노출하기 위해 HTML 마커(content)를 사용합니다.
+        const markerWidth = 75;
+        const markerHeight = 65;
+        const marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(m.lat, m.lng),
           title: m.title,
-          // 개별 마커는 네이버 기본 마커(핀)를 사용하도록 아이콘 설정 제거
+          // (한국어) 핀 마커 이미지 위에 주택 공급 유형 텍스트(예: '임대', '무순위' 등)가 얹어지도록 HTML 구조를 생성합니다.
+          icon: {
+            content: `
+              <div style="position:relative; width:${markerWidth}px; height:${markerHeight}px;">
+                <img src="${iconUrl}" style="width:100%; height:100%; display:block;" />
+                <div style="position:absolute; top:60%; left:50%; transform:translate(-50%, -50%); font-size:13px; font-weight:600; color:#000000; text-align:center; white-space:nowrap; font-family:'Pretendard', sans-serif; letter-spacing:-0.5px;">
+                  ${m.houseSecdNm || ''}
+                </div>
+              </div>
+            `,
+            size: new naver.maps.Size(markerWidth, markerHeight),
+            anchor: new naver.maps.Point(markerWidth / 2, markerHeight), // 핀 하단의 중앙 뾰족한 꼬리 부분을 앵커 포인트로 설정
+          },
         });
+
+        // (한국어) 마커 마우스 오버 시 상단에 깔끔한 사각형 형태의 말풍선 정보창(툴팁)을 표시합니다.
+        naver.maps.Event.addListener(marker, 'mouseover', () => {
+          if (!infoWindowRef.current || !map) return;
+
+          // 접수 시작일과 종료일 날짜 포맷팅 함수 정의
+          const formatDate = (dateVal?: string | Date) => {
+            if (!dateVal) return '';
+            const date = new Date(dateVal);
+            if (isNaN(date.getTime())) return '';
+            return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+          };
+
+          const startDateText = formatDate(m.rceptBgnde);
+          const endDateText = formatDate(m.rceptEndde);
+          const dateRange = startDateText && endDateText
+            ? `${startDateText} ~ ${endDateText}`
+            : '접수 기간 정보 없음';
+
+          const infoContent = `
+            <div style="padding: 12px 16px; border: 1px solid #CCCCCC; border-radius: 0px; background-color: #FFFFFF; text-align: center; font-family: 'Pretendard', sans-serif; box-shadow: none; min-width: 150px;">
+              <div style="font-size: 13px; font-weight: 600; color: #000000; margin-bottom: 2px; white-space: nowrap; letter-spacing: -0.5px;">
+                ${m.title}
+              </div>
+              <div style="font-size: 12px; font-weight: 400; color: #374151; white-space: nowrap; letter-spacing: -0.5px;">
+                ${dateRange}
+              </div>
+            </div>
+          `;
+
+          infoWindowRef.current.setContent(infoContent);
+          infoWindowRef.current.open(map, marker);
+        });
+
+        // (한국어) 마우스가 마커를 벗어나면 정보창을 즉시 닫습니다.
+        naver.maps.Event.addListener(marker, 'mouseout', () => {
+          if (infoWindowRef.current) {
+            infoWindowRef.current.close();
+          }
+        });
+
+        // (한국어) 마커를 클릭하면 해당 분양공고의 상세페이지로 라우팅 이동합니다.
+        naver.maps.Event.addListener(marker, 'click', () => {
+          router.push(`/detail/${m.id}`);
+        });
+
+        return marker;
       });
 
     markersRef.current = newMarkers;
@@ -263,8 +349,7 @@ const NaverMap = ({
       },
     ];
 
-    // 생성된 마커들에 맞춰 지도의 영역 조정 및 현재 줌 레벨 확인
-    let currentBaseZoom = resolvedZoom;
+    // (한국어) 생성된 마커들에 맞춰 지도의 영역을 자동으로 조정합니다.
     if (newMarkers.length > 0) {
       const bounds = new naver.maps.LatLngBounds(
         new naver.maps.LatLng(
@@ -282,12 +367,12 @@ const NaverMap = ({
       });
 
       if (newMarkers.length === 1) {
+        // 마커가 단 1개일 경우에는 마커가 있는 위치를 지도의 중심으로 두고 resolvedZoom 레벨로 고정합니다.
         map.setCenter(newMarkers[0].getPosition());
         map.setZoom(resolvedZoom);
-        currentBaseZoom = resolvedZoom;
       } else {
+        // 마커가 여러 개일 경우에는 모든 마커가 화면 안에 다 들어올 수 있도록 지도의 경계를 맞춥니다(fitBounds).
         map.fitBounds(bounds);
-        currentBaseZoom = map.getZoom();
       }
     }
 
@@ -297,8 +382,11 @@ const NaverMap = ({
       .then((MarkerClusteringClass) => {
         if (cancelled) return;
         clustererRef.current = new MarkerClusteringClass({
+          // (한국어) 1개짜리 마커도 줌 레벨이 낮을 때는 클러스터 원 형태로 표시하기 위해 minClusterSize를 1로 유지합니다.
           minClusterSize: 1,
-          maxZoom: currentBaseZoom + 2,
+          // (한국어) 줌 레벨 8 이하에서는 클러스터가 동작하고, 9 이상(수도권 전체가 보이는 뷰)이 되면
+          // 클러스터가 풀려 개별 마커들이 이미지처럼 큼직하게 보이도록 maxZoom을 8로 조정합니다.
+          maxZoom: 10,
           map: map,
           markers: newMarkers,
           disableClickZoom: false,
@@ -330,7 +418,7 @@ const NaverMap = ({
       markersRef.current.forEach((marker) => marker.setMap(null));
       markersRef.current = [];
     };
-  }, [map, markers, resolvedZoom]);
+  }, [map, markers, resolvedZoom, router]);
 
   return (
     <>

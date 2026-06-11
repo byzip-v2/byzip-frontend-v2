@@ -10,6 +10,12 @@ export interface MapMarker {
   title: string;
   /** (한국어) 마커 타입: 오늘 청약('today'), 예정 청약('coming'), 무순위('random'), 전체('all') */
   type?: 'today' | 'coming' | 'random' | 'all';
+  /** (한국어) 주택 공급 유형 명칭 (예: '임대', '민간분양' 등) */
+  houseSecdNm?: string;
+  /** (한국어) 청약 접수 시작일 (Date 객체 또는 YYYY-MM-DD 형식의 문자열) */
+  rceptBgnde?: string | Date;
+  /** (한국어) 청약 접수 종료일 (Date 객체 또는 YYYY-MM-DD 형식의 문자열) */
+  rceptEndde?: string | Date;
 }
 
 /**
