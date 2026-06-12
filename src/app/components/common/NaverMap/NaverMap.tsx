@@ -241,6 +241,12 @@ const NaverMap = ({
         // 내부에 분양 유형 명칭(houseSecdNm)을 텍스트로 노출하기 위해 HTML 마커(content)를 사용합니다.
         const markerWidth = 75;
         const markerHeight = 65;
+
+        // (한국어) 주택 공급 유형 명칭이 '신혼희망타운'인 경우, 마커 내부 핀의 제한된 공간에 글자가 
+        // 겹치거나 잘리지 않고 깔끔하게 표현될 수 있도록 '신혼'으로 단축하여 표시하고, 그 외에는 
+        // 원래의 명칭(또는 빈 문자열)을 그대로 사용합니다.
+        const markerText = m.houseSecdNm === '신혼희망타운' ? '신혼' : (m.houseSecdNm || '');
+
         const marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(m.lat, m.lng),
           title: m.title,
@@ -250,7 +256,7 @@ const NaverMap = ({
               <div style="position:relative; width:${markerWidth}px; height:${markerHeight}px;">
                 <img src="${iconUrl}" style="width:100%; height:100%; display:block;" />
                 <div style="position:absolute; top:60%; left:50%; transform:translate(-50%, -50%); font-size:13px; font-weight:600; color:#000000; text-align:center; white-space:nowrap; font-family:'Pretendard', sans-serif; letter-spacing:-0.5px;">
-                  ${m.houseSecdNm || ''}
+                  ${markerText}
                 </div>
               </div>
             `,

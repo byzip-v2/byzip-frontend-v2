@@ -8,6 +8,8 @@ import {
   getLawdCdByAddress,
   getPreviousMonth,
 } from '@/app/libs/utils/apt-real-price';
+import { useMapStore } from '@/app/libs/stores/zustand/useMapStore';
+import { determineHousingType } from '@/app/libs/utils/date';
 
 import styles from './detail.module.scss';
 import type {
@@ -1064,6 +1066,54 @@ export default function DetailPageClient({
   const [isRealPriceTab, setIsRealPriceTab] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const isLhDetail = detail.sourceSystem === 'LH';
+
+  // (한국어) 지도의 마커와 카메라 뷰를 조정하기 위해 전역 지도 스토어를 사용합니다.
+  const { setMarkers, setMapPageView, clearMarkers, clearMapPageView } = useMapStore();
+
+  // (한국어) 상세 페이지 진입 시 해당 분양 공고의 좌표 정보를 읽어 지도를 이동하고 마커를 표시하는 효과입니다.
+  useEffect(() => {
+    if (
+      detail.latitude !== undefined &&
+      detail.latitude !== null &&
+      detail.longitude !== undefined &&
+      detail.longitude !== null
+    ) {
+      const lat = Number(detail.latitude);
+      const lng = Number(detail.longitude);
+
+      // (한국어) 접수 기간과 공고 유형 정보를 기반으로 마커의 타입(오늘 접수, 예정, 무순위 등)을 판별합니다.
+      const type = (detail.houseSecd === '04'
+        ? 'random'
+        : determineHousingType(detail.rceptBgnde, detail.rceptEndde)) as 'today' | 'coming' | 'random' | 'all';
+
+      // (한국어) 마커에 표시할 데이터 구조를 생성합니다.
+      const detailMarker = {
+        id: String(detail.id),
+        lat: lat,
+        lng: lng,
+        title: detail.houseName || '',
+        type: type,
+        houseSecdNm: detail.houseSecdNm || '',
+        rceptBgnde: detail.rceptBgnde || '',
+        rceptEndde: detail.rceptEndde || '',
+      };
+
+      // (한국어) 마커 배열을 세팅하여 지도에 핀을 표시합니다.
+      setMarkers([detailMarker]);
+
+      // (한국어) 해당 분양지로 카메라를 이동하고 줌 레벨을 16으로 확대하여 상세히 볼 수 있도록 합니다.
+      setMapPageView({
+        center: { lat, lng },
+        zoom: 16,
+      });
+    }
+
+    // (한국어) 컴포넌트가 언마운트되거나 공고 상세 정보가 변경되어 이동할 때 이전 지도의 마커와 뷰를 초기화합니다.
+    return () => {
+      clearMarkers();
+      clearMapPageView();
+    };
+  }, [detail, setMarkers, setMapPageView, clearMarkers, clearMapPageView]);
 
   useEffect(() => {
     const bookmarks = readBookmarksFromStorage();

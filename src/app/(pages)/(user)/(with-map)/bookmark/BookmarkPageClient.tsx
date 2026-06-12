@@ -6,6 +6,8 @@ import { getPublicHousingSupplies } from '@/app/(pages)/(user)/(with-map)/action
 import { useHousingStore } from '@/app/libs/stores/zustand/useHousingStore';
 import Spinner from '@/app/components/common/Spinner/Spinner';
 import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
+import { useMapStore } from '@/app/libs/stores/zustand/useMapStore';
+import { determineHousingType } from '@/app/libs/utils/date';
 
 /**
  * 로컬스토리지 북마크 저장 키값 (DetailPageClient.tsx의 키와 일치)
@@ -16,6 +18,7 @@ const DETAIL_BOOKMARK_STORAGE_KEY = 'byzip:detail-bookmarks';
  * 북마크 페이지 클라이언트 컴포넌트
  * - localStorage에 저장된 공고 ID 목록을 로드하고, useHousingStore 전역 캐시를 필터링하여 노출합니다.
  * - 전역 캐시가 없는 경우(예: 홈을 거치지 않은 경우), 북마크 페이지에서 직접 현재 진행 중인 공고 리스트(recruiting: true)를 불러옵니다.
+ * - (with-map) 하위로 이동됨에 따라, 북마크한 공고 데이터를 지도의 마커로 표시하고 지도의 카메라 영역을 자동으로 맞춥니다.
  */
 export default function BookmarkPageClient() {
   const { housingData, setHousingData } = useHousingStore();
@@ -31,6 +34,9 @@ export default function BookmarkPageClient() {
 
   // 북마크 저장소가 실제로 비어있는지 여부를 판단하기 위한 상태값
   const [hasBookmarks, setHasBookmarks] = useState(true);
+
+  // (한국어) 지도의 마커 및 레이아웃 상태 변경을 위해 전역 지도 스토어를 구독합니다.
+  const { setMarkers } = useMapStore();
 
   useEffect(() => {
     setIsMounted(true);
@@ -113,6 +119,45 @@ export default function BookmarkPageClient() {
 
     setBookmarkedData(filtered);
   }, [housingData]);
+
+  // (한국어) 4. 북마크된 공고 데이터를 지도 상에 마커로 동기화합니다.
+  // NaverMap 컴포넌트가 스토어의 markers를 감지하여 1개인 경우 중심 좌표 이동, 여러 개인 경우 전체를 보여주는 fitBounds를 수행합니다.
+  useEffect(() => {
+    if (bookmarkedData.length === 0) {
+      setMarkers([]);
+      return;
+    }
+
+    // 위도와 경도 정보가 유효한 공고들만 지도의 마커 데이터로 변환합니다.
+    const markers = bookmarkedData
+      .filter(
+        (item) =>
+          item.latitude !== undefined &&
+          item.latitude !== null &&
+          item.longitude !== undefined &&
+          item.longitude !== null
+      )
+      .map((item) => ({
+        id: String(item.id),
+        lat: Number(item.latitude),
+        lng: Number(item.longitude),
+        title: item.houseName || '',
+        // 접수 시작/종료일 정보 등을 이용해 청약 상태 타입을 계산합니다.
+        type: (item.houseSecd === '04'
+          ? 'random'
+          : determineHousingType(item.rceptBgnde, item.rceptEndde)) as 'today' | 'coming' | 'random' | 'all',
+        houseSecdNm: item.houseSecdNm || '',
+        rceptBgnde: item.rceptBgnde || '',
+        rceptEndde: item.rceptEndde || '',
+      }));
+
+    setMarkers(markers);
+
+    // 컴포넌트 언마운트 시 지도의 마커를 깨끗하게 지웁니다.
+    return () => {
+      setMarkers([]);
+    };
+  }, [bookmarkedData, setMarkers]);
 
   // Next.js 하이드레이션 타이밍 이슈(서버와 브라우저 환경 차이)를 예방하기 위해 마운트 이전에는 로딩 스피너를 보여줍니다.
   if (!isMounted) {
