@@ -394,10 +394,6 @@ function DetailHeader({
         <p className={styles.headerAddress}>
           {displayText(detail.hssplyAdres)}
         </p>
-        <div className={styles.headerInterestBadge}>
-          <LegacyStarFilledIcon className={styles.headerInterestIcon} />
-          <span>0명이 관심을 갖고 있어요</span>
-        </div>
       </div>
     </header>
   );
@@ -481,10 +477,6 @@ function KeyInfoSection({ detail }: { detail: DetailPageData }) {
 }
 
 function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
-  const hideDetailedSchedule = ['02', '03', '04', '06'].includes(
-    detail.houseSecd || '',
-  );
-
   return (
     <section>
       <h2 className={styles.sectionTitle}>청약일정</h2>
@@ -498,52 +490,48 @@ function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
               </TableCell>
             </tr>
 
-            {!hideDetailedSchedule ? (
-              <>
-                <tr>
-                  <td className={styles.tableHead} rowSpan={4}>
-                    청약접수
-                  </td>
-                  <td className={styles.tableHeadBlue}>구분</td>
-                  <td className={styles.tableHeadBlue}>해당지역</td>
-                  <td className={styles.tableHeadBlue}>기타경기</td>
-                  <td className={styles.tableHeadBlue}>기타지역</td>
-                </tr>
-                <tr>
-                  <TableCell align="center">특별공급</TableCell>
-                  <TableCell align="center" colSpan={3}>
-                    {formatDateRange(
-                      detail.spsplyRceptBgnde,
-                      detail.spsplyRceptEndde,
-                    )}
-                  </TableCell>
-                </tr>
-                <tr>
-                  <TableCell align="center">1순위</TableCell>
-                  <TableCell align="center">
-                    {displayText(detail.gnrlRnk1CrspareaRceptPd)}
-                  </TableCell>
-                  <TableCell align="center">
-                    {displayText(detail.gnrlRnk1EtcGgRcptdePd)}
-                  </TableCell>
-                  <TableCell align="center">
-                    {displayText(detail.gnrlRnk1EtcAreaRcptdePd)}
-                  </TableCell>
-                </tr>
-                <tr>
-                  <TableCell align="center">2순위</TableCell>
-                  <TableCell align="center">
-                    {displayText(detail.gnrlRnk2CrspareaRceptPd)}
-                  </TableCell>
-                  <TableCell align="center">
-                    {displayText(detail.gnrlRnk2EtcGgRcptdePd)}
-                  </TableCell>
-                  <TableCell align="center">
-                    {displayText(detail.gnrlRnk2EtcAreaRcptdePd)}
-                  </TableCell>
-                </tr>
-              </>
-            ) : null}
+            <tr>
+              <td className={styles.tableHead} rowSpan={4}>
+                청약접수
+              </td>
+              <td className={styles.tableHeadBlue}>구분</td>
+              <td className={styles.tableHeadBlue}>해당지역</td>
+              <td className={styles.tableHeadBlue}>기타경기</td>
+              <td className={styles.tableHeadBlue}>기타지역</td>
+            </tr>
+            <tr>
+              <TableCell align="center">특별공급</TableCell>
+              <TableCell align="center" colSpan={3}>
+                {formatDateRange(
+                  detail.spsplyRceptBgnde,
+                  detail.spsplyRceptEndde,
+                )}
+              </TableCell>
+            </tr>
+            <tr>
+              <TableCell align="center">1순위</TableCell>
+              <TableCell align="center">
+                {displayText(detail.gnrlRnk1CrspareaRceptPd)}
+              </TableCell>
+              <TableCell align="center">
+                {displayText(detail.gnrlRnk1EtcGgRcptdePd)}
+              </TableCell>
+              <TableCell align="center">
+                {displayText(detail.gnrlRnk1EtcAreaRcptdePd)}
+              </TableCell>
+            </tr>
+            <tr>
+              <TableCell align="center">2순위</TableCell>
+              <TableCell align="center">
+                {displayText(detail.gnrlRnk2CrspareaRceptPd)}
+              </TableCell>
+              <TableCell align="center">
+                {displayText(detail.gnrlRnk2EtcGgRcptdePd)}
+              </TableCell>
+              <TableCell align="center">
+                {displayText(detail.gnrlRnk2EtcAreaRcptdePd)}
+              </TableCell>
+            </tr>
 
             <tr>
               <td className={styles.tableHead}>당첨자 발표일</td>
@@ -563,6 +551,42 @@ function SubscriptionScheduleSection({ detail }: { detail: DetailPageData }) {
           </tbody>
         </table>
       </div>
+      <p className={styles.sectionInfo}>
+        *특별공급 종류에 따라 접수기간 및 장소가 다를 수 있으니 모집공고를
+        반드시 확인하시기 바랍니다.
+      </p>
+    </section>
+  );
+}
+
+function SupplyScheduleSection({ detail }: { detail: DetailPageData }) {
+  return (
+    <section>
+      <h2 className={styles.sectionTitle}>공급일정</h2>
+      <div className={styles.tableScroll}>
+        <table className={styles.articleTable}>
+          <tbody>
+            <tr>
+              <td className={styles.tableHeadLh}>모집공고일</td>
+              <TableCell align="center" className={styles.tableCellLh}>
+                {formatRawDate(detail.rcritPblancDe)}
+              </TableCell>
+            </tr>
+            <tr>
+              <td className={styles.tableHeadLh}>서류 접수 기간</td>
+              <TableCell align="center" className={styles.tableCellLh}>
+                {formatDateRange(detail.rceptBgnde, detail.rceptEndde)}
+              </TableCell>
+            </tr>
+            <tr>
+              <td className={styles.tableHeadLh}>당첨자 발표일</td>
+              <TableCell align="center" className={styles.tableCellLh}>
+                {formatRawDate(detail.przwnerPresnatnDe)}
+              </TableCell>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -577,7 +601,10 @@ function SupplyInfoSection({ detail }: { detail: DetailPageData }) {
         <table className={styles.articleTable}>
           <tbody>
             <tr>
-              <td className={styles.tableHeadCompact} rowSpan={2}>
+              <td
+                className={`${styles.tableHeadCompact} ${styles.supplyNumberCell}`}
+                rowSpan={2}
+              >
                 번호
               </td>
               <td className={styles.tableHeadCompact} rowSpan={2}>
@@ -608,7 +635,9 @@ function SupplyInfoSection({ detail }: { detail: DetailPageData }) {
 
               return (
                 <tr key={`${displayText(row.modelNo) || 'empty'}-${index}`}>
-                  <td className={styles.tableHeadCompact}>
+                  <td
+                    className={`${styles.tableHeadCompact} ${styles.supplyNumberCell}`}
+                  >
                     {displayText(row.modelNo)}
                   </td>
                   <TableCell align="center">{exclusiveArea}</TableCell>
@@ -808,33 +837,7 @@ function ExtraInfoSection({ detail }: { detail: DetailPageData }) {
 function LhDetailSection({ detail }: { detail: DetailPageData }) {
   return (
     <>
-      <section>
-        <h2 className={styles.sectionTitle}>공급일정</h2>
-        <div className={styles.tableScroll}>
-          <table className={styles.articleTable}>
-            <tbody>
-              <tr>
-                <td className={styles.tableHeadLh}>모집공고일</td>
-                <TableCell align="center" className={styles.tableCellLh}>
-                  {formatRawDate(detail.rcritPblancDe)}
-                </TableCell>
-              </tr>
-              <tr>
-                <td className={styles.tableHeadLh}>서류 접수 기간</td>
-                <TableCell align="center" className={styles.tableCellLh}>
-                  {formatDateRange(detail.rceptBgnde, detail.rceptEndde)}
-                </TableCell>
-              </tr>
-              <tr>
-                <td className={styles.tableHeadLh}>당첨자 발표일</td>
-                <TableCell align="center" className={styles.tableCellLh}>
-                  {formatRawDate(detail.przwnerPresnatnDe)}
-                </TableCell>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <SupplyScheduleSection detail={detail} />
 
       <section>
         <h2 className={styles.sectionTitle}>유의사항</h2>
@@ -1067,6 +1070,7 @@ export default function DetailPageClient({
   const [isRealPriceTab, setIsRealPriceTab] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const isLhDetail = detail.sourceSystem === 'LH';
+  const isAptDetail = detail.houseSecd === '01';
 
   // (한국어) 지도의 마커와 카메라 뷰를 조정하기 위해 전역 지도 스토어를 사용합니다.
   const { setMarkers, setMapPageView, clearMarkers, clearMapPageView } = useMapStore();
@@ -1177,7 +1181,11 @@ export default function DetailPageClient({
               <LhDetailSection detail={detail} />
             ) : (
               <>
-                <SubscriptionScheduleSection detail={detail} />
+                {isAptDetail ? (
+                  <SubscriptionScheduleSection detail={detail} />
+                ) : (
+                  <SupplyScheduleSection detail={detail} />
+                )}
                 <SupplyInfoSection detail={detail} />
                 <SpecialSupplySection detail={detail} />
                 <ExtraInfoSection detail={detail} />

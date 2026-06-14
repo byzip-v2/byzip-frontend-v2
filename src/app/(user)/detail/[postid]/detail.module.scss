@@ -161,26 +161,6 @@
   letter-spacing: 0;
 }
 
-.headerInterestBadge {
-  height: 32px;
-  padding: 11px 13px;
-  gap: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 500;
-  font-variation-settings: 'wght' 500;
-}
-
-.headerInterestIcon {
-  color: #ffe14d;
-}
-
 .tabRow {
   display: flex;
   width: 100%;
@@ -296,6 +276,11 @@
 
 .tableHeadCompact {
   width: 10%;
+}
+
+.supplyNumberCell {
+  width: 8%;
+  min-width: 72px;
 }
 
 .specialSupplyTable {
@@ -580,14 +565,6 @@
   .headerAddress {
     font-size: 12px;
     padding-bottom: 2px;
-  }
-
-  .headerInterestBadge {
-    height: 26px;
-    padding-top: 10px;
-    margin-top: 5px;
-    font-size: 10px;
-    font-weight: 400;
   }
 
   .tabRow {
