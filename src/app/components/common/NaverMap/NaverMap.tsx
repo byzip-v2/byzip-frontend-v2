@@ -170,25 +170,30 @@ const NaverMap = ({
 
     // 이미 지도가 초기화되었다면 중복 생성 방지
     if (!map) {
-      const newMap = new naver.maps.Map(containerRef.current, {
-        center: new naver.maps.LatLng(resolvedCenter.lat, resolvedCenter.lng),
-        zoom: resolvedZoom,
-        zoomControl: true,
-        zoomControlOptions: {
-          position: naver.maps.Position.TOP_RIGHT,
-        },
-      });
-      setMap(newMap);
+      try {
+        const newMap = new naver.maps.Map(containerRef.current, {
+          center: new naver.maps.LatLng(resolvedCenter.lat, resolvedCenter.lng),
+          zoom: resolvedZoom,
+          zoomControl: true,
+          zoomControlOptions: {
+            position: naver.maps.Position.TOP_RIGHT,
+          },
+        });
+        setMap(newMap);
 
-      // (한국어) 툴팁으로 활용할 커스텀 정보창(InfoWindow)을 지도 초기화 시점에 생성해 둡니다.
-      const newInfoWindow = new naver.maps.InfoWindow({
-        content: '',
-        borderWidth: 0,
-        backgroundColor: 'transparent',
-        disableAnchor: true,
-        pixelOffset: new naver.maps.Point(0, -1), // 마커 상단 머리 위에 살짝 떨어지도록 배치
-      });
-      infoWindowRef.current = newInfoWindow;
+        // (한국어) 툴팁으로 활용할 커스텀 정보창(InfoWindow)을 지도 초기화 시점에 생성해 둡니다.
+        const newInfoWindow = new naver.maps.InfoWindow({
+          content: '',
+          borderWidth: 0,
+          backgroundColor: 'transparent',
+          disableAnchor: true,
+          pixelOffset: new naver.maps.Point(0, -1), // 마커 상단 머리 위에 살짝 떨어지도록 배치
+        });
+        infoWindowRef.current = newInfoWindow;
+      } catch (error) {
+        console.error('[NaverMap] 네이버 지도 인스턴스 초기화 중 에러 발생:', error);
+        setMapError(true);
+      }
     }
   }, [resolvedCenter.lat, resolvedCenter.lng, resolvedZoom, map, mapError]);
 
@@ -213,10 +218,14 @@ const NaverMap = ({
     if (typeof window === 'undefined' || !map || !window.naver?.maps) return;
     if (markers.length > 0) return;
 
-    map.setCenter(
-      new naver.maps.LatLng(resolvedCenter.lat, resolvedCenter.lng),
-    );
-    map.setZoom(resolvedZoom);
+    try {
+      map.setCenter(
+        new naver.maps.LatLng(resolvedCenter.lat, resolvedCenter.lng),
+      );
+      map.setZoom(resolvedZoom);
+    } catch (e) {
+      console.warn('[NaverMap] Failed to set map center/zoom:', e);
+    }
   }, [
     map,
     markers.length,
@@ -233,213 +242,252 @@ const NaverMap = ({
     // 지도 객체가 유효하지 않거나 에러 상태이면 마커 렌더링 작업을 건너뜁니다.
     if (mapError || !map || !window.naver || !window.naver.maps) return;
 
-    // 1. 기존 클러스터러 및 마커 정리
-    if (clustererRef.current) {
-      clustererRef.current.setMap(null);
-      clustererRef.current = null;
-    }
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    markersRef.current = [];
+    let cancelled = false;
 
-    // 표시할 데이터가 없으면 종료 (클러스터 스크립트는 불러오지 않음)
-    if (markers.length === 0) return;
-
-    // 2. 새로운 마커 객체 생성 (지도에는 직접 연결하지 않고 클러스터러에 전달)
-    const newMarkers = markers
-      .filter((m) => m.lat && m.lng)
-      .map((m) => {
-        // (한국어) 마커 타입별로 상응하는 Apply_ 아이콘 이미지 경로를 매핑합니다.
-        let iconUrl = '/images/icons/Apply_today.png';
-        if (m.type === 'coming') {
-          iconUrl = '/images/icons/Apply_upcomming.png';
-        } else if (m.type === 'random') {
-          iconUrl = '/images/icons/Apply_random.png';
+    try {
+      // 1. 기존 클러스터러 및 마커 정리
+      if (clustererRef.current) {
+        try {
+          clustererRef.current.setMap(null);
+        } catch (e) {
+          console.warn('[NaverMap] Failed to clear clusterer map:', e);
         }
-        // (한국어) 기획 및 이미지 비율(222x193)에 맞게 마커의 크기를 75x65로 조절하고, 
-        // 내부에 분양 유형 명칭(houseSecdNm)을 텍스트로 노출하기 위해 HTML 마커(content)를 사용합니다.
-        const markerWidth = 75;
-        const markerHeight = 65;
+        clustererRef.current = null;
+      }
+      markersRef.current.forEach((marker) => {
+        try {
+          marker.setMap(null);
+        } catch (e) {
+          console.warn('[NaverMap] Failed to clear marker map:', e);
+        }
+      });
+      markersRef.current = [];
 
-        // (한국어) 주택 공급 유형 명칭이 '신혼희망타운'인 경우, 마커 내부 핀의 제한된 공간에 글자가 
-        // 겹치거나 잘리지 않고 깔끔하게 표현될 수 있도록 '신혼'으로 단축하여 표시하고, 그 외에는 
-        // 원래의 명칭(또는 빈 문자열)을 그대로 사용합니다.
-        const markerText = m.houseSecdNm === '신혼희망타운' ? '신혼' : (m.houseSecdNm || '');
+      // 표시할 데이터가 없으면 종료 (클러스터 스크립트는 불러오지 않음)
+      if (markers.length === 0) return;
 
-        const marker = new naver.maps.Marker({
-          position: new naver.maps.LatLng(m.lat, m.lng),
-          title: m.title,
-          // (한국어) 핀 마커 이미지 위에 주택 공급 유형 텍스트(예: '임대', '무순위' 등)가 얹어지도록 HTML 구조를 생성합니다.
-          icon: {
-            content: `
-              <div style="position:relative; width:${markerWidth}px; height:${markerHeight}px;">
-                <img src="${iconUrl}" style="width:100%; height:100%; display:block;" />
-                <div style="position:absolute; top:60%; left:50%; transform:translate(-50%, -50%); font-size:13px; font-weight:600; color:#000000; text-align:center; white-space:nowrap; font-family:'Pretendard', sans-serif; letter-spacing:-0.5px;">
-                  ${markerText}
+      // 2. 새로운 마커 객체 생성 (지도에는 직접 연결하지 않고 클러스터러에 전달)
+      const newMarkers = markers
+        .filter((m) => m.lat && m.lng)
+        .map((m) => {
+          // (한국어) 마커 타입별로 상응하는 Apply_ 아이콘 이미지 경로를 매핑합니다.
+          let iconUrl = '/images/icons/Apply_today.png';
+          if (m.type === 'coming') {
+            iconUrl = '/images/icons/Apply_upcomming.png';
+          } else if (m.type === 'random') {
+            iconUrl = '/images/icons/Apply_random.png';
+          }
+          // (한국어) 기획 및 이미지 비율(222x193)에 맞게 마커의 크기를 75x65로 조절하고, 
+          // 내부에 분양 유형 명칭(houseSecdNm)을 텍스트로 노출하기 위해 HTML 마커(content)를 사용합니다.
+          const markerWidth = 75;
+          const markerHeight = 65;
+
+          // (한국어) 주택 공급 유형 명칭이 '신혼희망타운'인 경우, 마커 내부 핀의 제한된 공간에 글자가 
+          // 겹치거나 잘리지 않고 깔끔하게 표현될 수 있도록 '신혼'으로 단축하여 표시하고, 그 외에는 
+          // 원래의 명칭(또는 빈 문자열)을 그대로 사용합니다.
+          const markerText = m.houseSecdNm === '신혼희망타운' ? '신혼' : (m.houseSecdNm || '');
+
+          const marker = new naver.maps.Marker({
+            position: new naver.maps.LatLng(m.lat, m.lng),
+            title: m.title,
+            // (한국어) 핀 마커 이미지 위에 주택 공급 유형 텍스트(예: '임대', '무순위' 등)가 얹어지도록 HTML 구조를 생성합니다.
+            icon: {
+              content: `
+                <div style="position:relative; width:${markerWidth}px; height:${markerHeight}px;">
+                  <img src="${iconUrl}" style="width:100%; height:100%; display:block;" />
+                  <div style="position:absolute; top:60%; left:50%; transform:translate(-50%, -50%); font-size:13px; font-weight:600; color:#000000; text-align:center; white-space:nowrap; font-family:'Pretendard', sans-serif; letter-spacing:-0.5px;">
+                    ${markerText}
+                  </div>
+                </div>
+              `,
+              size: new naver.maps.Size(markerWidth, markerHeight),
+              anchor: new naver.maps.Point(markerWidth / 2, markerHeight), // 핀 하단의 중앙 뾰족한 꼬리 부분을 앵커 포인트로 설정
+            },
+          });
+
+          // (한국어) 마커 마우스 오버 시 상단에 깔끔한 사각형 형태의 말풍선 정보창(툴팁)을 표시합니다.
+          naver.maps.Event.addListener(marker, 'mouseover', () => {
+            if (!infoWindowRef.current || !map) return;
+
+            // 접수 시작일과 종료일 날짜 포맷팅 함수 정의
+            const formatDate = (dateVal?: string | Date) => {
+              if (!dateVal) return '';
+              const date = new Date(dateVal);
+              if (isNaN(date.getTime())) return '';
+              return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+            };
+
+            const startDateText = formatDate(m.rceptBgnde);
+            const endDateText = formatDate(m.rceptEndde);
+            const dateRange = startDateText && endDateText
+              ? `${startDateText} ~ ${endDateText}`
+              : '접수 기간 정보 없음';
+
+            const infoContent = `
+              <div style="padding: 12px 16px; border: 1px solid #CCCCCC; border-radius: 0px; background-color: #FFFFFF; text-align: center; font-family: 'Pretendard', sans-serif; box-shadow: none; min-width: 150px;">
+                <div style="font-size: 13px; font-weight: 600; color: #000000; margin-bottom: 2px; white-space: nowrap; letter-spacing: -0.5px;">
+                  ${m.title}
+                </div>
+                <div style="font-size: 12px; font-weight: 400; color: #374151; white-space: nowrap; letter-spacing: -0.5px;">
+                  ${dateRange}
                 </div>
               </div>
-            `,
-            size: new naver.maps.Size(markerWidth, markerHeight),
-            anchor: new naver.maps.Point(markerWidth / 2, markerHeight), // 핀 하단의 중앙 뾰족한 꼬리 부분을 앵커 포인트로 설정
-          },
+            `;
+
+            infoWindowRef.current.setContent(infoContent);
+            infoWindowRef.current.open(map, marker);
+          });
+
+          // (한국어) 마우스가 마커를 벗어나면 정보창을 즉시 닫습니다.
+          naver.maps.Event.addListener(marker, 'mouseout', () => {
+            if (infoWindowRef.current) {
+              infoWindowRef.current.close();
+            }
+          });
+
+          // (한국어) 마커를 클릭하면 해당 분양공고의 상세페이지로 라우팅 이동합니다.
+          naver.maps.Event.addListener(marker, 'click', () => {
+            router.push(`/detail/${m.id}`);
+          });
+
+          return marker;
         });
 
-        // (한국어) 마커 마우스 오버 시 상단에 깔끔한 사각형 형태의 말풍선 정보창(툴팁)을 표시합니다.
-        naver.maps.Event.addListener(marker, 'mouseover', () => {
-          if (!infoWindowRef.current || !map) return;
+      markersRef.current = newMarkers;
 
-          // 접수 시작일과 종료일 날짜 포맷팅 함수 정의
-          const formatDate = (dateVal?: string | Date) => {
-            if (!dateVal) return '';
-            const date = new Date(dateVal);
-            if (isNaN(date.getTime())) return '';
-            return `${date.getMonth() + 1}월 ${date.getDate()}일`;
-          };
+      // 3. 클러스터링용 아이콘 (UI 스펙: 파란 원 + 단계별 크기·글자)
+      const clusterIcons = [
+        {
+          content:
+            '<div style="cursor:pointer;width:46px;height:46px;line-height:44px;font-size:16px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
+          size: new naver.maps.Size(46, 46),
+          anchor: new naver.maps.Point(23, 23),
+        },
+        {
+          content:
+            '<div style="cursor:pointer;width:54px;height:54px;line-height:52px;font-size:17px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
+          size: new naver.maps.Size(54, 54),
+          anchor: new naver.maps.Point(27, 27),
+        },
+        {
+          content:
+            '<div style="cursor:pointer;width:64px;height:64px;line-height:62px;font-size:18px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
+          size: new naver.maps.Size(64, 64),
+          anchor: new naver.maps.Point(32, 32),
+        },
+        {
+          content:
+            '<div style="cursor:pointer;width:80px;height:80px;line-height:78px;font-size:19px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
+          size: new naver.maps.Size(80, 80),
+          anchor: new naver.maps.Point(40, 40),
+        },
+        {
+          content:
+            '<div style="cursor:pointer;width:100px;height:100px;line-height:98px;font-size:20px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
+          size: new naver.maps.Size(100, 100),
+          anchor: new naver.maps.Point(50, 50),
+        },
+        {
+          content:
+            '<div style="cursor:pointer;width:120px;height:120px;line-height:118px;font-size:21px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
+          size: new naver.maps.Size(120, 120),
+          anchor: new naver.maps.Point(60, 60),
+        },
+      ];
 
-          const startDateText = formatDate(m.rceptBgnde);
-          const endDateText = formatDate(m.rceptEndde);
-          const dateRange = startDateText && endDateText
-            ? `${startDateText} ~ ${endDateText}`
-            : '접수 기간 정보 없음';
+      // (한국어) 생성된 마커들에 맞춰 지도의 영역을 자동으로 조정합니다.
+      if (newMarkers.length > 0) {
+        const bounds = new naver.maps.LatLngBounds(
+          new naver.maps.LatLng(
+            newMarkers[0].getPosition().y,
+            newMarkers[0].getPosition().x,
+          ),
+          new naver.maps.LatLng(
+            newMarkers[0].getPosition().y,
+            newMarkers[0].getPosition().x,
+          ),
+        );
 
-          const infoContent = `
-            <div style="padding: 12px 16px; border: 1px solid #CCCCCC; border-radius: 0px; background-color: #FFFFFF; text-align: center; font-family: 'Pretendard', sans-serif; box-shadow: none; min-width: 150px;">
-              <div style="font-size: 13px; font-weight: 600; color: #000000; margin-bottom: 2px; white-space: nowrap; letter-spacing: -0.5px;">
-                ${m.title}
-              </div>
-              <div style="font-size: 12px; font-weight: 400; color: #374151; white-space: nowrap; letter-spacing: -0.5px;">
-                ${dateRange}
-              </div>
-            </div>
-          `;
-
-          infoWindowRef.current.setContent(infoContent);
-          infoWindowRef.current.open(map, marker);
+        newMarkers.forEach((marker) => {
+          bounds.extend(marker.getPosition());
         });
 
-        // (한국어) 마우스가 마커를 벗어나면 정보창을 즉시 닫습니다.
-        naver.maps.Event.addListener(marker, 'mouseout', () => {
-          if (infoWindowRef.current) {
-            infoWindowRef.current.close();
+        if (newMarkers.length === 1) {
+          // 마커가 단 1개일 경우에는 마커가 있는 위치를 지도의 중심으로 두고 resolvedZoom 레벨로 고정합니다.
+          try {
+            map.setCenter(newMarkers[0].getPosition());
+            map.setZoom(resolvedZoom);
+          } catch (e) {
+            console.warn('[NaverMap] Failed to set center for single marker:', e);
           }
-        });
-
-        // (한국어) 마커를 클릭하면 해당 분양공고의 상세페이지로 라우팅 이동합니다.
-        naver.maps.Event.addListener(marker, 'click', () => {
-          router.push(`/detail/${m.id}`);
-        });
-
-        return marker;
-      });
-
-    markersRef.current = newMarkers;
-
-    // 3. 클러스터링용 아이콘 (UI 스펙: 파란 원 + 단계별 크기·글자)
-    const clusterIcons = [
-      {
-        content:
-          '<div style="cursor:pointer;width:46px;height:46px;line-height:44px;font-size:16px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
-        size: new naver.maps.Size(46, 46),
-        anchor: new naver.maps.Point(23, 23),
-      },
-      {
-        content:
-          '<div style="cursor:pointer;width:54px;height:54px;line-height:52px;font-size:17px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
-        size: new naver.maps.Size(54, 54),
-        anchor: new naver.maps.Point(27, 27),
-      },
-      {
-        content:
-          '<div style="cursor:pointer;width:64px;height:64px;line-height:62px;font-size:18px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
-        size: new naver.maps.Size(64, 64),
-        anchor: new naver.maps.Point(32, 32),
-      },
-      {
-        content:
-          '<div style="cursor:pointer;width:80px;height:80px;line-height:78px;font-size:19px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
-        size: new naver.maps.Size(80, 80),
-        anchor: new naver.maps.Point(40, 40),
-      },
-      {
-        content:
-          '<div style="cursor:pointer;width:100px;height:100px;line-height:98px;font-size:20px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
-        size: new naver.maps.Size(100, 100),
-        anchor: new naver.maps.Point(50, 50),
-      },
-      {
-        content:
-          '<div style="cursor:pointer;width:120px;height:120px;line-height:118px;font-size:21px;font-weight:500;color:#356EFF;text-align:center;background:rgba(222, 239, 255, 0.7);border:1.5px solid #356EFF;border-radius:50%;box-sizing:border-box;"></div>',
-        size: new naver.maps.Size(120, 120),
-        anchor: new naver.maps.Point(60, 60),
-      },
-    ];
-
-    // (한국어) 생성된 마커들에 맞춰 지도의 영역을 자동으로 조정합니다.
-    if (newMarkers.length > 0) {
-      const bounds = new naver.maps.LatLngBounds(
-        new naver.maps.LatLng(
-          newMarkers[0].getPosition().y,
-          newMarkers[0].getPosition().x,
-        ),
-        new naver.maps.LatLng(
-          newMarkers[0].getPosition().y,
-          newMarkers[0].getPosition().x,
-        ),
-      );
-
-      newMarkers.forEach((marker) => {
-        bounds.extend(marker.getPosition());
-      });
-
-      if (newMarkers.length === 1) {
-        // 마커가 단 1개일 경우에는 마커가 있는 위치를 지도의 중심으로 두고 resolvedZoom 레벨로 고정합니다.
-        map.setCenter(newMarkers[0].getPosition());
-        map.setZoom(resolvedZoom);
-      } else {
-        // 마커가 여러 개일 경우에는 모든 마커가 화면 안에 다 들어올 수 있도록 지도의 경계를 맞춥니다(fitBounds).
-        map.fitBounds(bounds);
-      }
-    }
-
-    // 비동기 로드가 끝난 뒤에도 이 effect가 이미 정리됐으면 클러스터를 붙이지 않습니다.
-    let cancelled = false;
-    loadMarkerClusteringModule()
-      .then((MarkerClusteringClass) => {
-        if (cancelled) return;
-        clustererRef.current = new MarkerClusteringClass({
-          // (한국어) 1개짜리 마커도 줌 레벨이 낮을 때는 클러스터 원 형태로 표시하기 위해 minClusterSize를 1로 유지합니다.
-          minClusterSize: 1,
-          // (한국어) 줌 레벨 8 이하에서는 클러스터가 동작하고, 9 이상(수도권 전체가 보이는 뷰)이 되면
-          // 클러스터가 풀려 개별 마커들이 이미지처럼 큼직하게 보이도록 maxZoom을 8로 조정합니다.
-          maxZoom: 10,
-          map: map,
-          markers: newMarkers,
-          disableClickZoom: false,
-          gridSize: 120,
-          icons: clusterIcons,
-          indexGenerator: [2, 5, 10, 30, 100],
-          stylingFunction: (
-            clusterMarker: naver.maps.Marker,
-            count: number,
-          ) => {
-            const element = clusterMarker.getElement();
-            const div = element.querySelector('div');
-            if (div) div.innerText = count.toString();
-          },
-        });
-      })
-      .catch((err) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('[NaverMap] MarkerClustering load failed:', err);
+        } else {
+          // 마커가 여러 개일 경우에는 모든 마커가 화면 안에 다 들어올 수 있도록 지도의 경계를 맞춥니다(fitBounds).
+          try {
+            map.fitBounds(bounds);
+          } catch (e) {
+            console.warn('[NaverMap] Failed to fit bounds for multiple markers:', e);
+          }
         }
-      });
+      }
+
+      loadMarkerClusteringModule()
+        .then((MarkerClusteringClass) => {
+          if (cancelled) return;
+          try {
+            // (한국어) 네이버 지도 라이브러리 인증 에러 등으로 지도 객체가 불완전할 때 MarkerClusteringClass 인스턴스를 생성하면
+            // TypeError: Cannot read properties of null (reading 'capitalize') 등의 런타임 오류가 발생하므로 감쌉니다.
+            clustererRef.current = new MarkerClusteringClass({
+              // (한국어) 1개짜리 마커도 줌 레벨이 낮을 때는 클러스터 원 형태로 표시하기 위해 minClusterSize를 1로 유지합니다.
+              minClusterSize: 1,
+              // (한국어) 줌 레벨 8 이하에서는 클러스터가 동작하고, 9 이상(수도권 전체가 보이는 뷰)이 되면
+              // 클러스터가 풀려 개별 마커들이 이미지처럼 큼직하게 보이도록 maxZoom을 8로 조정합니다.
+              maxZoom: 10,
+              map: map,
+              markers: newMarkers,
+              disableClickZoom: false,
+              gridSize: 120,
+              icons: clusterIcons,
+              indexGenerator: [2, 5, 10, 30, 100],
+              stylingFunction: (
+                clusterMarker: naver.maps.Marker,
+                count: number,
+              ) => {
+                const element = clusterMarker.getElement();
+                const div = element.querySelector('div');
+                if (div) div.innerText = count.toString();
+              },
+            });
+          } catch (err) {
+            console.error('[NaverMap] MarkerClustering 인스턴스 생성 또는 setMap 실패:', err);
+            setMapError(true);
+          }
+        })
+        .catch((err) => {
+          console.error('[NaverMap] MarkerClustering 모듈 로드 실패:', err);
+          setMapError(true);
+        });
+    } catch (error) {
+      console.error('[NaverMap] 마커 렌더링 및 클러스터링 적용 중 에러 발생:', error);
+      setMapError(true);
+    }
 
     return () => {
       cancelled = true;
       if (clustererRef.current) {
-        clustererRef.current.setMap(null);
+        try {
+          clustererRef.current.setMap(null);
+        } catch (e) {
+          console.warn('[NaverMap] Failed to clear clusterer map on cleanup:', e);
+        }
         clustererRef.current = null;
       }
-      markersRef.current.forEach((marker) => marker.setMap(null));
+      markersRef.current.forEach((marker) => {
+        try {
+          marker.setMap(null);
+        } catch (e) {
+          console.warn('[NaverMap] Failed to clear marker map on cleanup:', e);
+        }
+      });
       markersRef.current = [];
     };
   }, [map, markers, resolvedZoom, router, mapError]);
