@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import { useRouter } from 'next/navigation';
+import { MapPinOff } from 'lucide-react';
 import {
   DEFAULT_MAP_PAGE_VIEW,
   useMapStore,
@@ -131,6 +132,9 @@ const NaverMap = ({
   // 지도 인스턴스를 상태로 관리하여, 인스턴스가 생성된 후 마커 렌더링 Effect가 실행되도록 함
   const [map, setMap] = React.useState<naver.maps.Map | null>(null);
 
+  // 네이버 지도 SDK 스크립트 로딩 중 발생한 에러 여부를 관리하기 위한 상태
+  const [mapError, setMapError] = useState<boolean>(false);
+
   // 지도가 그려질 DOM 요소 참조
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -154,7 +158,14 @@ const NaverMap = ({
    * 네이버 지도 SDK를 사용하여 지도 인스턴스를 생성하는 함수
    */
   const initMap = React.useCallback(() => {
-    if (typeof window === 'undefined' || !window.naver || !containerRef.current)
+    // 이미 스크립트 로드 실패 판정을 받았거나, window.naver 객체가 아직 생성되지 않았거나, 컨테이너 DOM이 마운트되지 않은 경우 지도 초기화를 취소합니다.
+    if (
+      typeof window === 'undefined' ||
+      mapError ||
+      !window.naver ||
+      !window.naver.maps ||
+      !containerRef.current
+    )
       return;
 
     // 이미 지도가 초기화되었다면 중복 생성 방지
@@ -179,14 +190,20 @@ const NaverMap = ({
       });
       infoWindowRef.current = newInfoWindow;
     }
-  }, [resolvedCenter.lat, resolvedCenter.lng, resolvedZoom, map]);
+  }, [resolvedCenter.lat, resolvedCenter.lng, resolvedZoom, map, mapError]);
 
   // 컴포넌트 마운트 시 또는 SDK 로드 시 지도 초기화 시도
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.naver && window.naver.maps) {
+    // 스크립트 에러 상황이 아닐 때만 지도를 초기화합니다.
+    if (
+      typeof window !== 'undefined' &&
+      !mapError &&
+      window.naver &&
+      window.naver.maps
+    ) {
       initMap();
     }
-  }, [initMap]);
+  }, [initMap, mapError]);
 
   /**
    * 마커가 없을 때만 페이지 기본 뷰(스토어 또는 props)를 지도에 반영합니다.
@@ -213,7 +230,8 @@ const NaverMap = ({
    * 클러스터 라이브러리는 maps.js 이후에만 의미가 있으므로, 맵이 준비된 뒤 동적 로드합니다(버전1과 동일한 순서).
    */
   useEffect(() => {
-    if (!map || !window.naver || !window.naver.maps) return;
+    // 지도 객체가 유효하지 않거나 에러 상태이면 마커 렌더링 작업을 건너뜁니다.
+    if (mapError || !map || !window.naver || !window.naver.maps) return;
 
     // 1. 기존 클러스터러 및 마커 정리
     if (clustererRef.current) {
@@ -424,7 +442,7 @@ const NaverMap = ({
       markersRef.current.forEach((marker) => marker.setMap(null));
       markersRef.current = [];
     };
-  }, [map, markers, resolvedZoom, router]);
+  }, [map, markers, resolvedZoom, router, mapError]);
 
   return (
     <>
@@ -433,13 +451,44 @@ const NaverMap = ({
         src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_CLIENT_ID}&submodules=geocoder`}
         strategy="afterInteractive"
         onReady={initMap} // 스크립트 로드 완료 시 초기화 함수 실행
+        onError={(e) => {
+          // 스크립트 로드 중 에러 발생 시 처리 (예: API Key 에러, 네트워크 끊김 등)
+          console.error('[NaverMap] 네이버 지도 SDK 스크립트 로드 실패:', e);
+          setMapError(true);
+        }}
       />
-      {/* 지도가 렌더링될 컨테이너 */}
-      <div
-        ref={containerRef}
-        className={className}
-        style={{ width: '100%', height: '100%' }}
-      />
+      {/* 지도 로딩에 실패한 경우 보여줄 폴백(Fallback) UI */}
+      {mapError ? (
+        <div
+          className={className}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f3f4f6',
+            border: '1px solid #e5e7eb',
+            color: '#6b7280',
+            gap: '8px',
+            fontFamily: "'Pretendard', sans-serif",
+            padding: '20px',
+            boxSizing: 'border-box'
+          }}
+        >
+          {/* 지도 로드 불가 대체 Lucide MapPinOff 아이콘 */}
+          <MapPinOff size={32} style={{ color: '#9ca3af' }} />
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>네이버 지도 로드에 실패했습니다.</span>
+        </div>
+      ) : (
+        /* 지도가 정상적으로 렌더링될 컨테이너 */
+        <div
+          ref={containerRef}
+          className={className}
+          style={{ width: '100%', height: '100%' }}
+        />
+      )}
     </>
   );
 };

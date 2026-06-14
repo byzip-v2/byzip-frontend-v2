@@ -1003,7 +1003,8 @@ function RealPricePanel({
     <section className={styles.realPriceSection}>
       {isLoading ? (
         <div className={styles.realPriceStatusBox}>
-          <Spinner />
+          {/* (한국어) 메인/북마크 리스트 스피너 규격과 통일하여 36px 크기 및 파란색(#356EFF)으로 일관된 로딩 UI를 제공합니다. */}
+          <Spinner size={36} strokeWidth={3.5} className="text-[#356EFF]" />
         </div>
       ) : items.length ? (
         <div className={styles.tableScroll}>

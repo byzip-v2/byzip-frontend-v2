@@ -58,9 +58,11 @@ const HousingCard = ({ item }: HousingCardProps) => {
               alt={getStatusText()}
               width={28}
               height={22}
-              quality={100}
+              // (한국어) Next.js 15 이상에서 quality 100이 설정되어 있지 않을 때 발생하는 경고를 방지하기 위해 quality 속성을 지우고 기본값 최적화를 사용합니다.
               priority={true}
               className="object-contain"
+              // (한국어) CSS로 이미지 너비/높이를 재정의할 때 종횡비(aspect ratio)가 깨지는 것을 막기 위해 width/height 'auto' 스타일을 추가합니다.
+              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
           <span className="w-full font-semibold text-xs text-left text-[#8e8e8e]">

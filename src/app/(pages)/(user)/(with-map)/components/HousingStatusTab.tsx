@@ -82,11 +82,14 @@ const HousingStatusTab = ({
           >
             <div className="flex items-center gap-1.5 w-full text-xs text-[#8e8e8e] leading-[140%] mb-1">
               <div className="w-7 h-6 flex items-center justify-center relative">
+                {/* (한국어) Next.js 14-15에서 고정 width/height 사용 시 CSS 높이 조절로 인한 종횡비 경고를 해결하기 위해 'fill' 속성을 적용합니다. */}
+                {/* 부모 요소가 relative 포지션과 w-7 h-6 크기를 가지므로, fill과 object-contain의 조합이 권장되는 모범 사례입니다. */}
                 <Image
                   src={tab.icon}
                   alt={tab.label}
-                  width={28}
-                  height={22}
+                  fill
+                  // (한국어) fill 속성을 사용할 때 Next.js가 기본으로 100vw용 이미지를 생성하여 성능 낭비와 경고를 방지하도록, 실제 렌더링될 최대 너비(28px)를 sizes 속성으로 정의합니다.
+                  sizes="28px"
                   priority={true}
                   className="object-contain"
                 />

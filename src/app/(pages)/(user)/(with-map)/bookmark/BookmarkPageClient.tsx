@@ -159,20 +159,22 @@ export default function BookmarkPageClient() {
     };
   }, [bookmarkedData, setMarkers]);
 
-  // Next.js 하이드레이션 타이밍 이슈(서버와 브라우저 환경 차이)를 예방하기 위해 마운트 이전에는 로딩 스피너를 보여줍니다.
-  if (!isMounted) {
+  // (한국어) Next.js 하이드레이션 타이밍 이슈(서버/클라이언트 환경 불일치) 예방 및 API 조회 중 
+  // 화면이 흔들리는 현상(제목이 나왔다 스피너 위치가 바뀌는 현상)을 방지하기 위해, 
+  // 마운트 완료 전이거나 API 데이터 패칭 중일 때는 화면 중앙에만 단일 스피너를 보여주도록 처리합니다.
+  if (!isMounted || isApiLoading) {
     return (
       <div className="w-full flex-1 flex flex-col min-h-[calc(100vh-4rem)] bg-[#f8faff] items-center justify-center">
-        <Spinner />
+        <Spinner size={36} strokeWidth={3.5} className="text-[#356EFF]" />
       </div>
     );
   }
 
   return (
     <div className="w-full flex-1 flex flex-col min-h-[calc(100vh-4rem)] bg-[#f8faff] items-center">
-      <div className="w-full max-w-3xl px-4 shrink-0 mt-8">
+      <div className="w-full max-w-3xl px-4 shrink-0">
         <h1
-          className="text-xl font-bold font-pyeongchang text-black"
+          className="text-lg font-bold font-pyeongchang text-black"
           style={{ marginBottom: '0px' }}
         >
           북마크
