@@ -7,11 +7,12 @@ export default async function SearchPage({
   searchParams: Promise<{ query?: string }>;
 }) {
   const { query } = await searchParams;
+  // 접수 종료일(rceptEndde)을 기준으로 오름차순(ASC) 정렬
   const result = await getPublicHousingSupplies({
     page: 1,
     limit: 100,
-    sortBy: 'rcritPblancDe',
-    sortOrder: 'DESC',
+    sortBy: 'rceptEndde',
+    sortOrder: 'ASC',
     search: query,
     recruiting: true
   });

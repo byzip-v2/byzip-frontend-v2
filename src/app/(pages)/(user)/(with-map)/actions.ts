@@ -15,7 +15,6 @@ import { Meta } from '@storybook/nextjs';
  */
 export interface GetHousingSuppliesParams {
   search?: string;
-  houseSecd?: string;
   subscrptAreaCodeNm?: string;
   rcritPblancDeFrom?: string;
   rcritPblancDeTo?: string;
@@ -25,7 +24,7 @@ export interface GetHousingSuppliesParams {
   limit?: number;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
-  recruiting?:boolean
+  recruiting?: boolean
 }
 
 /**

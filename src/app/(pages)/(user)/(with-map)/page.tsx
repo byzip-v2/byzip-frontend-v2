@@ -7,11 +7,12 @@ import { getPublicHousingSupplies } from './actions';
  * - 클라이언트 컴포넌트(HomeClient)에는 초기 데이터만 전달
  */
 export default async function Page() {
+  // 접수 종료일(rceptEndde)을 기준으로 오름차순(ASC) 정렬
   const result = await getPublicHousingSupplies({
     page: 1,
     limit: 100,
-    sortBy: 'rcritPblancDe',
-    sortOrder: 'DESC',
+    sortBy: 'rceptEndde',
+    sortOrder: 'ASC',
     recruiting: true,
   });
 

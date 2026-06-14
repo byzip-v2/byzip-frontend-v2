@@ -49,7 +49,7 @@ const HousingCard = ({ item }: HousingCardProps) => {
 
   return (
     <Link href={`/detail/${item.id}`} className="block">
-      <article className="w-58 bg-white flex flex-col items-center justify-center mb-10 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
+      <article className="w-58 bg-white flex flex-col items-center justify-center mb-8 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
         {/* 리스트 분류 (상태 정보) */}
         <div className="w-full flex flex-row justify-start items-end px-3 pt-4 pb-1.5 gap-1.5">
           <div className="w-7 relative flex items-center justify-center">
@@ -58,9 +58,11 @@ const HousingCard = ({ item }: HousingCardProps) => {
               alt={getStatusText()}
               width={28}
               height={22}
-              quality={100}
+              // (한국어) Next.js 15 이상에서 quality 100이 설정되어 있지 않을 때 발생하는 경고를 방지하기 위해 quality 속성을 지우고 기본값 최적화를 사용합니다.
               priority={true}
               className="object-contain"
+              // (한국어) CSS로 이미지 너비/높이를 재정의할 때 종횡비(aspect ratio)가 깨지는 것을 막기 위해 width/height 'auto' 스타일을 추가합니다.
+              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
           <span className="w-full font-semibold text-xs text-left text-[#8e8e8e]">
@@ -78,7 +80,7 @@ const HousingCard = ({ item }: HousingCardProps) => {
         </div>
 
         {/* 분양형태 / 지역 */}
-        <div className="w-full h-3 flex flex-row justify-start items-center pl-3 mt-1 mb-3 gap-1">
+        <div className="w-full h-3 flex flex-row justify-start items-center pl-3 mt-1 mb-2 gap-1">
           <span className="text-xs font-medium text-[#7b7b7b] leading-3">
             {item.subTitle} |
           </span>
@@ -114,13 +116,12 @@ const HousingCard = ({ item }: HousingCardProps) => {
               특별 청약일
             </span>
             <span
-              className={`text-white text-xs leading-4 ${
-                item.specialDate &&
+              className={`text-white text-xs leading-4 ${item.specialDate &&
                 item.specialDate !== '정보가 없습니다.' &&
                 item.specialDate !== '데이터 오류'
-                  ? 'font-bold'
-                  : 'font-normal'
-              }`}
+                ? 'font-bold'
+                : 'font-normal'
+                }`}
             >
               {item.specialDate || '정보가 없습니다.'}
             </span>

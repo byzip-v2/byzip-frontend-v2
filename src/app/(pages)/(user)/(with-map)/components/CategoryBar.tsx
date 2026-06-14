@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, RotateCcw, CheckCircle2 } from 'lucide-react';
 import InfoLinkBtn from './InfoLinkBtn';
 
+// 지역 옵션
 const REGIONS = [
   '서울',
   '경기',
@@ -24,25 +25,55 @@ const REGIONS = [
   '제주',
 ];
 
+// 분양형태 옵션
 const TYPES = [
-  '도시형생활주택',
-  '영구임대',
-  '분양주택',
-  '공공지원민간임대',
+  'APT',
+  '오피스텔/빌라',
   '민간임대',
-  '공공임대',
+  '잔여세대',
+  '임의공급',
   '신혼희망타운',
-  '국민임대',
-  '행복주택',
-  '계약취소',
-  '민영',
-  '국민',
 ];
 
-const CategoryBar = () => {
+interface CategoryBarProps {
+  /**
+   * 부모 컴포넌트(HomeClient)와 선택된 필터 상태를 양방향으로 공유하기 위한 Props 인터페이스입니다.
+   * 로컬 스토리지 보존 및 API 재조회를 부모 컴포넌트에서 일괄 제어하기 위해 상태를 위임받습니다.
+   */
+  selectedRegions: string[];
+  setSelectedRegions: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedTypes: string[];
+  setSelectedTypes: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+const CategoryBar = ({
+  selectedRegions,
+  setSelectedRegions,
+  selectedTypes,
+  setSelectedTypes,
+}: CategoryBarProps) => {
+  // 필터 외부 영역 클릭 시 드롭다운을 닫기 위해 컴포넌트의 루트 요소를 참조하는 ref입니다.
+  const containerRef = useRef<HTMLElement>(null);
   const [openFilter, setOpenFilter] = useState<'region' | 'type' | null>(null);
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
+  // 컴포넌트가 화면에 렌더링된 후 document에 mousedown 이벤트를 걸어 외부 클릭을 감시합니다.
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // ref가 가리키는 요소 영역 외부의 화면을 클릭한 경우 openFilter 상태를 null로 만들어 드롭다운을 닫습니다.
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpenFilter(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      // 메모리 누수를 방지하기 위해 컴포넌트가 언마운트될 때 이벤트 리스너를 정리(Clean-up)합니다.
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const toggleFilter = (filter: 'region' | 'type') => {
     setOpenFilter(openFilter === filter ? null : filter);
@@ -80,7 +111,10 @@ const CategoryBar = () => {
   };
 
   return (
-    <section className="w-full max-w-3xl flex flex-row flex-wrap items-center md:justify-between justify-center z-10 relative mx-auto mb-4 px-4 gap-4 md:gap-0">
+    <section
+      ref={containerRef}
+      className="w-full max-w-3xl flex flex-row flex-wrap items-center md:justify-between justify-center z-10 relative mx-auto mb-4 px-4 gap-4 md:gap-0"
+    >
       <div className="flex flex-row gap-2.5 items-center text-sm">
         {/* 지역 필터 버튼 */}
         <button
@@ -132,18 +166,10 @@ const CategoryBar = () => {
       {/* 드롭다운 패널 (V1 스타일) */}
       {openFilter && (
         <div
-          className={`
-            absolute top-10 z-20 p-2.5 bg-white border border-[#e8eaef] rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] flex flex-col items-center
-            ${openFilter === 'region' ? 'w-72 h-56' : 'w-72 h-56'}
-          `}
+          className="absolute top-10 z-20 w-72 p-2.5 bg-white border border-[#e8eaef] rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] flex flex-col items-center h-auto"
         >
           <div
-            className={`grid w-full pb-4 gap-x-2 gap-y-3 ${openFilter === 'region' ? 'grid-cols-5' : ''}`}
-            style={
-              openFilter === 'type'
-                ? { gridTemplateColumns: 'repeat(3, auto)' }
-                : {}
-            }
+            className={`grid w-full pb-2 gap-x-2 gap-y-3 ${openFilter === 'region' ? 'grid-cols-5' : 'grid-cols-6'}`}
           >
             {(openFilter === 'region' ? REGIONS : TYPES).map((item) => (
               <button
@@ -151,6 +177,13 @@ const CategoryBar = () => {
                 onClick={() => toggleSelection(item, openFilter)}
                 className={`
                   w-full h-8 flex justify-center items-center px-1 py-2.5 rounded-md text-sm! font-medium border whitespace-nowrap
+                  /* 
+                    분양형태 필터 레이아웃 구성:
+                    - 첫 행의 두 항목(APT, 오피스텔/빌라) 및 글자 수가 긴 '신혼희망타운'은 각각 3열씩 차지하게 하여 넉넉한 너비를 확보합니다 (col-span-3).
+                    - 2글자~4글자 내외의 나머지 세 항목(민간임대, 잔여세대, 임의공급)은 각각 2열씩 차지합니다 (col-span-2).
+                  */
+                  ${openFilter === 'type' && (item === 'APT' || item === '오피스텔/빌라' || item === '신혼희망타운') ? 'col-span-3' : ''}
+                  ${openFilter === 'type' && (item === '민간임대' || item === '잔여세대' || item === '임의공급') ? 'col-span-2' : ''}
                   ${(openFilter === 'region'
                     ? selectedRegions
                     : selectedTypes
@@ -164,8 +197,7 @@ const CategoryBar = () => {
               </button>
             ))}
           </div>
-
-          <div className="w-full flex justify-between items-center px-3 pb-3 absolute bottom-0 left-0">
+          <div className="w-full flex justify-between items-center px-3 pt-2 pb-1 bg-white">
             <button
               onClick={() => selectAll(openFilter)}
               className="flex flex-row items-end gap-1.5 text-sm! font-semibold underline text-[#505050] hover:text-[#3d7fff] hover:decoration-[#3d7fff]"
@@ -185,9 +217,9 @@ const CategoryBar = () => {
               초기화
             </button>
           </div>
-        </div >
+        </div>
       )}
-    </section >
+    </section>
   );
 };
 

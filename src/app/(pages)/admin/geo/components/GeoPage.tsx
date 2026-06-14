@@ -8,7 +8,7 @@ import { updateHousingSupplyCoords } from '../actions';
 import { useToast } from '@/app/libs/hooks/useToast';
 import Spinner from '@/app/components/common/Spinner/Spinner';
 import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, MapPinOff } from 'lucide-react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 
@@ -25,6 +25,8 @@ export default function GeoPage({ initialData }: GeoClientProps) {
 
   const [isSearching, setIsSearching] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  // 네이버 지도 스크립트 로드 실패 상태
+  const [mapError, setMapError] = useState<boolean>(false);
 
   const [searchAddress, setSearchAddress] = useState<string>('');
   const [tableData, setTableData] =
@@ -38,9 +40,10 @@ export default function GeoPage({ initialData }: GeoClientProps) {
 
   const checkNaverMapsLoaded = () => {
     return (
+      !mapError &&
       typeof window !== 'undefined' &&
       typeof window.naver !== 'undefined' &&
-      window.naver.maps
+      typeof window.naver.maps !== 'undefined'
     );
   };
 
@@ -79,7 +82,8 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   };
 
   const initializeMap = () => {
-    if (!checkNaverMapsLoaded()) {
+    // 지도가 로드되지 않은 에러 상태이거나 SDK가 아직 로드되지 않은 경우 초기화를 수행하지 않습니다.
+    if (mapError || !checkNaverMapsLoaded()) {
       return;
     }
 
@@ -138,7 +142,15 @@ export default function GeoPage({ initialData }: GeoClientProps) {
 
   // 주소 검색 시 좌표로 변환
   const searchAddressToCoordinate = (address: string) => {
-    if (!address.trim() || !checkNaverMapsLoaded() || isSearching) return;
+    if (!address.trim()) return;
+
+    // 지도가 정상 작동하지 않는 경우 에러 메시지를 노출하고 검색을 제한합니다.
+    if (!checkNaverMapsLoaded()) {
+      showToast('네이버 지도가 정상적으로 로드되지 않아 주소를 검색할 수 없습니다.', 'error');
+      return;
+    }
+
+    if (isSearching) return;
     setIsSearching(true);
 
     try {
@@ -184,7 +196,11 @@ export default function GeoPage({ initialData }: GeoClientProps) {
 
   // 지도 클릭 시 해당 위치 좌표로 변환
   const searchCoordinateToAddress = (latlng: naver.maps.LatLng) => {
-    if (!checkNaverMapsLoaded()) return;
+    // 지도가 정상 작동하지 않는 경우 에러 안내를 띄우고 중단합니다.
+    if (!checkNaverMapsLoaded()) {
+      showToast('네이버 지도가 로드되지 않아 좌표 변환 요청을 처리할 수 없습니다.', 'error');
+      return;
+    }
 
     naver.maps.Service.reverseGeocode(
       {
@@ -311,6 +327,11 @@ export default function GeoPage({ initialData }: GeoClientProps) {
         onReady={() => {
           initializeMap();
         }}
+        onError={(e) => {
+          // 스크립트 파일 다운로드 오류 발생 시 에러 플래그 업데이트
+          console.error('[GeoPage] 네이버 지도 SDK 스크립트 로드 실패:', e);
+          setMapError(true);
+        }}
       />
       <div className={styles.geoPage}>
         <AdminPageHeader title="좌표 관리" />
@@ -341,7 +362,31 @@ export default function GeoPage({ initialData }: GeoClientProps) {
             </div>
 
             {/* 지도 영역 */}
-            <div id="map" className={styles.mapContainer} />
+            {mapError ? (
+              <div
+                className={styles.mapContainer}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f3f4f6',
+                  border: '1px solid #e5e7eb',
+                  color: '#6b7280',
+                  gap: '8px',
+                  fontFamily: "'Pretendard', sans-serif",
+                  padding: '20px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* 지도 로드 불가 대체 Lucide MapPinOff 아이콘 */}
+                <MapPinOff size={32} style={{ color: '#9ca3af' }} />
+                <span style={{ fontSize: '14px', fontWeight: 600 }}>네이버 지도 로드에 실패했습니다.</span>
+                <span style={{ fontSize: '12px', color: '#9ca3af' }}>네트워크 연결 상태나 API Key 설정을 확인해 주세요.</span>
+              </div>
+            ) : (
+              <div id="map" className={styles.mapContainer} />
+            )}
           </div>
           {/* 데이터 테이블 영역 */}
           <div className={styles.tableSection}>
