@@ -394,10 +394,6 @@ function DetailHeader({
         <p className={styles.headerAddress}>
           {displayText(detail.hssplyAdres)}
         </p>
-        <div className={styles.headerInterestBadge}>
-          <LegacyStarFilledIcon className={styles.headerInterestIcon} />
-          <span>0명이 관심을 갖고 있어요</span>
-        </div>
       </div>
     </header>
   );
