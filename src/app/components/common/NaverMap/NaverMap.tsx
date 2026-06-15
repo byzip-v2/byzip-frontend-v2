@@ -282,10 +282,13 @@ const NaverMap = ({
           const markerWidth = 75;
           const markerHeight = 65;
 
-          // (한국어) 주택 공급 유형 명칭이 '신혼희망타운'인 경우, 마커 내부 핀의 제한된 공간에 글자가 
-          // 겹치거나 잘리지 않고 깔끔하게 표현될 수 있도록 '신혼'으로 단축하여 표시하고, 그 외에는 
-          // 원래의 명칭(또는 빈 문자열)을 그대로 사용합니다.
-          const markerText = m.houseSecdNm === '신혼희망타운' ? '신혼' : (m.houseSecdNm || '');
+          // (한국어) 주택 공급 유형 명칭에 따른 마커 텍스트 단축 처리:
+          let markerText = m.houseSecdNm || '';
+          if (markerText === '신혼희망타운') {
+            markerText = '신희타';
+          } else if (markerText === '오피스텔/빌라') {
+            markerText = '오피스텔';
+          }
 
           const marker = new naver.maps.Marker({
             position: new naver.maps.LatLng(m.lat, m.lng),
