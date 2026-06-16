@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { MapPinOff } from 'lucide-react';
 import {
   DEFAULT_MAP_PAGE_VIEW,
@@ -125,6 +125,8 @@ const NaverMap = ({
   zoom = DEFAULT_MAP_PAGE_VIEW.zoom,
 }: NaverMapProps) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const isRootPage = pathname === '/';
 
   // 지도의 단일 정보창(InfoWindow) 인스턴스를 재사용하기 위한 ref
   const infoWindowRef = useRef<naver.maps.InfoWindow | null>(null);
@@ -399,7 +401,9 @@ const NaverMap = ({
       ];
 
       // (한국어) 생성된 마커들에 맞춰 지도의 영역을 자동으로 조정합니다.
-      if (newMarkers.length > 0) {
+      // - 루트 페이지('/')에서는 전체 지도가 한눈에 보이도록 자동 영역 지정을 수행하지 않고 전체 지도로 고정합니다.
+      // - 루트 페이지가 아닐 때(검색, 북마크 등)에만 마커들의 좌표 범위에 맞춰 유동적으로 줌과 중심을 맞춥니다.
+      if (newMarkers.length > 0 && !isRootPage) {
         const bounds = new naver.maps.LatLngBounds(
           new naver.maps.LatLng(
             newMarkers[0].getPosition().y,
@@ -416,10 +420,10 @@ const NaverMap = ({
         });
 
         if (newMarkers.length === 1) {
-          // 마커가 단 1개일 경우에는 마커가 있는 위치를 지도의 중심으로 두고 resolvedZoom 레벨로 고정합니다.
+          // (한국어) 마커가 단 1개일 경우에는 주변 아파트 단지와 주요 도로망이 뚜렷하게 보이도록 기본 줌을 14로 확대하여 고정합니다.
           try {
             map.setCenter(newMarkers[0].getPosition());
-            map.setZoom(resolvedZoom);
+            map.setZoom(14);
           } catch (e) {
             console.warn('[NaverMap] Failed to set center for single marker:', e);
           }
@@ -431,6 +435,19 @@ const NaverMap = ({
             console.warn('[NaverMap] Failed to fit bounds for multiple markers:', e);
           }
         }
+      } else if (isRootPage) {
+        // 루트 페이지인 경우 마커 수와 무관하게 항상 대한민국 전체 지도가 보이도록 중심과 줌을 초기 고정값으로 강제 세팅합니다.
+        try {
+          map.setCenter(
+            new naver.maps.LatLng(
+              DEFAULT_MAP_PAGE_VIEW.center.lat,
+              DEFAULT_MAP_PAGE_VIEW.center.lng,
+            ),
+          );
+          map.setZoom(DEFAULT_MAP_PAGE_VIEW.zoom);
+        } catch (e) {
+          console.warn('[NaverMap] Failed to reset view for root page:', e);
+        }
       }
 
       loadMarkerClusteringModule()
@@ -440,8 +457,8 @@ const NaverMap = ({
             // (한국어) 네이버 지도 라이브러리 인증 에러 등으로 지도 객체가 불완전할 때 MarkerClusteringClass 인스턴스를 생성하면
             // TypeError: Cannot read properties of null (reading 'capitalize') 등의 런타임 오류가 발생하므로 감쌉니다.
             clustererRef.current = new MarkerClusteringClass({
-              // (한국어) 1개짜리 마커도 줌 레벨이 낮을 때는 클러스터 원 형태로 표시하기 위해 minClusterSize를 1로 유지합니다.
-              minClusterSize: 1,
+              // (한국어) 마커가 1개일 때는 클러스터 원 대신 원래 청약 마커(핀)가 항상 노출되도록 minClusterSize를 2로 상향 조정합니다.
+              minClusterSize: 2,
               // (한국어) 줌 레벨 8 이하에서는 클러스터가 동작하고, 9 이상(수도권 전체가 보이는 뷰)이 되면
               // 클러스터가 풀려 개별 마커들이 이미지처럼 큼직하게 보이도록 maxZoom을 8로 조정합니다.
               maxZoom: 10,
@@ -493,7 +510,7 @@ const NaverMap = ({
       });
       markersRef.current = [];
     };
-  }, [map, markers, resolvedZoom, router, mapError]);
+  }, [map, markers, resolvedZoom, router, mapError, isRootPage]);
 
   return (
     <>
