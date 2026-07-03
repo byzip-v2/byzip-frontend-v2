@@ -457,10 +457,9 @@ const NaverMap = ({
             // (한국어) 네이버 지도 라이브러리 인증 에러 등으로 지도 객체가 불완전할 때 MarkerClusteringClass 인스턴스를 생성하면
             // TypeError: Cannot read properties of null (reading 'capitalize') 등의 런타임 오류가 발생하므로 감쌉니다.
             clustererRef.current = new MarkerClusteringClass({
-              // (한국어) 마커가 1개일 때는 클러스터 원 대신 원래 청약 마커(핀)가 항상 노출되도록 minClusterSize를 2로 상향 조정합니다.
-              minClusterSize: 2,
-              // (한국어) 줌 레벨 8 이하에서는 클러스터가 동작하고, 9 이상(수도권 전체가 보이는 뷰)이 되면
-              // 클러스터가 풀려 개별 마커들이 이미지처럼 큼직하게 보이도록 maxZoom을 8로 조정합니다.
+              // (한국어 주석) 1개짜리 공고라도 무조건 클러스터(파란 원형 UI)로 표시하여, 지도 상에 일반 마커(핀)와 클러스터가 혼재되어 보이는 상황을 방지하기 위해 minClusterSize를 1로 설정합니다.
+              minClusterSize: 1,
+              // (한국어 주석) 줌 레벨 10 이하에서는 전체가 클러스터(원형)로만 보이고, 줌 레벨 11 이상이 되면 클러스터가 완전히 해제되어 전체가 개별 마커(핀)로만 보이도록 maxZoom을 10으로 설정합니다.
               maxZoom: 10,
               map: map,
               markers: newMarkers,
