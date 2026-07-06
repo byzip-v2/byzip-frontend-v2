@@ -113,7 +113,7 @@ const CategoryBar = ({
   return (
     <section
       ref={containerRef}
-      className="w-full max-w-3xl flex flex-row flex-wrap items-center md:justify-between justify-center z-10 relative mx-auto mb-4 px-4 gap-4 md:gap-0"
+      className="w-full max-w-3xl flex flex-row flex-wrap items-center justify-start lg:justify-between z-10 relative mx-auto mb-4 px-4 gap-4 lg:gap-0"
     >
       <div className="flex flex-row gap-2.5 items-center text-sm">
         {/* 지역 필터 버튼 */}
@@ -160,8 +160,10 @@ const CategoryBar = ({
         </button>
       </div>
 
-      {/* 우측 버튼 링크 */}
-      <InfoLinkBtn />
+      {/* 우측 버튼 링크: 모바일에서는 햄버거 메뉴로 이동 */}
+      <div className="hidden lg:block">
+        <InfoLinkBtn />
+      </div>
 
       {/* 드롭다운 패널 (V1 스타일) */}
       {openFilter && (
