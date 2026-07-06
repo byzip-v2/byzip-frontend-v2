@@ -95,16 +95,26 @@ const HousingCard = ({ item }: HousingCardProps) => {
             <span className="text-[#7b7b7b] text-[15px] lg:text-xs font-normal leading-4">
               전용면적
             </span>
-            <span className="text-black text-base lg:text-xs font-semibold lg:font-bold leading-4 text-right">
-              {item.area}
+            {/* (한국어) 공급면적 데이터가 없거나 '-'로 설정된 경우 '정보 없음'을 표시하고 텍스트 굵기를 얇게(font-normal) 조정합니다. */}
+            <span
+              className={`text-black text-xs leading-4 text-right ${
+                !item.area || item.area === '-' ? 'font-normal' : 'font-bold'
+              }`}
+            >
+              {!item.area || item.area === '-' ? '정보 없음' : item.area}
             </span>
           </div>
           <div className="w-full flex flex-row justify-between items-center mt-3">
             <span className="text-[#7b7b7b] text-[15px] lg:text-xs font-normal leading-4">
               분양가격
             </span>
-            <span className="text-black text-base lg:text-xs font-semibold lg:font-bold leading-4 text-right">
-              {item.price}
+            {/* (한국어) 분양가격 데이터가 없거나 '공고문 확인'으로 지정된 경우 '공고문 확인'을 표시하고 텍스트 굵기를 얇게(font-normal) 조정합니다. */}
+            <span
+              className={`text-black text-xs leading-4 text-right ${
+                !item.price || item.price === '공고문 확인' ? 'font-normal' : 'font-bold'
+              }`}
+            >
+              {!item.price || item.price === '공고문 확인' ? '공고문 확인' : item.price}
             </span>
           </div>
         </div>
@@ -115,15 +125,22 @@ const HousingCard = ({ item }: HousingCardProps) => {
             <span className="text-white text-[15px] lg:text-xs font-normal leading-4">
               특별 청약일
             </span>
+            {/* (한국어) 특별 청약일 데이터가 유효하지 않거나 '정보가 없습니다.' 혹은 '데이터 오류'인 경우 '정보 없음'으로 표시하며 텍스트 굵기를 얇게(font-normal) 조정합니다. */}
             <span
-              className={`text-white text-base lg:text-xs leading-4 ${item.specialDate &&
+              className={`text-white text-xs leading-4 ${
+                item.specialDate &&
                 item.specialDate !== '정보가 없습니다.' &&
+                item.specialDate !== '정보 없음' &&
                 item.specialDate !== '데이터 오류'
-                ? 'font-semibold lg:font-bold'
-                : 'font-normal'
-                }`}
+                  ? 'font-bold'
+                  : 'font-normal'
+              }`}
             >
-              {item.specialDate || '정보가 없습니다.'}
+              {!item.specialDate ||
+              item.specialDate === '정보가 없습니다.' ||
+              item.specialDate === '데이터 오류'
+                ? '정보 없음'
+                : item.specialDate}
             </span>
           </div>
           <div className="w-full flex flex-row justify-between items-center px-[13px] gap-1">

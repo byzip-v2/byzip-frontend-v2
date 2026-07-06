@@ -34,8 +34,8 @@ export interface MapPageView {
  * - clearMapPageView() 호출 시에도 null로 비우지 않고 이 기본값으로 복원합니다.
  */
 export const DEFAULT_MAP_PAGE_VIEW: MapPageView = {
-  center: { lat: 37.5665, lng: 126.978 },
-  zoom: 14,
+  center: { lat: 35.907757, lng: 127.766922 },
+  zoom: 8,
 };
 
 interface MapState {

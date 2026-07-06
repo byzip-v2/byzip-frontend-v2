@@ -184,7 +184,10 @@ export default function BookmarkPageClient() {
         housingData={bookmarkedData}
         isLoading={isApiLoading}
         emptyMessage={
-          !hasBookmarks
+          // (한국어 주석) 로컬스토리지에 북마크한 데이터가 존재하지 않는 경우(!hasBookmarks)이거나,
+          // 북마크 ID 목록은 존재하지만 해당 공고들이 모두 종료되어 전역 데이터(housingData)에 매칭되는 데이터가 없는 경우(bookmarkedData.length === 0)
+          // '저장한 북마크가 없습니다.' 메시지를 노출합니다.
+          !hasBookmarks || (housingData.length > 0 && bookmarkedData.length === 0)
             ? '저장한 북마크가 없습니다.'
             : '북마크 정보를 불러오는 데 실패했습니다.'
         }
