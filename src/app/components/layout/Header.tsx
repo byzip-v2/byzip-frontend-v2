@@ -1,25 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Menu, Bookmark } from 'lucide-react';
+import { BarChart3, Bookmark, Building2, CalendarDays, Menu, Search, X } from 'lucide-react';
+
+const APPLY_HOME_COMPETITION_URL =
+  'https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do';
+const APPLY_HOME_WINNER_URL =
+  'https://www.applyhome.co.kr/wa/waa/selectAptPrzwinDescList.do';
 
 const Header = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMobileSearchOpen(false);
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (isMobileSearchOpen) {
+      mobileSearchInputRef.current?.focus();
+    }
+  }, [isMobileSearchOpen]);
 
   // 검색 버튼 클릭시 동작
   const handleSearch = () => {
-    if(!searchQuery){
+    if (!searchQuery) {
       return;
     }
     const query = searchQuery.trim();
     if (query !== '') {
-      router.push(`/search?query=${query}`);
-    }else{
+      router.push(`/search?query=${encodeURIComponent(query)}`);
+      setIsMobileSearchOpen(false);
+    } else {
       return;
     }
   };
@@ -34,10 +54,21 @@ const Header = () => {
     }
   };
 
+  const closeMobileMenuAfterClick = () => {
+    window.setTimeout(() => {
+      setIsMobileMenuOpen(false);
+    }, 0);
+  };
+
   return (
-    <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-300 px-4 md:px-8 flex items-center justify-between md:grid md:grid-cols-3">
+    <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-[300] px-4 lg:px-8 flex items-center justify-between lg:grid lg:grid-cols-3">
       {/* 로고 영역 */}
-      <Link href="/" className="flex items-center gap-1 cursor-pointer">
+      <Link
+        href="/"
+        className={`flex items-center gap-1 cursor-pointer transition-opacity duration-200 ${
+          isMobileSearchOpen ? 'lg:opacity-100 opacity-100' : ''
+        }`}
+      >
         <Image
           src="/images/byzip_logo.png"
           alt="logoImg"
@@ -50,11 +81,11 @@ const Header = () => {
         </span>
       </Link>
 
-      {/* 검색창 영역 - 모바일에서는 숨김김 */}
-      <div className="hidden md:flex w-full items-center justify-center">
+      {/* 검색창 영역 - 모바일에서는 숨김 */}
+      <div className="hidden lg:flex w-full items-center justify-center">
         <div className="relative w-full max-w-lg">
           <input
-            onChange={(e) => onChangeSearchQuery(e)}
+            onChange={onChangeSearchQuery}
             onKeyDown={handleEnterKey}
             value={searchQuery}
             type="text"
@@ -69,9 +100,43 @@ const Header = () => {
         </div>
       </div>
 
-      {/* 네비게이션: 데스크톱은 텍스트 링크, 모바일은 아이콘으로 동일 경로 제공 */}
-      <nav className="flex justify-end items-center gap-2.5 md:gap-9 h-full">
-        <div className="hidden md:flex items-center gap-9">
+      {/* 모바일 검색창: 검색 버튼을 누르면 오른쪽에서 왼쪽으로 슬라이드되어 나타납니다. */}
+      <div
+        className={`lg:hidden absolute left-14 right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ease-out ${
+          isMobileSearchOpen
+            ? 'translate-x-0 opacity-100 pointer-events-auto'
+            : 'translate-x-full opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="relative">
+          <Search
+            size={17}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700"
+            aria-hidden="true"
+          />
+          <input
+            ref={mobileSearchInputRef}
+            onChange={onChangeSearchQuery}
+            onKeyDown={handleEnterKey}
+            value={searchQuery}
+            type="text"
+            placeholder="지역, 분양형태, 주택명을 검색해보세요."
+            className="w-full h-10 rounded-full border border-gray-300 bg-white pl-9 pr-9 text-xs font-medium outline-none focus:border-brand-blue"
+          />
+          <button
+            type="button"
+            aria-label="검색창 닫기"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            onClick={() => setIsMobileSearchOpen(false)}
+          >
+            <X size={17} />
+          </button>
+        </div>
+      </div>
+
+      {/* 네비게이션: 데스크톱은 텍스트 링크, 모바일 북마크는 햄버거 메뉴 안에서 제공 */}
+      <nav className="flex justify-end items-center gap-2.5 lg:gap-9 h-full">
+        <div className="hidden lg:flex items-center gap-9">
           <Link
             href="/calendar"
             className={`text-sm font-semibold hover:text-brand-blue transition-colors ${
@@ -90,23 +155,110 @@ const Header = () => {
           </Link>
         </div>
 
-        {/* 모바일: 공간 제약으로 아이콘 링크로 북마크 진입 (검색/메뉴와 동일 높이) */}
-        <div className="md:hidden flex items-center gap-4">
-          <Link
-            href="/bookmark"
-            aria-label="북마크"
-            className={`text-black hover:text-brand-blue transition-colors ${pathname === '/bookmark' ? 'text-brand-blue' : ''}`}
+        <div
+          className={`lg:hidden flex items-center gap-4 transition-opacity duration-200 ${
+            isMobileSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <button
+            type="button"
+            className="text-black"
+            aria-label="검색 열기"
+            onClick={() => setIsMobileSearchOpen(true)}
           >
-            <Bookmark size={24} />
-          </Link>
-          <button type="button" className="text-black">
             <Search size={24} />
           </button>
-          <button type="button" className="text-black">
+          <button
+            type="button"
+            className="text-black"
+            aria-label="메뉴 열기"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
             <Menu size={24} />
           </button>
         </div>
       </nav>
+
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 top-0 z-[400]">
+          <button
+            type="button"
+            aria-label="메뉴 배경 닫기"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <aside className="absolute right-0 top-0 h-full w-[82vw] max-w-[380px] bg-white px-5 py-5 shadow-[-12px_0_32px_rgba(15,23,42,0.2)]">
+            <div className="mb-8 flex h-9 items-center justify-start">
+              <button
+                type="button"
+                aria-label="메뉴 닫기"
+                className="flex h-9 w-9 items-center justify-center text-black transition-colors hover:text-brand-blue"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <X size={20} strokeWidth={2.2} />
+              </button>
+            </div>
+
+            <div className="mb-9 flex flex-col items-center gap-2.5">
+              <Image
+                src="/images/byzip_logo.png"
+                alt="분양모음집"
+                width={58}
+                height={58}
+                priority
+              />
+              <span className="font-pyeongchang text-[15px] font-bold">분양모음집</span>
+            </div>
+
+            <div className="flex flex-col gap-4 text-[15px] font-bold text-black">
+              <Link
+                href="/bookmark"
+                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+                onClick={closeMobileMenuAfterClick}
+              >
+                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                  <Bookmark size={26} strokeWidth={2.2} />
+                </span>
+                <span className="text-base font-bold">북마크</span>
+              </Link>
+              <Link
+                href="/calendar"
+                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+                onClick={closeMobileMenuAfterClick}
+              >
+                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                  <CalendarDays size={26} strokeWidth={2.2} />
+                </span>
+                <span className="text-base font-bold">청약캘린더</span>
+              </Link>
+              <a
+                href={APPLY_HOME_COMPETITION_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+                onClick={closeMobileMenuAfterClick}
+              >
+                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                  <BarChart3 size={26} strokeWidth={2.2} />
+                </span>
+                <span className="text-base font-bold">청약경쟁률 확인</span>
+              </a>
+              <a
+                href={APPLY_HOME_WINNER_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+                onClick={closeMobileMenuAfterClick}
+              >
+                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                  <Building2 size={26} strokeWidth={2.2} />
+                </span>
+                <span className="text-base font-bold">청약당첨자 확인</span>
+              </a>
+            </div>
+          </aside>
+        </div>
+      )}
     </header>
   );
 };
