@@ -71,7 +71,7 @@ const CalendarClient = ({
   });
 
   return (
-    <div className="w-full h-full min-h-calc(100dvh - 70px) flex flex-col items-center py-10 max-[730px]:py-7.5 box-content z-2 relative bg-[#f8faff] ">
+    <div className="w-full min-h-[calc(100vh-4rem)] flex flex-col items-center py-10 max-[730px]:py-7.5 z-2 relative bg-[#f8faff] ">
       <div className="w-[95%] max-w-275">
         <div className="w-full flex justify-between pb-7.5 relative z-2 max-[730px]:px-2.5 max-[730px]:pb-5">
           <div className="flex flex-col">
@@ -99,7 +99,7 @@ const CalendarClient = ({
               height={80}
               quality={100}
               priority={true}
-              width={100}
+              width={80}
             />
           </div>
         </div>

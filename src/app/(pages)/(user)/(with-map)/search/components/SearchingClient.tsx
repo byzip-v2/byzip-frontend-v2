@@ -7,8 +7,8 @@ import { useEffect } from 'react'
 import { determineHousingType } from '@/app/libs/utils/date'
 
 const SearchingClient = ({ initialHousingData }: { initialHousingData: HousingSupplyResponseDto[] }) => {
-    const searchParams = useSearchParams()
-    const query = searchParams.get('query')
+  const searchParams = useSearchParams()
+  const query = searchParams.get('query')
   // 서버에서 주입받은 원본 데이터
   const housingData = initialHousingData;
 
@@ -52,13 +52,13 @@ const SearchingClient = ({ initialHousingData }: { initialHousingData: HousingSu
   }, [housingData, setMarkers]);
 
   return (
-   <div className="w-full h-full bg-white flex flex-col items-center">
-    {/* (한국어) 아래 카드 목록(HousingListSection)의 중앙 정렬(max-w-3xl mx-auto pl-5 pr-4)과 일치하도록 
-        제목 컨테이너의 너비 및 여백을 맞추어 화면이 커져도 카드와 수직 정렬되도록 조정합니다. */}
-    <div className='w-full max-w-3xl mx-auto pl-5 pr-4'>
-        <h2 className="text-xl font-bold py-4 font-pyeongchang"><span className='text-[#356EFF]'>&quot;{query}&quot;</span> 검색 결과</h2>
-    </div>
-      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-[rgba(0,0,0,0.25)]">
+    <div className="w-full h-full bg-white flex flex-col items-center">
+      <div className='w-full max-w-3xl mx-auto pl-5 pr-4'>
+        <h2 className="text-xl font-semibold py-4">
+          <span className='text-[#356EFF]'>&apos;{query}&apos;</span> 검색 결과 총 {housingData?.length || 0}건
+        </h2>
+      </div>
+      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-gray-200">
         <HousingListSection housingData={housingData} isLoading={false} />
       </div>
     </div>

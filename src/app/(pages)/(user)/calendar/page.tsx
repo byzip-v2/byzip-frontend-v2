@@ -10,7 +10,8 @@ export default async function CalendarPage() {
     sortOrder: 'ASC',
   });
   return (
-    <div className="flex justify-center w-full overflow-hidden">
+    <div className="flex justify-center w-full min-h-[calc(100vh-4rem)] overflow-hidden">
+      {/* 캘린더 페이지 루트 컨테이너: 헤더 높이(4rem)를 제외한 화면 최소 높이(100vh - 4rem)를 보장하여 배경색이 화면 하단까지 꽉 차도록 설정합니다. */}
       <CalendarClient
         initialHousingData={
           result.success && result.data ? result.data.items : []
