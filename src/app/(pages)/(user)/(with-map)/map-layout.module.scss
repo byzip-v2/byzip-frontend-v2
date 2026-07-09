@@ -28,11 +28,6 @@
   border-left: 1px solid #e5e7eb;
 }
 
-.mobileMap,
-.sheetHandle {
-  display: none;
-}
-
 .scrollPane {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
@@ -69,70 +64,21 @@
     display: block;
     height: calc(100vh - 64px);
     overflow: hidden;
-    background: #eef3fb;
+    background: #ffffff;
   }
 
   .desktopMap {
     display: none;
   }
 
-  .mobileMap {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    display: block;
-    background: #f3f4f6;
-  }
-
   .contentPane {
-    --sheet-peek-height: 210px;
-
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    width: min(920px, calc(100% - 48px));
-    height: min(68vh, calc(100vh - 104px));
-    min-height: 360px;
-    overflow: hidden;
-    border-radius: 20px 20px 0 0;
-    background: #ffffff;
-    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.18);
-    transform: translate(-50%, calc(100% - var(--sheet-peek-height)));
-    transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .sheetOpen .contentPane {
-    transform: translate(-50%, 0);
-  }
-
-  .sheetHandle {
-    display: flex;
-    flex: 0 0 30px;
+    position: relative;
     width: 100%;
-    align-items: center;
-    justify-content: center;
-    border: 0;
+    height: 100%;
     background: #ffffff;
-    color: #5f6368;
-    cursor: pointer;
-  }
-
-  .sheetIcon {
-    transition: transform 240ms ease;
-  }
-
-  .sheetOpen .sheetIcon {
-    transform: rotate(180deg);
-  }
-
-  .mobileSheetBody {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    background: #ffffff;
+    transform: none;
+    box-shadow: none;
+    border-radius: 0;
   }
 
   .detailRoute {
@@ -157,30 +103,3 @@
   }
 }
 
-@media (max-width: 767px) {
-  .contentPane {
-    --sheet-peek-height: 158px;
-
-    right: 0;
-    left: 0;
-    width: 100%;
-    height: min(80vh, calc(100vh - 76px));
-    min-height: 280px;
-    border-radius: 18px 18px 0 0;
-    transform: translateY(calc(100% - var(--sheet-peek-height)));
-  }
-
-  .sheetOpen .contentPane {
-    transform: translateY(0);
-  }
-
-  .detailRoute .contentPane {
-    transform: none;
-  }
-}
-
-@media (max-width: 380px) {
-  .contentPane {
-    --sheet-peek-height: 146px;
-  }
-}

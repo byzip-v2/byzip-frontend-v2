@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, RotateCcw, CheckCircle2 } from 'lucide-react';
 import InfoLinkBtn from './InfoLinkBtn';
+import ViewToggle from '@/app/components/common/ViewToggle/ViewToggle';
 
 // 지역 옵션
 const REGIONS = [
@@ -52,6 +53,7 @@ const CategoryBar = ({
   selectedTypes,
   setSelectedTypes,
 }: CategoryBarProps) => {
+  // 더 이상 useMapStore를 직접 조회하지 않고 공용 ViewToggle 컴포넌트를 사용합니다.
   // 필터 외부 영역 클릭 시 드롭다운을 닫기 위해 컴포넌트의 루트 요소를 참조하는 ref입니다.
   const containerRef = useRef<HTMLElement>(null);
   const [openFilter, setOpenFilter] = useState<'region' | 'type' | null>(null);
@@ -164,6 +166,9 @@ const CategoryBar = ({
       <div className="hidden lg:block">
         <InfoLinkBtn />
       </div>
+
+      {/* 모바일/태블릿(1024px 미만) 화면에서만 노출되는 리스트/지도 뷰 전환 세그먼트 토글 스위치 */}
+      <ViewToggle className="ml-auto" />
 
       {/* 드롭다운 패널 (V1 스타일) */}
       {openFilter && (

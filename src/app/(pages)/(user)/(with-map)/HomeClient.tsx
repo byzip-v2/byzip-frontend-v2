@@ -9,6 +9,7 @@ import HousingStatusTab from './components/HousingStatusTab';
 import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 import { useHousingStore } from '@/app/libs/stores/zustand/useHousingStore';
 import HousingListSection from '../global/components/HousingListSection';
+import NaverMap from '@/app/components/common/NaverMap/NaverMap';
 
 interface HomeClientProps {
   /**
@@ -26,7 +27,8 @@ interface HomeClientProps {
  */
 export default function HomeClient({ initialHousingData }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState(0);
-  const { setMarkers } = useMapStore();
+  // 전역 맵 스토어로부터 모바일 레이아웃 판별 값 및 탭 스위치(viewType) 상태를 참조합니다.
+  const { setMarkers, isMobileLayout, viewType } = useMapStore();
 
   // UI 렌더링에 사용되는 전역 스토어의 전체 데이터입니다.
   const { housingData, setHousingData } = useHousingStore();
@@ -238,8 +240,15 @@ export default function HomeClient({ initialHousingData }: HomeClientProps) {
         />
       </div>
 
-      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-[rgba(0,0,0,0.25)]">
-        <HousingListSection housingData={filteredData} isLoading={isLoading} />
+      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-[rgba(0,0,0,0.25)] relative">
+        {/* 모바일 레이아웃 환경이면서 지도 뷰(map)가 켜진 경우 지도를 가득 채우고, 그 외에는 기존 리스트 섹션을 보여줍니다. */}
+        {isMobileLayout && viewType === 'map' ? (
+          <div className="absolute inset-0 w-full h-full">
+            <NaverMap />
+          </div>
+        ) : (
+          <HousingListSection housingData={filteredData} isLoading={isLoading} />
+        )}
       </div>
     </div>
   );
