@@ -149,9 +149,10 @@
   font-weight: 500;
   font-variation-settings: 'wght' 500;
   line-height: normal;
-  padding-bottom: 10px;
   letter-spacing: -0.02em;
   text-align: center;
+  margin-top: 17px;
+  margin-bottom: 27px;
 }
 
 .headerAddress {
@@ -525,9 +526,10 @@
 
 @media screen and (max-width: 450px) {
   .header {
+    position: relative;
     height: 200px;
-    padding-right: 30px;
-    padding-bottom: 15px;
+    box-sizing: border-box;
+    padding: 20px 0 20px;
   }
 
   .headerTopRow {
@@ -536,14 +538,22 @@
 
   .headerTopRowMobile {
     display: flex;
-    margin-left: 30px;
-    margin-bottom: 10px;
-    padding: 0;
+    /* (한국어) 뒤로가기와 북마크 아이콘이 아래 텍스트와 겹치지 않고 최상단에 상시 정렬되도록 absolute 고정을 적용합니다. */
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    margin: 0;
+    width: 100%;
   }
 
   .headerBody {
-    margin-left: 30px;
-    padding: 0;
+    margin-left: 0;
+    margin-top: 0;
+    padding: 0 20px;
   }
 
   .headerTagGroup {
@@ -561,13 +571,18 @@
   }
 
   .headerTitle {
-    max-width: calc(100vw - 72px);
-    font-size: 18px;
+    max-width: 100%;
+    font-size: 20px;
+    line-height: 1.35;
+    margin-top: 12px;
+    margin-bottom: 18px;
   }
 
   .headerAddress {
-    max-width: calc(100vw - 72px);
-    font-weight: 600;
+    max-width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
   }
 
   .tabRow {

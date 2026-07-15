@@ -75,7 +75,7 @@ const Header = () => {
           height={30}
           priority
         />
-        <span className="font-pyeongchang text-lg font-bold pl-2 pt-px hidden sm:block">
+        <span className="font-pyeongchang text-lg font-bold pl-2 pt-px">
           분양모음집
         </span>
       </Link>
