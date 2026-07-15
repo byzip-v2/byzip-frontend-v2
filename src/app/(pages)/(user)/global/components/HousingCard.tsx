@@ -47,9 +47,11 @@ const HousingCard = ({ item }: HousingCardProps) => {
     }
   };
 
+  // 550px 이하(모바일 화면)에서는 카드가 한 줄에 하나만 보이므로 최대 너비를 432px로 제한(max-w-[432px])하여 상단 필터바/탭바와 가로 정렬을 정렬하고 중앙에 배치(mx-auto)합니다.
+  // 550px 초과(데스크톱 화면)에서는 기존 크기(min-[551px]:w-58)와 마진(min-[551px]:mx-0), 최대 너비 제한 해제(min-[551px]:max-w-none)를 유지합니다.
   return (
     <Link href={`/detail/${item.id}`} className="block">
-      <article className="w-58 bg-white flex flex-col items-center justify-center mb-8 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
+      <article className="w-full max-w-[400px] mx-auto min-[551px]:mx-0 min-[551px]:w-58 min-[551px]:max-w-none bg-white flex flex-col items-center justify-center mb-8 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
         {/* 리스트 분류 (상태 정보) */}
         <div className="w-full flex flex-row justify-start items-end px-3 pt-4 pb-1.5 gap-1.5">
           <div className="w-7 relative flex items-center justify-center">
@@ -72,7 +74,11 @@ const HousingCard = ({ item }: HousingCardProps) => {
 
         {/* 주택 이름 */}
         <div className="w-full flex justify-start px-3">
-          <h3 className="h-5 font-bold text-base text-[#000000] mt-2 mb-1 min-h-12 text-left ">
+          {/* 
+            550px 이하(모바일 화면)에서는 제목이 한 줄로만 표시되도록 h-6, min-h-0, truncate를 적용합니다.
+            550px 초과(데스크톱 화면)에서는 기존처럼 2줄 영역을 확보하도록 min-[551px]:h-5, min-[551px]:min-h-12, min-[551px]:whitespace-normal, min-[551px]:overflow-visible을 적용합니다.
+          */}
+          <h3 className="w-full truncate h-6 min-h-0 font-bold text-base text-[#000000] mt-2 mb-1 text-left min-[551px]:h-5 min-[551px]:min-h-12 min-[551px]:whitespace-normal min-[551px]:overflow-visible">
             {item.title.length < 35
               ? item.title
               : item.title.slice(0, 34) + '...'}
@@ -126,11 +132,11 @@ const HousingCard = ({ item }: HousingCardProps) => {
             {/* (한국어) 특별 청약일 데이터가 유효하지 않거나 '정보가 없습니다.' 혹은 '데이터 오류'인 경우 '정보 없음'으로 표시하며 텍스트 굵기를 얇게(font-normal) 조정합니다. */}
             <span
               className={`text-white text-xs leading-4 ${item.specialDate &&
-                  item.specialDate !== '정보가 없습니다.' &&
-                  item.specialDate !== '정보 없음' &&
-                  item.specialDate !== '데이터 오류'
-                  ? 'font-bold'
-                  : 'font-normal'
+                item.specialDate !== '정보가 없습니다.' &&
+                item.specialDate !== '정보 없음' &&
+                item.specialDate !== '데이터 오류'
+                ? 'font-bold'
+                : 'font-normal'
                 }`}
             >
               {!item.specialDate ||

@@ -103,9 +103,11 @@ export default function HousingListSection({
       }));
   }, [housingData]);
 
+  // 550px 이하(모바일 화면)에서는 grid-cols-1을 적용하여 한 줄에 카드 하나만 노출되도록 하고,
+  // 550px 초과(데스크톱 화면)에서는 min-[551px]:grid-cols-[repeat(auto-fit,220px)]를 적용하여 기존과 동일하게 너비에 맞춰 자동 정렬되도록 합니다.
   return (
     <section className="w-full flex-1 min-h-0 bg-[#f8faff] pt-6 overflow-y-auto">
-      <div className="w-full max-w-3xl mx-auto grid grid-cols-[repeat(auto-fit,220px)] justify-center px-4 gap-x-8 gap-y-0">
+      <div className="w-full max-w-3xl mx-auto grid grid-cols-1 min-[551px]:grid-cols-[repeat(auto-fit,220px)] justify-center px-4 gap-x-8 gap-y-0">
         {isLoading ? (
           <div className="col-span-full min-h-[40vh] flex items-center justify-center">
             <Spinner size={36} strokeWidth={3.5} className="text-[#356EFF]" />
