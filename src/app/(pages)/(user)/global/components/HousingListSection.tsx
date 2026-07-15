@@ -107,7 +107,15 @@ export default function HousingListSection({
   // 550px 초과(데스크톱 화면)에서는 min-[551px]:grid-cols-[repeat(auto-fit,220px)]를 적용하여 기존과 동일하게 너비에 맞춰 자동 정렬되도록 합니다.
   return (
     <section className="w-full flex-1 min-h-0 bg-[#f8faff] pt-6 overflow-y-auto">
-      <div className="w-full max-w-3xl mx-auto grid grid-cols-1 min-[551px]:grid-cols-[repeat(auto-fit,220px)] justify-center px-4 gap-x-8 gap-y-0">
+      {/* 
+        550px 초과(데스크톱 화면) 환경에서 그리드 아이템(분양 공고 카드)이 단 하나만 존재할 때,
+        중앙 정렬(justify-center)이 아닌 왼쪽 정렬(min-[551px]:justify-start)이 적용되도록 조건부 정렬 클래스를 지정합니다.
+        아이템이 2개 이상일 경우에는 기존의 중앙 정렬(justify-center)을 동일하게 유지합니다.
+      */}
+      <div className={`
+        w-full max-w-3xl mx-auto grid grid-cols-1 min-[551px]:grid-cols-[repeat(auto-fit,220px)] px-4 gap-x-8 gap-y-0
+        ${filteredData.length === 1 ? 'justify-center min-[551px]:justify-start' : 'justify-center'}
+      `}>
         {isLoading ? (
           <div className="col-span-full min-h-[40vh] flex items-center justify-center">
             <Spinner size={36} strokeWidth={3.5} className="text-[#356EFF]" />

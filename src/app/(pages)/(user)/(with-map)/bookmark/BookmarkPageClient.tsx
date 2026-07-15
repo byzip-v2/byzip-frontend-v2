@@ -8,6 +8,8 @@ import Spinner from '@/app/components/common/Spinner/Spinner';
 import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 import { useMapStore } from '@/app/libs/stores/zustand/useMapStore';
 import { determineHousingType } from '@/app/libs/utils/date';
+import NaverMap from '@/app/components/common/NaverMap/NaverMap';
+import ViewToggle from '@/app/components/common/ViewToggle/ViewToggle';
 
 /**
  * 로컬스토리지 북마크 저장 키값 (DetailPageClient.tsx의 키와 일치)
@@ -35,8 +37,8 @@ export default function BookmarkPageClient() {
   // 북마크 저장소가 실제로 비어있는지 여부를 판단하기 위한 상태값
   const [hasBookmarks, setHasBookmarks] = useState(true);
 
-  // (한국어) 지도의 마커 및 레이아웃 상태 변경을 위해 전역 지도 스토어를 구독합니다.
-  const { setMarkers } = useMapStore();
+  // (한국어) 지도의 마커 및 레이아웃 상태 변경, 모바일 뷰 전환 모드 관리를 위해 전역 지도 스토어를 구독합니다.
+  const { setMarkers, isMobileLayout, viewType } = useMapStore();
 
   useEffect(() => {
     setIsMounted(true);
@@ -171,27 +173,36 @@ export default function BookmarkPageClient() {
   }
 
   return (
-    <div className="w-full flex-1 flex flex-col min-h-[calc(100vh-4rem)] bg-[#f8faff] items-center">
-      <div className="w-full max-w-3xl px-4 shrink-0">
-        <h1
-          className="text-lg font-bold font-pyeongchang text-black"
-          style={{ marginBottom: '0px' }}
-        >
+    <div className="bg-white w-full flex-1 flex flex-col min-h-[calc(100vh-4rem)] items-center relative">
+      <div className="w-full max-w-3xl mx-auto pl-5 pr-4 flex flex-row justify-between items-center py-4 shrink-0">
+        <h2 className="text-xl font-semibold">
           북마크
-        </h1>
+        </h2>
+        {/* 모바일/태블릿(1024px 미만) 화면에서만 노출되는 리스트/지도 뷰 전환 세그먼트 토글 스위치 */}
+        <ViewToggle />
       </div>
-      <HousingListSection
-        housingData={bookmarkedData}
-        isLoading={isApiLoading}
-        emptyMessage={
-          // (한국어 주석) 로컬스토리지에 북마크한 데이터가 존재하지 않는 경우(!hasBookmarks)이거나,
-          // 북마크 ID 목록은 존재하지만 해당 공고들이 모두 종료되어 전역 데이터(housingData)에 매칭되는 데이터가 없는 경우(bookmarkedData.length === 0)
-          // '저장한 북마크가 없습니다.' 메시지를 노출합니다.
-          !hasBookmarks || (housingData.length > 0 && bookmarkedData.length === 0)
-            ? '저장한 북마크가 없습니다.'
-            : '북마크 정보를 불러오는 데 실패했습니다.'
-        }
-      />
+
+      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-gray-200 relative">
+        {/* 모바일 레이아웃 환경이면서 지도 뷰(map)가 활성화된 경우 지도를 화면에 가득 채우고, 그 외에는 기존 리스트 섹션을 렌더링합니다. */}
+        {isMobileLayout && viewType === 'map' ? (
+          <div className="absolute inset-0 w-full h-full">
+            <NaverMap />
+          </div>
+        ) : (
+          <HousingListSection
+            housingData={bookmarkedData}
+            isLoading={isApiLoading}
+            emptyMessage={
+              // (한국어 주석) 로컬스토리지에 북마크한 데이터가 존재하지 않는 경우(!hasBookmarks)이거나,
+              // 북마크 ID 목록은 존재하지만 해당 공고들이 모두 종료되어 전역 데이터(housingData)에 매칭되는 데이터가 없는 경우(bookmarkedData.length === 0)
+              // '저장한 북마크가 없습니다.' 메시지를 노출합니다.
+              !hasBookmarks || (housingData.length > 0 && bookmarkedData.length === 0)
+                ? '저장한 북마크가 없습니다.'
+                : '북마크 정보를 불러오는 데 실패했습니다.'
+            }
+          />
+        )}
+      </div>
     </div>
   );
 }
