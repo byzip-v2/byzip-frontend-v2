@@ -1,7 +1,11 @@
-'use server';
-
 import { getBugReports, type GetBugReportsParams } from './actions';
 import BugReportPage from './components/BugReportPage';
+import type { Metadata } from 'next';
+
+// (한국어) 관리자 버그 리포트 관리 화면의 브라우저 탭 타이틀 최적화를 위한 메타데이터 설정
+export const metadata: Metadata = {
+  title: '버그리포트',
+};
 
 interface BugReportPageProps {
   searchParams: Promise<{

@@ -117,10 +117,11 @@ const CategoryBar = ({
       ref={containerRef}
       /* 
         (한국어) 550px 이하(모바일 화면)에서는 전체 필터 바 너비를 400px로 제한(max-w-[400px])하고 중앙 정렬(mx-auto)을 유지합니다.
+        다만 432px 이하(미만)의 초소형 모바일 기기 환경에서는 마진과 패딩의 중첩으로 인해 카드가 과도하게 안으로 들어가는 레이아웃 오정렬을 방지하기 위해 마진을 제거(mx-0)하고 너비를 꽉 채우도록(max-w-full) 조정합니다.
         화면 크기가 432px 미만으로 작아졌을 때는 좌우 끝부분 여백을 확보하기 위해 px-4를 적용하고, 432px 이상 550px 이하일 때는 여백을 제거(min-[432px]:px-0)합니다.
         550px 초과(데스크톱 화면)에서는 원래 크기(min-[551px]:max-w-3xl, px-4)로 복원합니다.
       */
-      className="w-full max-w-[400px] min-[551px]:max-w-3xl flex flex-row flex-wrap items-center justify-start lg:justify-between z-10 relative mx-auto mb-4 px-4 min-[432px]:px-0 min-[551px]:px-4 gap-4 lg:gap-0"
+      className="w-full max-w-full min-[432px]:max-w-[400px] min-[551px]:max-w-3xl flex flex-row flex-wrap items-center justify-start lg:justify-between z-10 relative mx-0 min-[432px]:mx-auto mb-4 px-4 min-[432px]:px-0 min-[551px]:px-4 gap-4 lg:gap-0"
     >
       <div className="flex flex-row gap-2.5 items-center text-sm">
         {/* 지역 필터 버튼 */}

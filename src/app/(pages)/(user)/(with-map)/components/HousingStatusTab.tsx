@@ -58,10 +58,11 @@ const HousingStatusTab = ({
     <div className="w-full flex justify-center items-center pt-4 pb-2">
       {/* 
         (한국어) 550px 이하(모바일 화면)에서는 전체 탭 바 너비를 400px로 제한(max-w-[400px])하고 중앙 정렬(mx-auto) 및 좁은 여백(gap-2)을 설정합니다.
+        다만 432px 이하(미만)의 초소형 모바일 기기 환경에서는 마진과 패딩의 중첩으로 인해 카드가 과도하게 안으로 들어가는 레이아웃 오정렬을 방지하기 위해 마진을 제거(mx-0)하고 너비를 꽉 채우도록(max-w-full) 조정합니다.
         화면 크기가 432px 미만으로 작아졌을 때는 화면 좌우에 딱 붙어 답답해 보이지 않도록 좌우 여백(px-4)을 적용하고, 432px 이상 550px 이하에서는 여백 없이 꽉 채웁니다(min-[432px]:px-0).
         550px 초과(데스크톱 화면)에서는 원래 크기(min-[551px]:max-w-3xl, px-4, gap-3)로 복원합니다.
       */}
-      <ul className="flex items-center px-4 min-[432px]:px-0 min-[551px]:px-4 gap-2 min-[551px]:gap-3 w-full max-w-[400px] min-[551px]:max-w-3xl mx-auto list-none py-1.5 pb-3 overflow-x-auto no-scrollbar">
+      <ul className="flex items-center px-4 min-[432px]:px-0 min-[551px]:px-4 gap-2 min-[551px]:gap-3 w-full max-w-full min-[432px]:max-w-[400px] min-[551px]:max-w-3xl mx-0 min-[432px]:mx-auto list-none py-1.5 pb-3 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <li
             key={tab.id}
