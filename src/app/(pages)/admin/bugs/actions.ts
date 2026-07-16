@@ -31,11 +31,13 @@ export interface BugReportDataDtoWithMemo extends BugReportResponseDto {
  * 각 상태별 버그 리포트 카운트 타입
  * API 응답의 meta.statusCounts 에 포함되는 구조와 일치합니다.
  */
+// (한국어) 백엔드 API 서버의 구현 방식에 따라 statusCounts 키값이 대문자(OPEN, IN_PROGRESS 등) 또는
+// 소문자(open, in_progress 등)로 상이하게 반환될 수 있으므로, 두 형태 모두 대응할 수 있도록 옵셔널 타입을 통합 정의합니다.
 export interface StatusCounts {
-  open: number;
-  in_progress: number;
-  resolved: number;
-  closed: number;
+  OPEN?: number;
+  IN_PROGRESS?: number;
+  RESOLVED?: number;
+  CLOSED?: number;
 }
 
 /**
@@ -108,7 +110,7 @@ export async function getBugReports(
       actionName: 'getBugReports',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -196,7 +198,7 @@ export async function updateBugReport(
       actionName: 'updateBugReport',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -250,7 +252,7 @@ export async function bulkUpdateBugStatus(
       actionName: 'bulkUpdateBugStatus',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {

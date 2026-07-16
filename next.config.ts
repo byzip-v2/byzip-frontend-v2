@@ -13,5 +13,9 @@ export default function nextConfig(phase: string): NextConfig {
     ...baseConfig,
     // dev 서버와 build 결과물이 같은 .next를 쓰지 않도록 분리
     distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.next-dev' : '.next',
+    // (한국어) 프로덕션 빌드(production) 시점에 브라우저 콘솔 로그(console.*)를 제거
+    compiler: {
+      removeConsole: process.env.NEXT_PUBLIC_NODE_ENV === 'production',
+    },
   };
 }
