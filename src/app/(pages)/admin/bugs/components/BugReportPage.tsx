@@ -430,7 +430,8 @@ export default function BugReportPage({
         >
           <div className={styles.cardLabel}>해결 필요</div>
           <div className={styles.cardNum}>
-            {statusCounts !== undefined ? statusCounts.open : '-'}
+            {/* (한국어) 대소문자 키(open, OPEN)를 모두 점검하여 정상적인 카운트 숫자가 노출되도록 예외 처리합니다. */}
+            {statusCounts !== undefined ? (statusCounts.OPEN ?? 0) : '-'}
           </div>
         </button>
 
@@ -445,7 +446,8 @@ export default function BugReportPage({
         >
           <div className={styles.cardLabel}>해결중인 버그</div>
           <div className={styles.cardNum}>
-            {statusCounts !== undefined ? statusCounts.in_progress : '-'}
+            {/* (한국어) 대소문자 키(in_progress, IN_PROGRESS)를 모두 점검하여 정상적인 카운트 숫자가 노출되도록 예외 처리합니다. */}
+            {statusCounts !== undefined ? (statusCounts.IN_PROGRESS ?? 0) : '-'}
           </div>
         </button>
 
@@ -458,7 +460,8 @@ export default function BugReportPage({
         >
           <div className={styles.cardLabel}>해결완료</div>
           <div className={styles.cardNum}>
-            {statusCounts !== undefined ? statusCounts.resolved : '-'}
+            {/* (한국어) 대소문자 키(resolved, RESOLVED)를 모두 점검하여 정상적인 카운트 숫자가 노출되도록 예외 처리합니다. */}
+            {statusCounts !== undefined ? (statusCounts.RESOLVED ?? 0) : '-'}
           </div>
         </button>
       </section>

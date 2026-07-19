@@ -5,6 +5,12 @@ import {
   getMissingCoordinatesSummary,
   getBugReportsSummary,
 } from './actions';
+import type { Metadata } from 'next';
+
+// (한국어) 관리자 대시보드 화면의 브라우저 탭 타이틀 최적화를 위한 메타데이터 설정
+export const metadata: Metadata = {
+  title: '관리자 대시보드',
+};
 
 export default async function AdminDashboardPage() {
   // 데이터를 서버에서 미리 가져옴

@@ -5,15 +5,17 @@ import HousingListSection from '../../../global/components/HousingListSection'
 import { useMapStore } from '@/app/libs/stores/zustand/useMapStore'
 import { useEffect } from 'react'
 import { determineHousingType } from '@/app/libs/utils/date'
+import NaverMap from '@/app/components/common/NaverMap/NaverMap'
+import ViewToggle from '@/app/components/common/ViewToggle/ViewToggle'
 
 const SearchingClient = ({ initialHousingData }: { initialHousingData: HousingSupplyResponseDto[] }) => {
-    const searchParams = useSearchParams()
-    const query = searchParams.get('query')
+  const searchParams = useSearchParams()
+  const query = searchParams.get('query')
   // 서버에서 주입받은 원본 데이터
   const housingData = initialHousingData;
 
   // (한국어) 지도의 마커 데이터를 변경하기 위해 전역 맵 스토어의 setMarkers 함수를 가져옵니다.
-  const { setMarkers } = useMapStore();
+  const { setMarkers, isMobileLayout, viewType } = useMapStore();
 
   // (한국어) 검색 페이지에 진입하거나 검색 결과 데이터(housingData)가 갱신될 때
   // 지도의 마커 목록을 검색 결과 좌표 데이터로 동기화합니다.
@@ -52,14 +54,24 @@ const SearchingClient = ({ initialHousingData }: { initialHousingData: HousingSu
   }, [housingData, setMarkers]);
 
   return (
-   <div className="w-full h-full bg-white flex flex-col items-center">
-    {/* (한국어) 아래 카드 목록(HousingListSection)의 중앙 정렬(max-w-3xl mx-auto pl-5 pr-4)과 일치하도록 
-        제목 컨테이너의 너비 및 여백을 맞추어 화면이 커져도 카드와 수직 정렬되도록 조정합니다. */}
-    <div className='w-full max-w-3xl mx-auto pl-5 pr-4'>
-        <h2 className="text-xl font-bold py-4 font-pyeongchang"><span className='text-[#356EFF]'>&quot;{query}&quot;</span> 검색 결과</h2>
-    </div>
-      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-[rgba(0,0,0,0.25)]">
-        <HousingListSection housingData={housingData} isLoading={false} />
+    <div className="w-full h-full bg-white flex flex-col items-center relative">
+      <div className='w-full max-w-3xl mx-auto pl-5 pr-4 flex flex-row justify-between items-center py-4'>
+        <h2 className="text-xl font-semibold">
+          <span className='text-[#356EFF]'>&apos;{query}&apos;</span> 검색 결과 총 {housingData?.length || 0}건
+        </h2>
+
+        {/* 모바일/태블릿(1024px 미만) 화면에서만 노출되는 리스트/지도 뷰 전환 세그먼트 토글 스위치 */}
+        <ViewToggle />
+      </div>
+      <div className="w-full flex-1 flex flex-col min-h-0 border-t border-gray-200 relative">
+        {/* 모바일 레이아웃 환경이면서 지도 뷰(map)가 켜진 경우 지도를 가득 채우고, 그 외에는 기존 리스트 섹션을 보여줍니다. */}
+        {isMobileLayout && viewType === 'map' ? (
+          <div className="absolute inset-0 w-full h-full">
+            <NaverMap />
+          </div>
+        ) : (
+          <HousingListSection housingData={housingData} isLoading={false} />
+        )}
       </div>
     </div>
   )

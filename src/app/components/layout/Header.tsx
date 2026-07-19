@@ -65,9 +65,8 @@ const Header = () => {
       {/* 로고 영역 */}
       <Link
         href="/"
-        className={`flex items-center gap-1 cursor-pointer transition-opacity duration-200 ${
-          isMobileSearchOpen ? 'lg:opacity-100 opacity-100' : ''
-        }`}
+        className={`flex items-center gap-1 cursor-pointer transition-opacity duration-200 ${isMobileSearchOpen ? 'lg:opacity-100 opacity-100' : ''
+          }`}
       >
         <Image
           src="/images/byzip_logo.png"
@@ -76,7 +75,7 @@ const Header = () => {
           height={30}
           priority
         />
-        <span className="font-pyeongchang text-lg font-bold pl-2 pt-px hidden sm:block">
+        <span className="font-pyeongchang text-lg font-bold pl-2 pt-px">
           분양모음집
         </span>
       </Link>
@@ -93,7 +92,7 @@ const Header = () => {
             className="w-full h-10 px-4 pr-12 border border-gray-200 rounded-full text-sm! leading-4 font-medium outline-none focus:border-brand-blue transition-all"
           />
           <button className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-brand-blue transition-colors"
-          onClick={handleSearch}
+            onClick={handleSearch}
           >
             <Search size={20} />
           </button>
@@ -102,11 +101,10 @@ const Header = () => {
 
       {/* 모바일 검색창: 검색 버튼을 누르면 오른쪽에서 왼쪽으로 슬라이드되어 나타납니다. */}
       <div
-        className={`lg:hidden absolute left-14 right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ease-out ${
-          isMobileSearchOpen
-            ? 'translate-x-0 opacity-100 pointer-events-auto'
-            : 'translate-x-full opacity-0 pointer-events-none'
-        }`}
+        className={`lg:hidden absolute left-14 right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ease-out ${isMobileSearchOpen
+          ? 'translate-x-0 opacity-100 pointer-events-auto'
+          : 'translate-x-full opacity-0 pointer-events-none'
+          }`}
       >
         <div className="relative">
           <Search
@@ -139,26 +137,23 @@ const Header = () => {
         <div className="hidden lg:flex items-center gap-9">
           <Link
             href="/calendar"
-            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${
-              pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
-            }`}
+            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${pathname === '/calendar' ? 'text-brand-blue' : 'text-black'
+              }`}
           >
             청약캘린더
           </Link>
           <Link
             href="/bookmark"
-            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${
-              pathname === '/bookmark' ? 'text-brand-blue' : 'text-black'
-            }`}
+            className={`text-sm font-semibold hover:text-brand-blue transition-colors ${pathname === '/bookmark' ? 'text-brand-blue' : 'text-black'
+              }`}
           >
             북마크
           </Link>
         </div>
 
         <div
-          className={`lg:hidden flex items-center gap-4 transition-opacity duration-200 ${
-            isMobileSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
+          className={`lg:hidden flex items-center gap-4 transition-opacity duration-200 ${isMobileSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
         >
           <button
             type="button"
@@ -179,86 +174,117 @@ const Header = () => {
         </div>
       </nav>
 
-      {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-0 z-[400]">
-          <button
-            type="button"
-            aria-label="메뉴 배경 닫기"
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <aside className="absolute right-0 top-0 h-full w-[82vw] max-w-[380px] bg-white px-5 py-5 shadow-[-12px_0_32px_rgba(15,23,42,0.2)]">
-            <div className="mb-8 flex h-9 items-center justify-start">
-              <button
-                type="button"
-                aria-label="메뉴 닫기"
-                className="flex h-9 w-9 items-center justify-center text-black transition-colors hover:text-brand-blue"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <X size={20} strokeWidth={2.2} />
-              </button>
-            </div>
+      {/* 
+        모바일 메뉴 전체 컨테이너 
+        - isMobileMenuOpen 상태에 따라 pointer-events 및 visibility를 전환하여 트랜지션 애니메이션 완료 후 완전히 숨깁니다.
+        - transition-all duration-300을 적용하여 부드러운 상태 전환을 지원합니다.
+      */}
+      <div
+        className={`lg:hidden fixed inset-0 top-0 z-[400] transition-all duration-300 ${isMobileMenuOpen ? 'pointer-events-auto visible' : 'pointer-events-none invisible'
+          }`}
+      >
+        {/* 
+          메뉴 배경 (Dimmed Layer)
+          - 뒷배경을 어둡게 처리하는 반투명 레이어입니다.
+          - 메뉴가 열리면 서서히 불투명해지고(opacity-100), 닫히면 투명해지도록(opacity-0) 트랜지션을 적용합니다.
+        */}
+        <button
+          type="button"
+          aria-label="메뉴 배경 닫기"
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
 
-            <div className="mb-9 flex flex-col items-center gap-2.5">
-              <Image
-                src="/images/byzip_logo.png"
-                alt="분양모음집"
-                width={58}
-                height={58}
-                priority
-              />
-              <span className="font-pyeongchang text-[15px] font-bold">분양모음집</span>
-            </div>
+        {/* 
+          메뉴 바 (Sidebar Aside)
+          - 우측에서 왼쪽으로 슬라이드하며 들어오고(translate-x-0) 나가는(translate-x-full) 애니메이션을 구현합니다.
+          - transition-transform duration-300 ease-in-out 효과로 부드러운 슬라이딩 모션을 제공합니다.
+        */}
+        <aside
+          className={`absolute right-0 top-0 h-full w-[82vw] max-w-[380px] bg-white px-5 py-5 shadow-[-12px_0_32px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+        >
+          {/* 모바일 메뉴 닫기 버튼 영역 */}
+          <div className="mb-8 h-9">
+            <button
+              type="button"
+              aria-label="메뉴 닫기"
+              className="absolute left-[12px] top-[12px] flex h-9 w-9 items-center justify-center text-black transition-colors hover:text-brand-blue"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X size={20} strokeWidth={2.2} />
+            </button>
+          </div>
 
-            <div className="flex flex-col gap-4 text-[15px] font-bold text-black">
-              <Link
-                href="/bookmark"
-                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
-                onClick={closeMobileMenuAfterClick}
-              >
-                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
-                  <Bookmark size={26} strokeWidth={2.2} />
-                </span>
-                <span className="text-base font-bold">북마크</span>
-              </Link>
-              <Link
-                href="/calendar"
-                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
-                onClick={closeMobileMenuAfterClick}
-              >
-                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
-                  <CalendarDays size={26} strokeWidth={2.2} />
-                </span>
-                <span className="text-base font-bold">청약캘린더</span>
-              </Link>
-              <a
-                href={APPLY_HOME_COMPETITION_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
-                onClick={closeMobileMenuAfterClick}
-              >
-                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
-                  <BarChart3 size={26} strokeWidth={2.2} />
-                </span>
-                <span className="text-base font-bold">청약경쟁률 확인</span>
-              </a>
-              <a
-                href={APPLY_HOME_WINNER_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
-                onClick={closeMobileMenuAfterClick}
-              >
-                <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
-                  <Building2 size={26} strokeWidth={2.2} />
-                </span>
-                <span className="text-base font-bold">청약당첨자 확인</span>
-              </a>
-            </div>
-          </aside>
-        </div>
-      )}
+          {/* 서비스 로고 및 타이틀 영역 */}
+          <div className="mb-9 flex flex-col items-center gap-2.5">
+            <Image
+              src="/images/byzip_logo.png"
+              alt="분양모음집"
+              width={58}
+              height={58}
+              priority
+            />
+            <span className="font-pyeongchang text-[15px] font-bold">분양모음집</span>
+          </div>
+
+          {/* 메뉴 링크 리스트 영역 */}
+          <div className="flex flex-col gap-4 text-[15px] font-bold text-black">
+            {/* 청약캘린더 페이지 링크 */}
+            <Link
+              href="/calendar"
+              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              onClick={closeMobileMenuAfterClick}
+            >
+              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                <CalendarDays size={26} strokeWidth={2.2} />
+              </span>
+              <span className="text-base font-bold">청약캘린더</span>
+            </Link>
+
+            {/* 북마크 페이지 링크 */}
+            <Link
+              href="/bookmark"
+              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              onClick={closeMobileMenuAfterClick}
+            >
+              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                <Bookmark size={26} strokeWidth={2.2} />
+              </span>
+              <span className="text-base font-bold">북마크</span>
+            </Link>
+
+            {/* 외부 청약경쟁률 확인 링크 */}
+            <a
+              href={APPLY_HOME_COMPETITION_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              onClick={closeMobileMenuAfterClick}
+            >
+              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                <BarChart3 size={26} strokeWidth={2.2} />
+              </span>
+              <span className="text-base font-bold">청약경쟁률 확인</span>
+            </a>
+
+            {/* 외부 청약당첨자 확인 링크 */}
+            <a
+              href={APPLY_HOME_WINNER_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              onClick={closeMobileMenuAfterClick}
+            >
+              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+                <Building2 size={26} strokeWidth={2.2} />
+              </span>
+              <span className="text-base font-bold">청약당첨자 확인</span>
+            </a>
+          </div>
+        </aside>
+      </div>
     </header>
   );
 };

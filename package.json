@@ -11,7 +11,13 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.4",
+    "@fullcalendar/daygrid": "^6.1.4",
+    "@fullcalendar/interaction": "^6.1.4",
+    "@fullcalendar/react": "^6.1.4",
+    "@fullcalendar/timegrid": "^6.1.4",
     "@google-analytics/data": "^5.1.0",
+    "@next/third-parties": "^16.2.10",
     "@tanstack/react-query": "^5.80.7",
     "axios": "^1.10.0",
     "byzip-v2-sdk": "^1.0.63",
@@ -21,12 +27,7 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.6.0",
     "sass": "^1.89.2",
-    "zustand": "^5.0.5",
-    "@fullcalendar/core": "^6.1.4",
-    "@fullcalendar/daygrid": "^6.1.4",
-    "@fullcalendar/interaction": "^6.1.4",
-    "@fullcalendar/react": "^6.1.4",
-    "@fullcalendar/timegrid": "^6.1.4"
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.0",

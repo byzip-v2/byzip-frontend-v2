@@ -121,7 +121,7 @@
   justify-content: center;
   align-items: center;
   gap: 3px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 300;
   font-variation-settings: 'wght' 300;
   color: #fff;
@@ -149,9 +149,10 @@
   font-weight: 500;
   font-variation-settings: 'wght' 500;
   line-height: normal;
-  padding-bottom: 10px;
   letter-spacing: -0.02em;
   text-align: center;
+  margin-top: 17px;
+  margin-bottom: 27px;
 }
 
 .headerAddress {
@@ -194,7 +195,9 @@
 
 .contentSection {
   width: 100%;
-  padding: 30px;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-bottom: 30px;
   background-color: #fff;
 }
 
@@ -523,9 +526,10 @@
 
 @media screen and (max-width: 450px) {
   .header {
+    position: relative;
     height: 200px;
-    padding-top: 30px;
-    padding-right: 30px;
+    box-sizing: border-box;
+    padding: 20px 0 20px;
   }
 
   .headerTopRow {
@@ -534,22 +538,22 @@
 
   .headerTopRowMobile {
     display: flex;
-    margin-left: 30px;
-    margin-bottom: 10px;
-    padding: 0;
+    /* (한국어) 뒤로가기와 북마크 아이콘이 아래 텍스트와 겹치지 않고 최상단에 상시 정렬되도록 absolute 고정을 적용합니다. */
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    margin: 0;
+    width: 100%;
   }
 
   .headerBody {
-    margin-left: 30px;
-    padding: 0;
-  }
-
-  .headerTagRow {
-    font-size: 12px;
-    font-weight: 700;
-    font-variation-settings: 'wght' 700;
-    line-height: 18px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    margin-left: 0;
+    margin-top: 0;
+    padding: 0 20px;
   }
 
   .headerTagGroup {
@@ -567,38 +571,32 @@
   }
 
   .headerTitle {
-    max-width: calc(100vw - 72px);
-    font-size: 17px;
-    font-weight: 800;
-    font-variation-settings: 'wght' 800;
-    line-height: 22px;
-    padding-bottom: 6px;
-    letter-spacing: 0;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.38);
+    max-width: 100%;
+    font-size: 20px;
+    line-height: 1.35;
+    margin-top: 12px;
+    margin-bottom: 18px;
   }
 
   .headerAddress {
-    max-width: calc(100vw - 72px);
-    font-size: 13px;
-    font-weight: 700;
-    font-variation-settings: 'wght' 700;
-    line-height: 18px;
-    padding-bottom: 3px;
-    color: rgba(255, 255, 255, 0.98);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    max-width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
   }
 
   .tabRow {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    padding: 10px 10px 0;
+    padding: 0 10px;
   }
 
   .tabButton {
     flex-direction: column;
-    height: 35px;
-    padding: 10px 12px;
-    font-size: 13px;
+    height: auto;
+    padding: 12px 8px;
+    font-size: 14px;
+    justify-content: center;
   }
 
   .contentSection {
@@ -609,8 +607,18 @@
     padding: 0 10px 10px;
   }
 
+  .iconButton {
+    padding: 0;
+  }
+
   .sectionTitle {
     font-size: 16px;
+    padding-top: 10px;
+  }
+
+  .linkRow {
+    margin-top: 0;
+    margin-bottom: 10px;
   }
 
   .articleTable {

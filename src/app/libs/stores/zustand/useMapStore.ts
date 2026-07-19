@@ -46,6 +46,12 @@ interface MapState {
   mapPageView: MapPageView;
   setMapPageView: (view: MapPageView) => void;
   clearMapPageView: () => void;
+  /** (한국어) 모바일 화면에서의 뷰 타입 ('list': 리스트 뷰, 'map': 지도 뷰) */
+  viewType: 'list' | 'map';
+  setViewType: (viewType: 'list' | 'map') => void;
+  /** (한국어) 현재 레이아웃이 1024px 미만 모바일 레이아웃인지 여부 */
+  isMobileLayout: boolean;
+  setIsMobileLayout: (isMobile: boolean) => void;
 }
 
 /**
@@ -60,4 +66,8 @@ export const useMapStore = create<MapState>((set) => ({
   mapPageView: DEFAULT_MAP_PAGE_VIEW,
   setMapPageView: (view) => set({ mapPageView: view }),
   clearMapPageView: () => set({ mapPageView: DEFAULT_MAP_PAGE_VIEW }),
+  viewType: 'list',
+  setViewType: (viewType) => set({ viewType }),
+  isMobileLayout: false,
+  setIsMobileLayout: (isMobileLayout) => set({ isMobileLayout }),
 }));
