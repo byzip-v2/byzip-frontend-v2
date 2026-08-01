@@ -61,7 +61,7 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-[300] px-4 lg:px-8 flex items-center justify-between lg:grid lg:grid-cols-3">
+    <header className="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-300 px-4 lg:px-8 flex items-center justify-between lg:grid lg:grid-cols-3">
       {/* 로고 영역 */}
       <Link
         href="/"
@@ -180,7 +180,7 @@ const Header = () => {
         - transition-all duration-300을 적용하여 부드러운 상태 전환을 지원합니다.
       */}
       <div
-        className={`lg:hidden fixed inset-0 top-0 z-[400] transition-all duration-300 ${isMobileMenuOpen ? 'pointer-events-auto visible' : 'pointer-events-none invisible'
+        className={`lg:hidden fixed inset-0 top-0 z-400 transition-all duration-300 ${isMobileMenuOpen ? 'pointer-events-auto visible' : 'pointer-events-none invisible'
           }`}
       >
         {/* 
@@ -202,7 +202,7 @@ const Header = () => {
           - transition-transform duration-300 ease-in-out 효과로 부드러운 슬라이딩 모션을 제공합니다.
         */}
         <aside
-          className={`absolute right-0 top-0 h-full w-[82vw] max-w-[380px] bg-white px-5 py-5 shadow-[-12px_0_32px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`absolute right-0 top-0 h-full w-[82vw] max-w-95 bg-white px-5 py-5 shadow-[-12px_0_32px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
         >
           {/* 모바일 메뉴 닫기 버튼 영역 */}
@@ -210,7 +210,7 @@ const Header = () => {
             <button
               type="button"
               aria-label="메뉴 닫기"
-              className="absolute left-[12px] top-[12px] flex h-9 w-9 items-center justify-center text-black transition-colors hover:text-brand-blue"
+              className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center text-black transition-colors hover:text-brand-blue"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <X size={20} strokeWidth={2.2} />
@@ -234,10 +234,10 @@ const Header = () => {
             {/* 청약캘린더 페이지 링크 */}
             <Link
               href="/calendar"
-              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              className="flex min-h-19 items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
               onClick={closeMobileMenuAfterClick}
             >
-              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+              <span className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
                 <CalendarDays size={26} strokeWidth={2.2} />
               </span>
               <span className="text-base font-bold">청약캘린더</span>
@@ -246,10 +246,10 @@ const Header = () => {
             {/* 북마크 페이지 링크 */}
             <Link
               href="/bookmark"
-              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              className="flex min-h-19 items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
               onClick={closeMobileMenuAfterClick}
             >
-              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+              <span className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
                 <Bookmark size={26} strokeWidth={2.2} />
               </span>
               <span className="text-base font-bold">북마크</span>
@@ -260,10 +260,10 @@ const Header = () => {
               href={APPLY_HOME_COMPETITION_URL}
               target="_blank"
               rel="noreferrer"
-              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              className="flex min-h-19 items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
               onClick={closeMobileMenuAfterClick}
             >
-              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+              <span className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
                 <BarChart3 size={26} strokeWidth={2.2} />
               </span>
               <span className="text-base font-bold">청약경쟁률 확인</span>
@@ -274,10 +274,10 @@ const Header = () => {
               href={APPLY_HOME_WINNER_URL}
               target="_blank"
               rel="noreferrer"
-              className="flex min-h-[76px] items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
+              className="flex min-h-19 items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 shadow-[0_3px_10px_rgba(15,23,42,0.11)] transition-colors hover:bg-[#f8fbff]"
               onClick={closeMobileMenuAfterClick}
             >
-              <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
+              <span className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-brand-blue">
                 <Building2 size={26} strokeWidth={2.2} />
               </span>
               <span className="text-base font-bold">청약당첨자 확인</span>

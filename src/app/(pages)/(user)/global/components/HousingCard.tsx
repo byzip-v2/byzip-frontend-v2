@@ -51,7 +51,7 @@ const HousingCard = ({ item }: HousingCardProps) => {
   // 550px 초과(데스크톱 화면)에서는 기존 크기(min-[551px]:w-58)와 마진(min-[551px]:mx-0), 최대 너비 제한 해제(min-[551px]:max-w-none)를 유지합니다.
   return (
     <Link href={`/detail/${item.id}`} className="block">
-      <article className="w-full max-w-[400px] mx-auto min-[551px]:mx-0 min-[551px]:w-58 min-[551px]:max-w-none bg-white flex flex-col items-center justify-center mb-8 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
+      <article className="w-full max-w-100 mx-auto min-[551px]:mx-0 min-[551px]:w-58 min-[551px]:max-w-none bg-white flex flex-col items-center justify-center mb-8 rounded-2xl shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-center cursor-pointer relative overflow-hidden">
         {/* 리스트 분류 (상태 정보) */}
         <div className="w-full flex flex-row justify-start items-end px-3 pt-4 pb-1.5 gap-1.5">
           <div className="w-7 relative flex items-center justify-center">
