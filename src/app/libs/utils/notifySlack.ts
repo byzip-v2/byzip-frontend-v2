@@ -1,6 +1,9 @@
 import axios from 'axios';
-import type { CreateBugReportDto } from 'byzip-v2-sdk';
-import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
+import {
+  BugReportCreateRequestDto,
+  BugReportErrorType,
+  BugReportSeverity,
+} from 'byzip-v2-sdk';
 
 /**
  * Slack에 버그 리포트 알림을 전송하는 함수
@@ -11,7 +14,7 @@ import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
  * 버그 리포트 정보를 Slack 메시지 형식으로 변환하여 전송합니다.
  */
 export const notifySlackBugReport = async (
-  bugReportData: CreateBugReportDto,
+  bugReportData: BugReportCreateRequestDto,
 ): Promise<void> => {
   const webhookUrl = process.env.SLACK_BUG_REPORT_WEBHOOK_URL;
 

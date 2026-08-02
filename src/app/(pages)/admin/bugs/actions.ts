@@ -3,7 +3,7 @@
 import { serverApiWithToken, logErrorToDatabase } from '@/app/libs/utils/api';
 import type { ActionResult } from '@/app/libs/types/api';
 import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
-import { BugReportDataDto, BugReportErrorType } from 'byzip-v2-sdk';
+import { BugReportErrorType, BugReportResponseDto } from 'byzip-v2-sdk';
 import axios from 'axios';
 import { notifySlackAssigneeChange } from '@/app/libs/utils/notifySlack';
 
@@ -23,12 +23,26 @@ export interface GetBugReportsParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
-export interface BugReportDataDtoWithMemo extends BugReportDataDto {
+export interface BugReportDataDtoWithMemo extends BugReportResponseDto {
   memo: string;
 }
 
 /**
+ * 각 상태별 버그 리포트 카운트 타입
+ * API 응답의 meta.statusCounts 에 포함되는 구조와 일치합니다.
+ */
+// (한국어) 백엔드 API 서버의 구현 방식에 따라 statusCounts 키값이 대문자(OPEN, IN_PROGRESS 등) 또는
+// 소문자(open, in_progress 등)로 상이하게 반환될 수 있으므로, 두 형태 모두 대응할 수 있도록 옵셔널 타입을 통합 정의합니다.
+export interface StatusCounts {
+  OPEN?: number;
+  IN_PROGRESS?: number;
+  RESOLVED?: number;
+  CLOSED?: number;
+}
+
+/**
  * 페이지네이션 메타 데이터 타입
+ * statusCounts 는 전체 상태별 카운트를 담으며, 현재 필터와 무관하게 항상 반환됩니다.
  */
 export interface PaginationMeta {
   page: number;
@@ -36,6 +50,8 @@ export interface PaginationMeta {
   total: number;
   totalPages: number;
   itemCount: number;
+  /** 상태별 버그 리포트 수 (open / in_progress / resolved / closed) */
+  statusCounts?: StatusCounts;
 }
 
 /**
@@ -94,7 +110,7 @@ export async function getBugReports(
       actionName: 'getBugReports',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -182,7 +198,7 @@ export async function updateBugReport(
       actionName: 'updateBugReport',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -236,7 +252,7 @@ export async function bulkUpdateBugStatus(
       actionName: 'bulkUpdateBugStatus',
       skipAxiosError: true,
       errorType: BugReportErrorType.SERVER_ERROR,
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (axios.isAxiosError(error) && error.response) {
       return {

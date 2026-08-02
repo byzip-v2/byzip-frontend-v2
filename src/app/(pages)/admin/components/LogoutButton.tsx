@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { logoutAction } from '@/app/(pages)/login/actions';
+import Spinner from '@/app/components/common/Spinner/Spinner';
 import styles from '@/styles/pages/admin/admin-layout.module.scss';
 
 export default function LogoutButton() {
@@ -31,7 +32,7 @@ export default function LogoutButton() {
       disabled={isLoading}
       className={styles.logoutBtn}
     >
-      {isLoading ? '로그아웃 중...' : '로그아웃'}
+      {isLoading ? <Spinner /> : '로그아웃'}
     </button>
   );
 }

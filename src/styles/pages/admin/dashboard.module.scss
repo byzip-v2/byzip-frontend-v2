@@ -1,0 +1,521 @@
+@use '../../_variables.scss' as *;
+@use 'sass:color';
+
+.section {
+  padding: 0 24px 24px;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-areas:
+    'summary bug'
+    'visitor bug'
+    'table os';
+  gap: 16px;
+  align-items: start;
+}
+
+.summaryRow {
+  grid-area: summary;
+  display: flex;
+  gap: 12px;
+}
+
+.summaryCard {
+  width: 220px;
+  border-radius: 10px;
+  padding: 16px 18px;
+  border: 1px solid transparent;
+}
+
+.pendingCard {
+  background: $card-open-bg;
+  border-color: color.adjust($card-open-bg, $lightness: -10%);
+}
+
+.newCard {
+  background: $card-progress-bg;
+  border-color: color.adjust($card-progress-bg, $lightness: -10%);
+}
+
+.summaryLabel {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.summaryValue {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  color: $color-text-primary;
+}
+
+.panel {
+  background: $color-white;
+  border: 1px solid $color-border-subtle;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.visitorPanel {
+  grid-area: visitor;
+}
+
+.bugPanel {
+  grid-area: bug;
+  max-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tablePanel {
+  grid-area: table;
+  display: flex;
+  flex-direction: column;
+}
+
+.osPanel {
+  grid-area: os;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.panelHeaderBlock {
+  margin-bottom: 20px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.panelSubText {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.visitorTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rangeSelect {
+  position: relative;
+  min-width: 78px;
+}
+
+.rangeTrigger {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid $color-border;
+  background: $color-white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  color: $color-text-primary;
+  font-size: 12px;
+
+  &:hover {
+    border-color: $color-border-muted;
+  }
+}
+
+.rangeValue {
+  font-weight: 600;
+}
+
+.rangeCaret {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.rangeMenu {
+  position: absolute;
+  z-index: 905;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 100%;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $color-white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.rangeOption {
+  width: 100%;
+  padding: 8px 10px;
+  background: $color-white;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: $color-text-primary;
+  font-size: 12px;
+
+  &:hover {
+    background: $color-gray;
+  }
+}
+
+.rangeOptionActive {
+  background: $color-primary;
+  color: $color-white;
+}
+
+.linkButton {
+  border: 0;
+  background: transparent;
+  color: $color-text-secondary;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.countAccent {
+  color: $color-primary;
+}
+
+.chartLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: $color-primary;
+}
+
+.chartContainer {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  padding: 10px 12px 0 0;
+}
+
+.chartYAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 0 24px;
+  height: 214px;
+  // 기준선과의 정렬을 위해 너비 고정
+  width: 32px;
+}
+
+.yLabel {
+  font-size: 11px;
+  color: $color-text-soft;
+  text-align: right;
+  min-width: 24px;
+}
+
+.barChart {
+  flex: 1;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 8px;
+  min-height: 240px;
+  align-items: end;
+}
+
+.chartGrid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 24px; // barLabel 제외 영역
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gridLine {
+  width: 100%;
+  height: 1px;
+  background: $color-border-subtle;
+  opacity: 0.6;
+}
+
+.barItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.barTrack {
+  width: 100%;
+  max-width: 30px;
+  height: 190px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar {
+  display: block;
+  width: 100%;
+  min-height: 12px;
+  border-radius: 6px 6px 0 0;
+  background: $color-primary;
+}
+
+.barLabel {
+  font-size: 11px;
+  color: $color-text-soft;
+  white-space: nowrap;
+}
+
+.bugList {
+  list-style: none;
+  margin: 0;
+  padding: 0 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.bugList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bugList::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: $color-border;
+}
+
+.bugItem {
+  border: 1px solid $color-border-subtle;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.bugTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.bugMeta {
+  margin: 2px 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
+.bugMetaDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: $color-error;
+}
+
+.bugText {
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-muted;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tableWrap {
+  position: relative;
+  border: 1px solid $color-border-subtle;
+  border-radius: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 188px;
+  scrollbar-gutter: stable;
+}
+
+.tableWrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tableWrap::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: $color-border;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: $color-gray;
+    color: $color-text-secondary;
+    font-weight: 600;
+    font-size: 12px;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid $color-border-subtle;
+  }
+
+  td {
+    padding: 12px;
+    border-top: 1px solid $color-border-subtle;
+    font-size: 13px;
+    color: $color-text-primary;
+  }
+
+  th:nth-child(2),
+  th:nth-child(3),
+  td:nth-child(2),
+  td:nth-child(3) {
+    width: 140px;
+    text-align: center;
+  }
+
+  td:first-child {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.osContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.donutWrap {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  flex-shrink: 0;
+}
+
+.donut {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background-image: conic-gradient(#3270ff 0 22%, #22c55e 22% 60%, #f2d544 60% 100%);
+  display: grid;
+  place-items: center;
+}
+
+.donutTooltip {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  pointer-events: none;
+  background: rgba(30, 30, 30, 0.92);
+  color: $color-white;
+  font-size: 11px;
+  line-height: 1;
+  padding: 7px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 4;
+}
+
+.donutHole {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: $color-white;
+  border: 1px solid $color-border-subtle;
+  display: grid;
+  place-items: center;
+
+  strong {
+    font-size: 15px;
+    color: $color-text-primary;
+  }
+}
+
+.osLegend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.osLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.osLegendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+@media (max-width: 1320px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'summary'
+      'visitor'
+      'bug'
+      'table'
+      'os';
+  }
+
+  .summaryRow {
+    flex-wrap: wrap;
+  }
+
+  .summaryCard {
+    width: 220px;
+  }
+
+  .bugPanel {
+    max-height: 380px;
+  }
+}

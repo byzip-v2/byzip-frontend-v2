@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const NAV = [
-  { href: '/pub/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/pub/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/pub/admin/housing', icon: Folder, label: '분양공고 관리' },
   { href: '/pub/admin/geo', icon: Users, label: '좌표 관리' },
   { href: '/pub/admin/bug', icon: BarChart3, label: '버그리포트' },
@@ -20,8 +20,12 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + '/');
+  const isActive = (href: string) => {
+    if (href === '/pub/admin') {
+      return pathname === href;
+    }
+    return pathname === href || pathname.startsWith(href + '/');
+  };
 
   return (
     <div className={styles.adminLayout}>

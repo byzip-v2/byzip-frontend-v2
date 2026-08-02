@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { logErrorToDatabase } from '@/app/libs/utils/api';
-import { BugReportErrorType } from 'byzip-v2-sdk';
+import { BugReportErrorType, BugReportSeverity } from 'byzip-v2-sdk';
 import {
   accessTokenMaxAge,
   refreshTokenMaxAge,
@@ -86,6 +85,12 @@ export async function middleware(request: NextRequest) {
           refreshedTokens.refreshToken,
           refreshTokenMaxAge,
         );
+        setCookie(
+          response,
+          'grant_type',
+          refreshedTokens.grantType,
+          accessTokenMaxAge,
+        );
       }
       return response;
     }
@@ -105,6 +110,12 @@ export async function middleware(request: NextRequest) {
         'refresh_token',
         refreshedTokens.refreshToken,
         refreshTokenMaxAge,
+      );
+      setCookie(
+        response,
+        'grant_type',
+        refreshedTokens.grantType,
+        accessTokenMaxAge,
       );
       return response;
     }
@@ -131,6 +142,7 @@ export async function middleware(request: NextRequest) {
 type TokenData = {
   accessToken: string; // 액세스 토큰 (짧은 만료 시간)
   refreshToken: string; // 리프레시 토큰 (긴 만료 시간)
+  grantType: string; // 권한 부여 타입 (예: Bearer)
 };
 
 /**
@@ -283,7 +295,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     }
 
     // ========== 2단계: 토큰 재발급 API 요청 ==========
-    const refreshResponse = await fetch(`${apiBaseUrl}/auth/refresh`, {
+    const refreshResponse = await fetch(`${apiBaseUrl}/auth/reissue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -291,11 +303,17 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
 
     // ========== 3단계: 응답 상태 확인 ==========
     if (!refreshResponse.ok) {
+      // 404 에러인 경우 로깅 제외
+      if (refreshResponse.status === 404) {
+        return null;
+      }
+
       const error = new Error(`토큰 갱신 요청 실패: ${refreshResponse.status}`);
       console.error('🔐 [Middleware]', error.message);
       await logErrorToDatabase(error, {
         actionName: `refreshTokens - HTTP ${refreshResponse.status}`,
         errorType: BugReportErrorType.SERVER_ERROR,
+        status: refreshResponse.status, // status 전달
       }).catch(() => {});
       return null;
     }
@@ -303,11 +321,16 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     // ========== 4단계: 응답 데이터 파싱 ==========
     const json = (await refreshResponse.json()) as {
       success?: boolean;
-      data?: { accessToken?: string; refreshToken?: string };
+      data?: { accessToken?: string; refreshToken?: string; grantType?: string };
     };
 
     // ========== 5단계: 응답 데이터 검증 ==========
-    if (!json.success || !json.data?.accessToken || !json.data.refreshToken) {
+    if (
+      !json.success ||
+      !json.data?.accessToken ||
+      !json.data.refreshToken ||
+      !json.data.grantType
+    ) {
       const error = new Error('토큰 갱신 응답 형식이 올바르지 않습니다.');
       console.error('🔐 [Middleware]', error.message);
       await logErrorToDatabase(error, {
@@ -322,6 +345,7 @@ async function refreshTokens(refreshToken: string): Promise<TokenData | null> {
     return {
       accessToken: json.data.accessToken,
       refreshToken: json.data.refreshToken,
+      grantType: json.data.grantType,
     };
   } catch (error) {
     // 네트워크 오류 등 예외 상황 처리
@@ -375,4 +399,67 @@ function redirectToLogin(request: NextRequest) {
  */
 function redirectToAdmin(request: NextRequest) {
   return NextResponse.redirect(new URL('/admin', request.url));
+}
+
+type LogErrorOptions = {
+  actionName?: string;
+  errorType?: BugReportErrorType;
+  status?: number; // 응답 상태 코드 추가
+};
+
+/**
+ * Edge Runtime 전용 에러 로거
+ * middleware는 Edge Runtime에서 실행되므로 axios/node API를 사용하지 않고 fetch로 전송합니다.
+ */
+async function logErrorToDatabase(
+  error: unknown,
+  options?: LogErrorOptions,
+): Promise<void> {
+  // 401(인증 실패), 404(찾을 수 없음) 에러인 경우 로깅 제외
+  if (options?.status === 401 || options?.status === 404) {
+    return;
+  }
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiBaseUrl) {
+    return;
+  }
+
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : 'Unknown error';
+
+  const title = options?.actionName
+    ? `Middleware Error: ${options.actionName}`
+    : 'Middleware Error';
+  const description = options?.actionName
+    ? `${options.actionName} 실행 중 오류 발생: ${errorMessage}`
+    : `미들웨어 실행 중 오류 발생: ${errorMessage}`;
+
+  try {
+    await fetch(`${apiBaseUrl}/bug-reports`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title,
+        description,
+        errorMessage,
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorType: options?.errorType ?? BugReportErrorType.SERVER_ERROR,
+        severity: BugReportSeverity.MEDIUM,
+        url: 'middleware',
+        userAgent: 'edge-middleware',
+        metadata: {
+          source: 'middleware',
+        },
+      }),
+    });
+  } catch (logError) {
+    console.error('🔐 [Middleware] 에러 로깅 실패:', logError);
+  }
 }

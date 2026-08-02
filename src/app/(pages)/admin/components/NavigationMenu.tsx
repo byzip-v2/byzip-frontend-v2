@@ -14,7 +14,7 @@ const navigationItems = [
   },
   {
     label: '분양공고 관리',
-    href: '/admin/posts',
+    href: '/admin/housing',
     icon: Folder,
   },
   {

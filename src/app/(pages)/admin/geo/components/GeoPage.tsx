@@ -1,18 +1,19 @@
 'use client';
 
 import styles from '@/styles/pages/admin/geo/geo.module.scss';
-import { HousingSupplyDataDto } from 'byzip-v2-sdk';
 import Script from 'next/script';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateHousingSupplyCoords } from '../actions';
 import { useToast } from '@/app/libs/hooks/useToast';
 import Spinner from '@/app/components/common/Spinner/Spinner';
-import { RotateCcw } from 'lucide-react';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
+import { RotateCcw, MapPinOff } from 'lucide-react';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
+import { HousingSupplyResponseDto } from 'byzip-v2-sdk';
 
 interface GeoClientProps {
-  initialData: HousingSupplyDataDto[];
+  initialData: HousingSupplyResponseDto[];
 }
 
 export default function GeoPage({ initialData }: GeoClientProps) {
@@ -20,14 +21,16 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   const mapRef = useRef<naver.maps.Map | null>(null);
   const infowindowRef = useRef<naver.maps.InfoWindow | null>(null);
   const markerRef = useRef<naver.maps.Marker | null>(null);
-  const selectedDataRef = useRef<HousingSupplyDataDto | null>(null);
+  const selectedDataRef = useRef<HousingSupplyResponseDto | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  // 네이버 지도 스크립트 로드 실패 상태
+  const [mapError, setMapError] = useState<boolean>(false);
 
   const [searchAddress, setSearchAddress] = useState<string>('');
   const [tableData, setTableData] =
-    useState<HousingSupplyDataDto[]>(initialData);
+    useState<HousingSupplyResponseDto[]>(initialData);
   const { showToast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -37,9 +40,10 @@ export default function GeoPage({ initialData }: GeoClientProps) {
 
   const checkNaverMapsLoaded = () => {
     return (
+      !mapError &&
       typeof window !== 'undefined' &&
       typeof window.naver !== 'undefined' &&
-      window.naver.maps
+      typeof window.naver.maps !== 'undefined'
     );
   };
 
@@ -67,16 +71,29 @@ export default function GeoPage({ initialData }: GeoClientProps) {
       </div>
     `;
     const btn = container.querySelector('#add-coord-btn');
-    if (btn && coords)
+    if (btn && coords) {
+      // 기본은 지번 주소, 지번 주소가 없는 경우 도로명 주소 사용
+      const address = jibunAddress || roadAddress;
       btn.addEventListener('click', () =>
-        handleCoordUpdate(coords?.lat, coords?.lng),
+        handleCoordUpdate(coords?.lat, coords?.lng, address),
       );
+    }
     return container;
   };
 
   const initializeMap = () => {
-    if (!checkNaverMapsLoaded()) {
-      console.error('네이버 지도 API가 로드되지 않았습니다.');
+    // 지도가 로드되지 않은 에러 상태이거나 SDK가 아직 로드되지 않은 경우 초기화를 수행하지 않습니다.
+    if (mapError || !checkNaverMapsLoaded()) {
+      return;
+    }
+
+    if (mapRef.current) {
+      return;
+    }
+
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+      setTimeout(initializeMap, 100);
       return;
     }
 
@@ -125,46 +142,65 @@ export default function GeoPage({ initialData }: GeoClientProps) {
 
   // 주소 검색 시 좌표로 변환
   const searchAddressToCoordinate = (address: string) => {
-    if (!address.trim() || !checkNaverMapsLoaded()) return;
+    if (!address.trim()) return;
+
+    // 지도가 정상 작동하지 않는 경우 에러 메시지를 노출하고 검색을 제한합니다.
+    if (!checkNaverMapsLoaded()) {
+      showToast('네이버 지도가 정상적으로 로드되지 않아 주소를 검색할 수 없습니다.', 'error');
+      return;
+    }
+
+    if (isSearching) return;
     setIsSearching(true);
 
     try {
       naver.maps.Service.geocode({ query: address }, (status, response) => {
-        if (
-          status === naver.maps.Service.Status.ERROR ||
-          response.v2.meta.totalCount === 0
-        ) {
-          showToast('주소를 찾을 수 없습니다.', 'error');
-          return;
+        try {
+          if (
+            status === naver.maps.Service.Status.ERROR ||
+            !response?.v2 ||
+            response.v2.meta.totalCount === 0
+          ) {
+            showToast('주소를 찾을 수 없습니다.', 'error');
+            return;
+          }
+
+          const item = response.v2.addresses[0];
+          const point = new naver.maps.LatLng(
+            parseFloat(item.y),
+            parseFloat(item.x),
+          );
+          mapRef.current?.setCenter(point);
+          setMarkerPosition(point);
+
+          // JSX 컴포넌트를 HTML 문자열로 변환
+          infowindowRef.current?.setContent(
+            createInfoWindowContent({
+              title: selectedDataRef.current?.houseName,
+              roadAddress: item.roadAddress,
+              jibunAddress: item.jibunAddress,
+              coords: { lat: parseFloat(item.y), lng: parseFloat(item.x) },
+            }),
+          );
+          infowindowRef.current?.open(mapRef.current!, point);
+        } finally {
+          setIsSearching(false);
         }
-
-        const item = response.v2.addresses[0];
-        const point = new naver.maps.LatLng(
-          parseFloat(item.y),
-          parseFloat(item.x),
-        );
-        mapRef.current?.setCenter(point);
-        setMarkerPosition(point);
-
-        // JSX 컴포넌트를 HTML 문자열로 변환
-        infowindowRef.current?.setContent(
-          createInfoWindowContent({
-            title: selectedDataRef.current?.houseName,
-            roadAddress: item.roadAddress,
-            jibunAddress: item.jibunAddress,
-            coords: { lat: parseFloat(item.y), lng: parseFloat(item.x) },
-          }),
-        );
-        infowindowRef.current?.open(mapRef.current!, point);
       });
-    } finally {
+    } catch (error) {
+      console.error(error);
+      showToast('주소 검색 중 오류가 발생했습니다.', 'error');
       setIsSearching(false);
     }
   };
 
   // 지도 클릭 시 해당 위치 좌표로 변환
   const searchCoordinateToAddress = (latlng: naver.maps.LatLng) => {
-    if (!checkNaverMapsLoaded()) return;
+    // 지도가 정상 작동하지 않는 경우 에러 안내를 띄우고 중단합니다.
+    if (!checkNaverMapsLoaded()) {
+      showToast('네이버 지도가 로드되지 않아 좌표 변환 요청을 처리할 수 없습니다.', 'error');
+      return;
+    }
 
     naver.maps.Service.reverseGeocode(
       {
@@ -217,23 +253,31 @@ export default function GeoPage({ initialData }: GeoClientProps) {
   };
 
   // 좌표 찾기 버튼 클릭 핸들러
-  const handleCoordinateSearch = (data: HousingSupplyDataDto) => {
+  const handleCoordinateSearch = (data: HousingSupplyResponseDto) => {
     setSearchAddress(data.hssplyAdres || '');
     selectedDataRef.current = data; // ref 업데이트
     searchAddressToCoordinate(data.hssplyAdres || '');
   };
 
   // 좌표 업데이트 DB 반영 핸들러
-  const handleCoordUpdate = async (lat: number, lng: number) => {
+  const handleCoordUpdate = async (
+    lat: number,
+    lng: number,
+    address?: string,
+  ) => {
     if (!selectedDataRef.current || !lat || !lng || isUpdating) return;
     setIsUpdating(true);
     try {
       const result = await updateHousingSupplyCoords(
         selectedDataRef.current.id,
-        { latitude: lat, longitude: lng },
+        {
+          latitude: lat,
+          longitude: lng,
+          hssplyAdres: address,
+        },
       );
       if (result.success) {
-        showToast('좌표가 성공적으로 업데이트되었습니다.');
+        showToast('좌표 및 주소가 성공적으로 업데이트되었습니다.');
         infowindowRef.current?.close();
         router.refresh();
       } else {
@@ -254,6 +298,7 @@ export default function GeoPage({ initialData }: GeoClientProps) {
    * isResetting으로 버튼 로딩 상태를 표시합니다.
    */
   const handleReset = () => {
+    if (isResetting) return;
     setIsResetting(true);
     try {
       // 지도 입력값 초기화: 주소 검색창 비우기
@@ -278,10 +323,15 @@ export default function GeoPage({ initialData }: GeoClientProps) {
       <Script
         strategy="afterInteractive"
         src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${process.env.NEXT_PUBLIC_NAVER_CLIENT_ID}&submodules=geocoder`}
-        // 네이버 지도 API가 완전히 로드된 후 지도 초기화
-        onLoad={() =>
-          setTimeout(() => checkNaverMapsLoaded() && initializeMap(), 100)
-        }
+        // onReady는 스크립트 로드 완료 시점과 컴포넌트 마운트 시점에 모두 실행됨
+        onReady={() => {
+          initializeMap();
+        }}
+        onError={(e) => {
+          // 스크립트 파일 다운로드 오류 발생 시 에러 플래그 업데이트
+          console.error('[GeoPage] 네이버 지도 SDK 스크립트 로드 실패:', e);
+          setMapError(true);
+        }}
       />
       <div className={styles.geoPage}>
         <AdminPageHeader title="좌표 관리" />
@@ -302,24 +352,47 @@ export default function GeoPage({ initialData }: GeoClientProps) {
                     }
                   }}
                 />
-                <button
-                  className={`${styles.searchBtn} ${isSearching ? styles.searchBtnLoading : ''}`}
+                <PrimaryButton
                   onClick={() => searchAddressToCoordinate(searchAddress)}
-                  disabled={isSearching}
+                  isLoading={isSearching}
                 >
-                  {isSearching ? <Spinner /> : '좌표 검색'}
-                </button>
+                  좌표 검색
+                </PrimaryButton>
               </div>
             </div>
 
             {/* 지도 영역 */}
-            <div id="map" className={styles.mapContainer} />
+            {mapError ? (
+              <div
+                className={styles.mapContainer}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f3f4f6',
+                  border: '1px solid #e5e7eb',
+                  color: '#6b7280',
+                  gap: '8px',
+                  fontFamily: "'Pretendard', sans-serif",
+                  padding: '20px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* 지도 로드 불가 대체 Lucide MapPinOff 아이콘 */}
+                <MapPinOff size={32} style={{ color: '#9ca3af' }} />
+                <span style={{ fontSize: '14px', fontWeight: 600 }}>네이버 지도 로드에 실패했습니다.</span>
+                <span style={{ fontSize: '12px', color: '#9ca3af' }}>네트워크 연결 상태나 API Key 설정을 확인해 주세요.</span>
+              </div>
+            ) : (
+              <div id="map" className={styles.mapContainer} />
+            )}
           </div>
           {/* 데이터 테이블 영역 */}
           <div className={styles.tableSection}>
             <div className={styles.tableHeader}>
               <h2 className={styles.tableTitle}>
-                좌표가 없는 공고 (<span>5</span>개)
+                좌표가 없는 공고 (<span>{tableData.length}</span>개)
               </h2>
               <button
                 type="button"
@@ -356,8 +429,16 @@ export default function GeoPage({ initialData }: GeoClientProps) {
                           : ''
                       }
                     >
-                      <td>{data.houseName}</td>
-                      <td>{data.hssplyAdres}</td>
+                      <td>
+                        <div className={styles.cellEllipsis}>
+                          {data.houseName || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.cellEllipsis}>
+                          {data.hssplyAdres || '-'}
+                        </div>
+                      </td>
                       <td>
                         <a
                           href={data.pblancUrl}

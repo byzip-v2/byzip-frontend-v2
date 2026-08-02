@@ -1,6 +1,12 @@
 import styles from '@/styles/pages/login/login.module.scss';
 import Image from 'next/image';
 import LoginForm from './components/LoginForm';
+import type { Metadata } from 'next';
+
+// (한국어) 로그인 화면의 브라우저 탭 타이틀 최적화를 위한 메타데이터 설정
+export const metadata: Metadata = {
+  title: '로그인',
+};
 
 export default async function LoginPage() {
   return (

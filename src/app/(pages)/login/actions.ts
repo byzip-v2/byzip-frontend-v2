@@ -9,9 +9,9 @@ import { cookies } from 'next/headers';
 import axios from 'axios';
 import {
   BugReportErrorType,
+  TokenResponseDto,
   type BaseResponseDto,
   type LoginRequestDto,
-  type TokenDataDto,
 } from 'byzip-v2-sdk';
 import {
   serverApiWithToken,
@@ -43,13 +43,13 @@ export async function loginAction(
 ): Promise<ActionResult> {
   try {
     const requestBody: LoginRequestDto = {
-      userId: userId.trim(),
+      username: userId.trim(),
       password: password,
     };
 
     // API 요청 (serverApi 사용)
     const response = await serverApiWithoutToken.post<
-      BaseResponseDto<TokenDataDto>
+      BaseResponseDto<TokenResponseDto>
     >('/auth/login', requestBody);
 
     // 응답 성공 시 응답 데이터 확인
@@ -80,6 +80,7 @@ export async function loginAction(
     // maxAge: 365일 (31536000초)
     const cookieStore = await cookies();
 
+    // 1. Access Token 저장 (보안 옵션: httpOnly, secure, sameSite)
     cookieStore.set('access_token', tokenData.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -88,11 +89,21 @@ export async function loginAction(
       path: '/',
     });
 
+    // 2. Refresh Token 저장 (만료일 30일 설정)
     cookieStore.set('refresh_token', tokenData.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: refreshTokenMaxAge,
+      path: '/',
+    });
+
+    // 3. Grant Type 저장 (API Authorization 헤더 구성 시 동적으로 사용하기 위함)
+    cookieStore.set('grant_type', tokenData.grantType, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: accessTokenMaxAge,
       path: '/',
     });
 
@@ -142,7 +153,7 @@ export async function loginAction(
     // 기타 모든 에러
     return {
       success: false,
-      message: '로그인 중 오류가 발생했습니다. 다시 시도해주세요.',
+      message: '로그인에 실패했습니다.',
     };
   }
 }
@@ -172,7 +183,8 @@ export async function logoutAction(): Promise<void> {
     }
   }
 
-  // 토큰 쿠키 삭제
+  // 저장되어 있던 모든 인증 관련 쿠키(액세스 토큰, 리프레시 토큰, 권한 부여 타입) 삭제
   cookieStore.delete('access_token');
   cookieStore.delete('refresh_token');
+  cookieStore.delete('grant_type');
 }

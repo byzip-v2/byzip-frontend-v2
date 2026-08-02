@@ -1,0 +1,674 @@
+.page {
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  background-color: #fff;
+  display: flex;
+  justify-content: stretch;
+  font-family: 'Pretendard Variable', var(--font-pretendard), sans-serif;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.shell {
+  width: 100%;
+}
+
+.page button,
+.page input,
+.page textarea {
+  font-family: inherit;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 0 40px;
+  background-size: 105%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image:
+    linear-gradient(rgba(78, 127, 250, 0.8), rgba(78, 127, 255, 0.8)),
+    url('/images/detail/detailHeaderBackground.png');
+}
+
+.headerTopRow,
+.headerTopRowMobile {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px 10px 10px;
+}
+
+.headerTopRowMobile {
+  display: none;
+}
+
+.iconButton {
+  width: 25px;
+  height: 25px;
+  padding: 0 0 0 10px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-sizing: content-box;
+}
+
+.bookmarkButton,
+.bookmarkButtonMobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.bookmarkButton {
+  width: 120px;
+  height: 28px;
+  padding: 0;
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  font-weight: 400;
+  font-variation-settings: 'wght' 400;
+}
+
+.bookmarkButton span {
+  font-size: 11px;
+}
+
+.bookmarkButtonActive {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.bookmarkActiveIcon {
+  color: #ffe14d;
+}
+
+.bookmarkButtonMobile {
+  width: 25px;
+  height: 25px;
+  border-radius: 30px;
+  border: 1px solid #fff;
+  padding: 0;
+}
+
+.headerBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: -35px;
+  gap: 5px;
+  padding: 0;
+  text-align: center;
+}
+
+.headerTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  font-size: 14px;
+  font-weight: 300;
+  font-variation-settings: 'wght' 300;
+  color: #fff;
+}
+
+.headerTagGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.headerTag {
+  color: #fff;
+  line-height: 28px;
+}
+
+.headerTagDivider {
+  color: #fff;
+  line-height: 28px;
+}
+
+.headerTitle {
+  color: #fff;
+  font-size: 25px;
+  font-weight: 500;
+  font-variation-settings: 'wght' 500;
+  line-height: normal;
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin-top: 17px;
+  margin-bottom: 27px;
+}
+
+.headerAddress {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 300;
+  font-variation-settings: 'wght' 300;
+  padding-bottom: 5px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.tabRow {
+  display: flex;
+  width: 100%;
+  padding: 10px 20px 0;
+  background-color: #fff;
+}
+
+.tabButton {
+  border: 0;
+  border-bottom: 2px solid #f4f4f4;
+  background: transparent;
+  color: #7b7b7b;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 15px 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  letter-spacing: -0.02em;
+}
+
+.tabButtonActive {
+  color: #3d7fff;
+  border-bottom-color: #3d7fff;
+}
+
+.contentSection {
+  width: 100%;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-bottom: 30px;
+  background-color: #fff;
+}
+
+.sectionTitle {
+  padding-top: 30px;
+  padding-bottom: 10px;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -0.03em;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.specialSupplyScroll {
+  scrollbar-width: thin;
+  scrollbar-color: #c9c9c9 transparent;
+}
+
+.specialSupplyScroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.specialSupplyScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.specialSupplyScroll::-webkit-scrollbar-thumb {
+  background-color: #c9c9c9;
+  border-radius: 999px;
+}
+
+.specialSupplyScroll::-webkit-scrollbar-thumb:hover {
+  background-color: #b7b7b7;
+}
+
+.articleTable {
+  width: 100%;
+  min-width: 680px;
+  margin-bottom: 15px;
+  border: 1px solid #f4f4f4;
+  border-right: 1px solid #e8eaef;
+  border-top: 1.3px solid #8e8e8e;
+  font-size: 15px;
+  text-align: center;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+.articleTitle {
+  height: 51px;
+  border: 1px solid #e8eaef;
+  background-color: #f0f4ff;
+  color: #356eff;
+  font-size: 16px;
+  font-weight: 600;
+  vertical-align: middle;
+  letter-spacing: -0.03em;
+}
+
+.tableHead,
+.tableHeadBlue,
+.tableHeadCompact {
+  width: 20%;
+  height: 50px;
+  padding: 8px 10px;
+  border: 1px solid #e8eaef;
+  background-color: #f0f4ff;
+  color: #000;
+  font-size: 15px;
+  font-weight: 500;
+  vertical-align: middle;
+  letter-spacing: -0.02em;
+}
+
+.tableHeadBlue {
+  color: #356eff;
+}
+
+.tableHeadCompact {
+  width: 10%;
+}
+
+.supplyNumberCell {
+  width: 8%;
+  min-width: 72px;
+}
+
+.specialSupplyTable {
+  min-width: 960px;
+  margin-bottom: 6px;
+}
+
+.areaHeaderCell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.areaHeaderText {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+
+.nowrapHeader {
+  min-width: 72px;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.tableHeadLh {
+  width: 20%;
+  min-height: 50px;
+  height: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e8eaef;
+  background-color: #f0f4ff;
+  color: #000;
+  font-size: 15px;
+  font-weight: 400;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.tableCell,
+.tableCellCenter {
+  height: 50px;
+  padding: 8px 10px;
+  border: 1px solid #e8eaef;
+  font-size: 15px;
+  font-weight: 400;
+  vertical-align: middle;
+  letter-spacing: -0.02em;
+}
+
+.tableCell {
+  width: 80%;
+  text-align: left;
+}
+
+.tableCellCenter {
+  text-align: center;
+}
+
+.tableCellLh {
+  width: 80%;
+  height: 50px;
+  padding: 8px 0;
+  border: 1px solid #e8eaef;
+  font-size: 15px;
+  font-weight: 400;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.tableCellLhNotice {
+  width: 80%;
+  min-height: 50px;
+  padding: 10px;
+  border: 1px solid #e8eaef;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 25px;
+  letter-spacing: 0;
+  vertical-align: middle;
+  text-align: left;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+.subText {
+  color: #8e8e8e;
+  font-size: 13px;
+}
+
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.primaryLinkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primaryLinkButton {
+  min-width: 110px;
+  min-height: 40px;
+  padding: 10px 16px;
+  background-color: #3d7fff;
+  color: #fff;
+}
+
+.sectionInfo {
+  padding-left: 10px;
+  color: #8e8e8e;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.02em;
+}
+
+.noticeBox {
+  padding: 18px;
+  border: 1px solid #e8eaef;
+  border-top: 1.3px solid #8e8e8e;
+  background-color: #fff;
+  color: #5d6775;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  letter-spacing: -0.02em;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fileButton {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #e8eaef;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #1e1e1e;
+  text-decoration: none;
+}
+
+.fileName {
+  color: #356eff;
+  font-size: 13px;
+}
+
+.realPricePlaceholder {
+  padding-bottom: 10px;
+}
+
+.realPriceSection {
+  width: 100%;
+  padding: 0 30px 30px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.realPriceStatusBox {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  width: 100%;
+}
+
+.realPriceEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.realPriceEmptyImage {
+  width: 100px;
+  height: auto;
+}
+
+.realPriceText {
+  color: #8e8e8e;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21px;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.realPriceTable {
+  width: 100%;
+  min-width: 680px;
+  margin-top: 40px;
+  border: 1px solid #e8eaef;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+.realPriceHead {
+  border: 1px solid #e8eaef;
+  background-color: #f0f4ff;
+  padding: 15px 25px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.realPriceCell {
+  border: 1px solid #e8eaef;
+  padding: 15px 25px;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.realPriceFloor {
+  color: #8e8e8e;
+  font-size: 13px;
+}
+
+@media screen and (max-width: 450px) {
+  .header {
+    position: relative;
+    height: 200px;
+    box-sizing: border-box;
+    padding: 20px 0 20px;
+  }
+
+  .headerTopRow {
+    display: none;
+  }
+
+  .headerTopRowMobile {
+    display: flex;
+    /* (한국어) 뒤로가기와 북마크 아이콘이 아래 텍스트와 겹치지 않고 최상단에 상시 정렬되도록 absolute 고정을 적용합니다. */
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    margin: 0;
+    width: 100%;
+  }
+
+  .headerBody {
+    margin-left: 0;
+    margin-top: 0;
+    padding: 0 20px;
+  }
+
+  .headerTagGroup {
+    gap: 2px;
+  }
+
+  .headerTag {
+    line-height: 22px;
+    color: #fff;
+  }
+
+  .headerTagDivider {
+    line-height: 22px;
+    color: #fff;
+  }
+
+  .headerTitle {
+    max-width: 100%;
+    font-size: 20px;
+    line-height: 1.35;
+    margin-top: 12px;
+    margin-bottom: 18px;
+  }
+
+  .headerAddress {
+    max-width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .tabRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 10px;
+  }
+
+  .tabButton {
+    flex-direction: column;
+    height: auto;
+    padding: 12px 8px;
+    font-size: 14px;
+    justify-content: center;
+  }
+
+  .contentSection {
+    padding: 10px;
+  }
+
+  .realPriceSection {
+    padding: 0 10px 10px;
+  }
+
+  .iconButton {
+    padding: 0;
+  }
+
+  .sectionTitle {
+    font-size: 16px;
+    padding-top: 10px;
+  }
+
+  .linkRow {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+
+  .articleTable {
+    min-width: 344px;
+    font-size: 12px;
+  }
+
+  .articleTitle {
+    font-size: 14px;
+  }
+
+  .tableHead,
+  .tableHeadBlue,
+  .tableHeadCompact,
+  .tableHeadLh,
+  .tableCell,
+  .tableCellCenter,
+  .tableCellLh,
+  .tableCellLhNotice {
+    font-size: 12px;
+  }
+
+  .tableCellLhNotice {
+    line-height: 20px;
+  }
+
+  .primaryLinkButton {
+    min-width: 90px;
+    min-height: 30px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+
+  .sectionInfo,
+  .noticeBox {
+    font-size: 11px;
+  }
+
+  .realPriceText {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .realPriceHead,
+  .realPriceCell {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .realPriceFloor {
+    font-size: 11px;
+  }
+}

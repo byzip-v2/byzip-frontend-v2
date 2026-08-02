@@ -8,14 +8,18 @@ import {
   updateBugReport,
   type PaginationMeta,
   type BugReportDataDtoWithMemo,
+  type StatusCounts,
 } from '../actions';
 import Spinner from '../../../../components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import Alert from '@/app/components/common/Alert/Alert';
+import Pagination from '@/app/components/common/Pagination/Pagination';
 
 interface BugReportClientProps {
   initialBugs: BugReportDataDtoWithMemo[];
   initialMeta?: PaginationMeta;
+  statusCounts?: StatusCounts;
   searchParams: {
     search?: string;
     assigneeId?: string;
@@ -24,8 +28,8 @@ interface BugReportClientProps {
   };
 }
 
-/** 서버(byzip-sdk)와 동일한 상태값. 기본값 open */
-export type StatusFilter = BugReportStatus;
+/** 서버(byzip-sdk)와 동일한 상태값 + 전체(all) */
+export type StatusFilter = BugReportStatus | 'all';
 
 // 내부에 저장되는 assignee id 목록 및 표시 이름
 export const ASSIGNEES = [
@@ -51,9 +55,11 @@ export const STATUS_LABEL: Record<BugReportStatus, string> = {
   [BugReportStatus.CLOSED]: '버그아님',
 };
 
+
 export default function BugReportPage({
   initialBugs,
   initialMeta,
+  statusCounts,
   searchParams,
 }: BugReportClientProps) {
   const router = useRouter();
@@ -89,7 +95,7 @@ export default function BugReportPage({
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeId | 'all'>(
     () =>
       searchParams.assigneeId &&
-      ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
+        ASSIGNEES.some((a) => a.id === searchParams.assigneeId)
         ? (searchParams.assigneeId as AssigneeId)
         : 'all',
   );
@@ -103,6 +109,7 @@ export default function BugReportPage({
         : 'all',
     );
   }, [searchParams.assigneeId]);
+
   const [assigneeFilterOpen, setAssigneeFilterOpen] = useState(false);
   const assigneeFilterRef = useRef<HTMLTableCellElement>(null);
   const assigneeBtnRef = useRef<HTMLButtonElement>(null);
@@ -133,9 +140,9 @@ export default function BugReportPage({
   const [isUpdating, setIsUpdating] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
 
-  /** 선택된 상태 필터. URL에 없으면 기본값 open */
+  /** 선택된 상태 필터. URL에서 가져오며 없으면 'all' */
   const statusFilter: StatusFilter =
-    (searchParams.status as BugReportStatus) || BugReportStatus.OPEN;
+    (searchParams.status as BugReportStatus) || 'all';
 
   // 데이터 가공 (서버 status 그대로 사용, 포맷된 날짜만 추가)
   const processedBugs = useMemo(() => {
@@ -275,10 +282,9 @@ export default function BugReportPage({
     setAssigneeOpen(false);
   };
 
-  /** 같은 카드 재클릭 시 기본값(open)으로, 아니면 해당 상태로 필터 */
+  /** 같은 카드 재클릭 시 전체(all)로, 아니면 해당 상태로 필터 */
   const toggleFilter = (next: BugReportStatus) => {
-    const newStatus: StatusFilter =
-      statusFilter === next ? BugReportStatus.OPEN : next;
+    const newStatus = statusFilter === next ? undefined : next;
     updateUrl({ status: newStatus, page: 1 });
   };
 
@@ -415,48 +421,47 @@ export default function BugReportPage({
 
       {/* 통계 카드 (서버 상태값 open / in_progress / resolved 로 필터) */}
       <section className={styles.stats}>
+        {/* 해결 필요(open) 카드 */}
         <button
           type="button"
-          className={`${styles.card} ${styles.cardButton} ${styles.yellow} ${
-            statusFilter === BugReportStatus.OPEN ? styles.activeCard : ''
-          }`}
+          className={`${styles.card} ${styles.cardButton} ${styles.yellow} ${statusFilter === BugReportStatus.OPEN ? styles.activeCard : ''
+            }`}
           onClick={() => toggleFilter(BugReportStatus.OPEN)}
         >
           <div className={styles.cardLabel}>해결 필요</div>
           <div className={styles.cardNum}>
-            {statusFilter === BugReportStatus.OPEN && initialMeta
-              ? initialMeta.total
-              : '-'}
+            {/* (한국어) 대소문자 키(open, OPEN)를 모두 점검하여 정상적인 카운트 숫자가 노출되도록 예외 처리합니다. */}
+            {statusCounts !== undefined ? (statusCounts.OPEN ?? 0) : '-'}
           </div>
         </button>
+
+        {/* 해결중인 버그(in_progress) 카드 */}
         <button
           type="button"
-          className={`${styles.card} ${styles.cardButton} ${styles.mint} ${
-            statusFilter === BugReportStatus.IN_PROGRESS
-              ? styles.activeCard
-              : ''
-          }`}
+          className={`${styles.card} ${styles.cardButton} ${styles.mint} ${statusFilter === BugReportStatus.IN_PROGRESS
+            ? styles.activeCard
+            : ''
+            }`}
           onClick={() => toggleFilter(BugReportStatus.IN_PROGRESS)}
         >
           <div className={styles.cardLabel}>해결중인 버그</div>
           <div className={styles.cardNum}>
-            {statusFilter === BugReportStatus.IN_PROGRESS && initialMeta
-              ? initialMeta.total
-              : '-'}
+            {/* (한국어) 대소문자 키(in_progress, IN_PROGRESS)를 모두 점검하여 정상적인 카운트 숫자가 노출되도록 예외 처리합니다. */}
+            {statusCounts !== undefined ? (statusCounts.IN_PROGRESS ?? 0) : '-'}
           </div>
         </button>
+
+        {/* 해결완료(resolved) 카드 */}
         <button
           type="button"
-          className={`${styles.card} ${styles.cardButton} ${styles.purple} ${
-            statusFilter === BugReportStatus.RESOLVED ? styles.activeCard : ''
-          }`}
+          className={`${styles.card} ${styles.cardButton} ${styles.purple} ${statusFilter === BugReportStatus.RESOLVED ? styles.activeCard : ''
+            }`}
           onClick={() => toggleFilter(BugReportStatus.RESOLVED)}
         >
           <div className={styles.cardLabel}>해결완료</div>
           <div className={styles.cardNum}>
-            {statusFilter === BugReportStatus.RESOLVED && initialMeta
-              ? initialMeta.total
-              : '-'}
+            {/* (한국어) 대소문자 키(resolved, RESOLVED)를 모두 점검하여 정상적인 카운트 숫자가 노출되도록 예외 처리합니다. */}
+            {statusCounts !== undefined ? (statusCounts.RESOLVED ?? 0) : '-'}
           </div>
         </button>
       </section>
@@ -470,14 +475,9 @@ export default function BugReportPage({
             onChange={(e) => setQ(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <button
-            type="button"
-            className={styles.searchBtn}
-            onClick={handleSearch}
-            disabled={isSearching}
-          >
-            {isSearching ? <Spinner /> : '검색'}
-          </button>
+          <PrimaryButton onClick={handleSearch} isLoading={isSearching}>
+            검색
+          </PrimaryButton>
           <div className={styles.statusDropdownWrap} ref={statusActionRef}>
             <button
               type="button"
@@ -517,20 +517,19 @@ export default function BugReportPage({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: 60 }}>
+                <th>
                   <input
                     type="checkbox"
                     checked={allVisibleSelected}
                     onChange={(e) => handleToggleAllVisible(e.target.checked)}
                   />
                 </th>
-                <th style={{ width: 400 }}>내용</th>
-                <th style={{ width: 150 }}>발생일</th>
-                <th style={{ width: 200 }}>상태</th>
-                <th style={{ width: 240 }}>메모</th>
+                <th>내용</th>
+                <th>발생일</th>
+                <th>상태</th>
+                <th>메모</th>
                 <th
                   className={styles.assigneeHeader}
-                  style={{ width: 140, position: 'relative' }}
                   ref={assigneeFilterRef}
                 >
                   <button
@@ -585,20 +584,21 @@ export default function BugReportPage({
                     <td>{r.formattedDate}</td>
                     <td>
                       <span
-                        className={`${styles.badge} ${
-                          r.status === BugReportStatus.RESOLVED
-                            ? styles.statusDone
-                            : r.status === BugReportStatus.IN_PROGRESS
-                              ? styles.statusProgress
-                              : r.status === BugReportStatus.OPEN
-                                ? styles.statusNeeded
-                                : styles.statusNotBug
-                        }`}
+                        className={`${styles.badge} ${r.status === BugReportStatus.RESOLVED
+                          ? styles.statusDone
+                          : r.status === BugReportStatus.IN_PROGRESS
+                            ? styles.statusProgress
+                            : r.status === BugReportStatus.OPEN
+                              ? styles.statusNeeded
+                              : styles.statusNotBug
+                          }`}
                       >
                         {STATUS_LABEL[r.status as BugReportStatus]}
                       </span>
                     </td>
-                    <td className={styles.ellipsis}>{r.memo || ''}</td>
+                    <td>
+                      <div className={styles.ellipsis}>{r.memo || ''}</div>
+                    </td>
                     <td className={styles.assignee}>
                       {(() => {
                         const displayName = r.assigneeId
@@ -639,45 +639,12 @@ export default function BugReportPage({
         </div>
 
         {/* 페이지네이션 */}
-        {initialMeta && initialMeta.totalPages > 1 && (
-          <div className={styles.paging}>
-            <button
-              className={styles.arrow}
-              onClick={() => handlePageChange(initialMeta.page - 1)}
-              disabled={initialMeta.page === 1}
-            >
-              {'<'}
-            </button>
-            {Array.from(
-              { length: Math.min(10, initialMeta.totalPages) },
-              (_, i) => {
-                const currentPage = Number(searchParams.page) || 1;
-                const startPage = Math.max(
-                  1,
-                  Math.min(currentPage - 4, initialMeta.totalPages - 9),
-                );
-                const p = startPage + i;
-                if (p > initialMeta.totalPages) return null;
-                return (
-                  <button
-                    key={p}
-                    className={`${styles.pageBtn} ${p === currentPage ? styles.active : ''}`}
-                    onClick={() => handlePageChange(p)}
-                  >
-                    {p}
-                  </button>
-                );
-              },
-            )}
-            <button
-              className={styles.arrow}
-              onClick={() => handlePageChange(initialMeta.page + 1)}
-              disabled={initialMeta.page === initialMeta.totalPages}
-            >
-              {'>'}
-            </button>
-          </div>
-        )}
+        <Pagination
+          currentPage={initialMeta?.page || 1}
+          totalPages={initialMeta?.totalPages || 1}
+          onPageChange={handlePageChange}
+          hasData={processedBugs.length > 0}
+        />
       </section>
 
       {/* 오른쪽 디테일 서랍 */}
@@ -730,9 +697,8 @@ export default function BugReportPage({
                           <button
                             key={status}
                             type="button"
-                            className={`${styles.selectOption} ${
-                              detailStatus === status ? styles.active : ''
-                            }`}
+                            className={`${styles.selectOption} ${detailStatus === status ? styles.active : ''
+                              }`}
                             onClick={() => handleSelectStatus(status)}
                           >
                             {STATUS_LABEL[status]}
@@ -771,9 +737,8 @@ export default function BugReportPage({
                       <div className={styles.selectMenu}>
                         <button
                           type="button"
-                          className={`${styles.selectOption} ${
-                            detailAssignee === null ? styles.active : ''
-                          }`}
+                          className={`${styles.selectOption} ${detailAssignee === null ? styles.active : ''
+                            }`}
                           onClick={() => handleSelectAssignee(null)}
                         >
                           미지정
@@ -782,9 +747,8 @@ export default function BugReportPage({
                           <button
                             key={id}
                             type="button"
-                            className={`${styles.selectOption} ${
-                              detailAssignee === id ? styles.active : ''
-                            }`}
+                            className={`${styles.selectOption} ${detailAssignee === id ? styles.active : ''
+                              }`}
                             onClick={() => handleSelectAssignee(id)}
                           >
                             {name}
@@ -937,9 +901,8 @@ export default function BugReportPage({
         >
           <button
             type="button"
-            className={`${styles.assigneeOption} ${
-              assigneeFilter === 'all' ? styles.active : ''
-            }`}
+            className={`${styles.assigneeOption} ${assigneeFilter === 'all' ? styles.active : ''
+              }`}
             onClick={() => {
               setAssigneeFilter('all');
               setAssigneeFilterOpen(false);
@@ -954,9 +917,8 @@ export default function BugReportPage({
             <button
               key={id}
               type="button"
-              className={`${styles.assigneeOption} ${
-                assigneeFilter === id ? styles.active : ''
-              }`}
+              className={`${styles.assigneeOption} ${assigneeFilter === id ? styles.active : ''
+                }`}
               onClick={() => {
                 setAssigneeFilter(id);
                 setAssigneeFilterOpen(false);

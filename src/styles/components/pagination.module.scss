@@ -1,0 +1,58 @@
+@use '../_variables.scss' as *;
+
+.paging {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+}
+
+.pageBtn,
+.arrow {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid $color-border-subtle;
+  border-radius: 8px;
+  background: $color-white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: $color-text-primary;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: $color-gray;
+    border-color: $color-border;
+  }
+
+  &:disabled {
+    cursor: default;
+    color: $color-text-soft;
+    border-color: $color-gray;
+  }
+}
+
+.pageDots {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-secondary;
+  font-weight: 600;
+}
+
+.pageBtn.active {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: $color-white;
+  cursor: default;
+
+  &:hover {
+    background: $color-primary;
+  }
+}

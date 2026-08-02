@@ -2,6 +2,7 @@
 
 import Toast from '@/app/components/common/Toast/Toast';
 import Spinner from '@/app/components/common/Spinner/Spinner';
+import PrimaryButton from '@/app/components/common/Button/PrimaryButton';
 import AdminPageHeader from '@/app/pub/admin/AdminPageHeader';
 import styles from '@/styles/pages/admin/geo/geo.module.scss';
 import { RotateCcw } from 'lucide-react';
@@ -54,7 +55,7 @@ export default function GeoPage() {
   };
 
   return (
-    <div className={styles.geoPage}>
+    <div>
       <AdminPageHeader title="좌표 관리" />
       <div className={styles.pageContent}>
         {/* 지도 영역 */}
@@ -66,13 +67,9 @@ export default function GeoPage() {
                 placeholder="전북특별자치도 정읍시 수성2로 13-12(수성동) 주공1단지아파트"
                 className={styles.searchInput}
               />
-              <button
-                className={`${styles.searchBtn} ${isSearching ? styles.searchBtnLoading : ''}`}
-                onClick={handleSearch}
-                disabled={isSearching}
-              >
-                {isSearching ? <Spinner /> : '좌표 검색'}
-              </button>
+              <PrimaryButton onClick={handleSearch} isLoading={isSearching}>
+                좌표 검색
+              </PrimaryButton>
             </div>
           </div>
           <div className={styles.mapContainer}>
@@ -137,30 +134,13 @@ export default function GeoPage() {
               </thead>
               <tbody>
                 <tr className={styles.highlightedRow}>
-                  <td>군산소룡신도시</td>
-                  <td>전북특별자치도 정읍시 수성2로 13-12</td>
                   <td>
-                    <button className={styles.linkBtn}>링크</button>
+                    <div className={styles.cellEllipsis}>군산소룡신도시</div>
                   </td>
                   <td>
-                    <button className={styles.coordinateBtn}>좌표 찾기</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>군산신역세권 A-3블록 영구임대주택</td>
-                  <td>전북특별자치도 군산시 사옥로 69(내흥동)</td>
-                  <td>
-                    <button className={styles.linkBtn}>링크</button>
-                  </td>
-                  <td>
-                    <button className={styles.coordinateBtn}>좌표 찾기</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>포항블루밸리 행복주택</td>
-                  <td>
-                    경상북도 포항시 남구 동해면 블루동로2길 25 포항블루밸리
-                    행복주택
+                    <div className={styles.cellEllipsis}>
+                      전북특별자치도 정읍시 수성2로 13-12
+                    </div>
                   </td>
                   <td>
                     <button className={styles.linkBtn}>링크</button>
@@ -170,10 +150,15 @@ export default function GeoPage() {
                   </td>
                 </tr>
                 <tr>
-                  <td>포항블루밸리 행복주택</td>
                   <td>
-                    경상북도 포항시 남구 동해면 블루동로2길 25 포항블루밸리
-                    행복주택
+                    <div className={styles.cellEllipsis}>
+                      군산신역세권 A-3블록 영구임대주택
+                    </div>
+                  </td>
+                  <td>
+                    <div className={styles.cellEllipsis}>
+                      전북특별자치도 군산시 사옥로 69(내흥동)
+                    </div>
                   </td>
                   <td>
                     <button className={styles.linkBtn}>링크</button>
@@ -183,10 +168,49 @@ export default function GeoPage() {
                   </td>
                 </tr>
                 <tr>
-                  <td>포항블루밸리 행복주택</td>
                   <td>
-                    경상북도 포항시 남구 동해면 블루동로2길 25 포항블루밸리
-                    행복주택
+                    <div className={styles.cellEllipsis}>포항블루밸리 행복주택</div>
+                  </td>
+                  <td>
+                    <div className={styles.cellEllipsis}>
+                      경상북도 포항시 남구 동해면 블루동로2길 25 포항블루밸리
+                      경상북도 포항시 남구 동해면 블루동로2길 25 포항블루밸리
+                      행복주택
+                    </div>
+                  </td>
+                  <td>
+                    <button className={styles.linkBtn}>링크</button>
+                  </td>
+                  <td>
+                    <button className={styles.coordinateBtn}>좌표 찾기</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div className={styles.cellEllipsis}>포항블루밸리 행복주택</div>
+                  </td>
+                  <td>
+                    <div className={styles.cellEllipsis}>
+                      경상북도 포항시 남구 동해면 블루동로2길 25 포항블루밸리
+                      행복주택
+                    </div>
+                  </td>
+                  <td>
+                    <button className={styles.linkBtn}>링크</button>
+                  </td>
+                  <td>
+                    <button className={styles.coordinateBtn}>좌표 찾기</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div className={styles.cellEllipsis}>포항블루밸리 행복주택</div>
+                  </td>
+                  <td>
+                    <div className={styles.cellEllipsis}>
+                      경상북도 포항시 남구 동해면 블루동로2길 25 포항블루밸리
+                      행복주택
+                    </div>
                   </td>
                   <td>
                     <button className={styles.linkBtn}>링크</button>

@@ -2,11 +2,12 @@
 @use 'sass:color';
 
 // 좌표 관리 페이지 스타일
+
 .geoPage {
-  padding: 24px;
-  font-family: $font-family-base;
-  height: 100vh;
-  background-color: $color-white;
+  height: calc(100vh - 48px); // AdminLayout의 mainContent 패딩(24px * 2) 제외
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .pageHeader {
@@ -26,6 +27,9 @@
 .mapSection {
   padding: 16px;
   position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .mapHeader {
@@ -81,13 +85,14 @@
   display: grid;
   grid-template-columns: 2fr 3fr;
   gap: 24px;
-  height: calc(100vh - 120px);
+  flex: 1;
+  min-height: 0; // 내부 스크롤 허용을 위한 필수 설정
   margin: 20px 0 0 0;
 }
 
 .mapContainer {
   position: relative;
-  height: calc(100% - 60px);
+  height: 100%;
   background-color: $color-surface-geo;
   border-radius: 8px;
   overflow: hidden;
@@ -190,6 +195,9 @@
 .tableSection {
   background-color: $color-white;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .tableHeader {
@@ -243,14 +251,34 @@
 
 .tableContainer {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100% - 60px); // Header 영역 제외
   border-radius: 10px;
   border: solid 1px $color-gray;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db; // 회색 (gray-300 수준)
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .dataTable {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 14px;
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
 }
 
 .dataTable th {
@@ -272,13 +300,32 @@
   padding: 12px;
   border-bottom: 1px solid $color-white;
   color: $color-text-primary;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
 
   &:last-child,
   &:nth-child(3) {
     text-align: center;
   }
+}
+
+.dataTable th:nth-child(1),
+.dataTable td:nth-child(1) {
+  width: 30%;
+}
+
+.dataTable th:nth-child(2),
+.dataTable td:nth-child(2) {
+  width: 46%;
+}
+
+.dataTable th:nth-child(3),
+.dataTable td:nth-child(3) {
+  width: 12%;
+}
+
+.dataTable th:nth-child(4),
+.dataTable td:nth-child(4) {
+  width: 12%;
 }
 
 .dataTable tr:hover {
@@ -310,4 +357,13 @@
   &:hover {
     background-color: color.adjust($color-primary, $lightness: -10%);
   }
+}
+
+.cellEllipsis {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
