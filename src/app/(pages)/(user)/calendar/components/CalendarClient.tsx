@@ -18,10 +18,16 @@ interface CalendarData {
   textColor: string;
 }
 
+/** 캘린더 렌더링에 필요한 필드만 추린 주택 공급 정보 타입 */
+export type CalendarHousingData = Pick<
+  HousingSupplyResponseDto,
+  'id' | 'houseName' | 'rceptEndde' | 'houseSecdNm'
+>;
+
 const CalendarClient = ({
   initialHousingData,
 }: {
-  initialHousingData: HousingSupplyResponseDto[];
+  initialHousingData: CalendarHousingData[];
 }) => {
   const router = useRouter();
   // 청약캘린더 헤더에서 사용
@@ -52,7 +58,7 @@ const CalendarClient = ({
     }
   };
 
-  const convertCalendarData = (item: HousingSupplyResponseDto) => {
+  const convertCalendarData = (item: CalendarHousingData) => {
     houseList.push({
       title: item.houseName,
       date: item.rceptEndde,
@@ -114,7 +120,7 @@ const CalendarClient = ({
             initialView="dayGridMonth"
             nowIndicator={true}
             fixedWeekCount={false} // 달에 따라 4-6주를 보여줌 (6주로 고정x)
-            weekends={false} // 토요일 일요일 제거
+            weekends={true} // 주말 마감 청약도 표시해야 하므로 토·일 노출
             locale={'ko'} // 한글 표기
             contentHeight="auto" // 스크롤 생성되지 않고 높이 자동 조절
             events={houseList}

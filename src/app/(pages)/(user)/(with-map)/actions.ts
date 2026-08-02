@@ -8,7 +8,6 @@ import type { ActionResult } from '@/app/libs/types/api';
 import { handleNextRedirectError } from '@/app/libs/utils/server-actions';
 import { BugReportErrorType, HousingSupplyResponseDto } from 'byzip-v2-sdk';
 import axios from 'axios';
-import { Meta } from '@storybook/nextjs';
 
 /**
  * 주택 공급 정보 목록 조회 쿼리 파라미터 타입
@@ -28,11 +27,22 @@ export interface GetHousingSuppliesParams {
 }
 
 /**
+ * 주택 공급 정보 목록 조회 페이지네이션 메타 정보 타입
+ */
+export interface HousingSuppliesMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  itemCount: number;
+}
+
+/**
  * 주택 공급 정보 목록 조회 결과 데이터 타입
  */
 export interface GetHousingSuppliesResultData {
   items: HousingSupplyResponseDto[];
-  meta: Meta;
+  meta: HousingSuppliesMeta;
 }
 
 /**
