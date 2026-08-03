@@ -27,7 +27,7 @@ export async function generateMetadata({
       description,
       images: [
         {
-          url: '/og_image.png',
+          url: '/images/og_image.png',
           width: 1200,
           height: 630,
           alt: searchQuery ? `'${searchQuery}' 검색 결과` : '분양 검색',

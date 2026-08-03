@@ -120,7 +120,7 @@ const CalendarClient = ({
             initialView="dayGridMonth"
             nowIndicator={true}
             fixedWeekCount={false} // 달에 따라 4-6주를 보여줌 (6주로 고정x)
-            weekends={true} // 주말 마감 청약도 표시해야 하므로 토·일 노출
+            weekends={false} // 토요일 일요일 제거
             locale={'ko'} // 한글 표기
             contentHeight="auto" // 스크롤 생성되지 않고 높이 자동 조절
             events={houseList}
@@ -128,7 +128,7 @@ const CalendarClient = ({
           />
         </div>
       </div>
-      <div className="w-screen h-46.5 absolute top-0 left-0 bg-linear-to-b from-[#d9e5ff] to-[rgba(216,228,255,0)] z-[1]" />
+      <div className="w-screen h-46.5 absolute top-0 left-0 bg-linear-to-b from-[#d9e5ff] to-[rgba(216,228,255,0)] z-1" />
     </div>
   );
 };

@@ -64,7 +64,7 @@ export async function generateMetadata({
           description: desc,
           images: [
             {
-              url: '/og_image.png',
+              url: '/images/og_image.png',
               width: 1200,
               height: 630,
               alt: detail.houseName,
@@ -85,7 +85,8 @@ export async function generateMetadata({
       description: '전국 아파트, 오피스텔, 민간임대 등 분양 상세 정보를 확인합니다.',
       images: [
         {
-          url: '/og_image.png',
+          // 배포 시 404 에러 방지를 위해 실제 파일 위치인 public/images/og_image.png 경로로 수정합니다.
+          url: '/images/og_image.png',
           width: 1200,
           height: 630,
           alt: '분양 상세 정보',

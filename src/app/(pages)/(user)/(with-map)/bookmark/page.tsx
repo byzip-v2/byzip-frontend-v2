@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: '내가 북마크한 분양 정보를 확인해 보세요.',
     images: [
       {
-        url: '/og_image.png',
+        url: '/images/og_image.png',
         width: 1200,
         height: 630,
         alt: '북마크',

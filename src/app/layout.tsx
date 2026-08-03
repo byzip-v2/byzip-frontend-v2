@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     description: '내 집 마련을 위한 솔루션, 전국 분양 정보를 한눈에 확인할 수 있는 플랫폼입니다. 국토교통부 아파트 실거래가와 시세 정보를 확인할 수 있습니다. 청약캘린더를 통해 분양 일정을 관리해보세요.',
     images: [
       {
-        url: '/og_image.png',
+        url: '/images/og_image.png',
         width: 1200,
         height: 630,
         alt: '분양모음집',

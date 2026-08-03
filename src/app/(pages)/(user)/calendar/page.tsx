@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description: '전국 아파트, 민간임대, 오피스텔 등 주요 분양 접수 일정을 달력 형식으로 한눈에 편리하게 파악해 보세요.',
     images: [
       {
-        url: '/og_image.png',
+        url: '/images/og_image.png',
         width: 1200,
         height: 630,
         alt: '청약 캘린더',
