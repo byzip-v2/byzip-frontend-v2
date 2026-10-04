@@ -165,6 +165,29 @@
   text-align: center;
 }
 
+// (한국어) 모바일 지도 탭일 때 페이지를 뷰포트 높이에 맞추고, 지도가 남은 영역을 채우도록 합니다.
+.pageMapView {
+  height: calc(100dvh - 64px);
+  min-height: 0;
+}
+
+.pageMapView .shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pageMapView .header,
+.pageMapView .tabRow {
+  flex-shrink: 0;
+}
+
+.mobileMap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+
 .tabRow {
   display: flex;
   width: 100%;
@@ -589,6 +612,11 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     padding: 0 10px;
+  }
+
+  // (한국어) 모바일에서 '지도' 탭이 추가되면 3칸으로 나눕니다. 지도 탭은 라벨이 짧아 좁게 둡니다.
+  .tabRowWithMap {
+    grid-template-columns: 1fr 1fr 0.6fr;
   }
 
   .tabButton {

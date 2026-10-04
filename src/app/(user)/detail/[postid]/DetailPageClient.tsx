@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/app/components/common/Spinner/Spinner';
+import NaverMap from '@/app/components/common/NaverMap/NaverMap';
 import {
   getLawdCdByAddress,
   getPreviousMonth,
@@ -18,6 +19,8 @@ import type {
   DetailPageData,
   DetailRow,
 } from './detail.types';
+
+type DetailTab = 'detail' | 'realPrice' | 'map';
 
 const DETAIL_BOOKMARK_STORAGE_KEY = 'byzip:detail-bookmarks';
 const REAL_PRICE_CONTRACT_MONTH = getPreviousMonth();
@@ -1067,13 +1070,17 @@ export default function DetailPageClient({
   detailId,
   isRealPriceEnabled,
 }: DetailPageClientProps) {
-  const [isRealPriceTab, setIsRealPriceTab] = useState(false);
+  // (한국어) 현재 선택된 탭 ('detail': 분양 상세 정보, 'realPrice': 주변 실거래가, 'map': 지도)
+  // - '지도' 탭은 모바일(1024px 미만)에서만 노출되며, 데스크톱에서는 우측 고정 지도가 그 역할을 합니다.
+  const [activeTab, setActiveTab] = useState<DetailTab>('detail');
   const [isBookmarked, setIsBookmarked] = useState(false);
   const isLhDetail = detail.sourceSystem === 'LH';
   const isAptDetail = detail.houseSecd === '01';
 
   // (한국어) 지도의 마커와 카메라 뷰를 조정하기 위해 전역 지도 스토어를 사용합니다.
-  const { setMarkers, setMapPageView, clearMarkers, clearMapPageView } = useMapStore();
+  const { isMobileLayout, setMarkers, setMapPageView, clearMarkers, clearMapPageView } = useMapStore();
+  // (한국어) 지도 탭을 연 상태에서 데스크톱으로 넓어지면 지도 탭이 사라지므로 상세 정보 탭으로 대체합니다.
+  const currentTab: DetailTab = activeTab === 'map' && !isMobileLayout ? 'detail' : activeTab;
 
   // (한국어) 상세 페이지 진입 시 해당 분양 공고의 좌표 정보를 읽어 지도를 이동하고 마커를 표시하는 효과입니다.
   useEffect(() => {
@@ -1147,7 +1154,7 @@ export default function DetailPageClient({
   };
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${currentTab === 'map' ? styles.pageMapView : ''}`}>
       <div className={styles.shell}>
         <DetailHeader
           detail={detail}
@@ -1156,25 +1163,35 @@ export default function DetailPageClient({
           onToggleBookmark={handleToggleBookmark}
         />
 
-        <div className={styles.tabRow}>
+        <div className={`${styles.tabRow} ${isMobileLayout ? styles.tabRowWithMap : ''}`}>
           <button
             type="button"
-            className={`${styles.tabButton} ${!isRealPriceTab ? styles.tabButtonActive : ''}`}
-            onClick={() => setIsRealPriceTab(false)}
+            className={`${styles.tabButton} ${currentTab === 'detail' ? styles.tabButtonActive : ''}`}
+            onClick={() => setActiveTab('detail')}
           >
             분양 상세 정보
           </button>
           <button
             type="button"
-            className={`${styles.tabButton} ${isRealPriceTab ? styles.tabButtonActive : ''}`}
-            onClick={() => setIsRealPriceTab(true)}
+            className={`${styles.tabButton} ${currentTab === 'realPrice' ? styles.tabButtonActive : ''}`}
+            onClick={() => setActiveTab('realPrice')}
           >
             <span>주변 아파트 매매</span>
             <span>실거래가</span>
           </button>
+          {/* 모바일/태블릿(1024px 미만) 화면에서만 노출되는 지도 탭 */}
+          {isMobileLayout && (
+            <button
+              type="button"
+              className={`${styles.tabButton} ${currentTab === 'map' ? styles.tabButtonActive : ''}`}
+              onClick={() => setActiveTab('map')}
+            >
+              지도
+            </button>
+          )}
         </div>
 
-        {!isRealPriceTab ? (
+        {currentTab === 'detail' && (
           <section className={styles.contentSection}>
             <KeyInfoSection detail={detail} />
             {isLhDetail ? (
@@ -1192,11 +1209,20 @@ export default function DetailPageClient({
               </>
             )}
           </section>
-        ) : (
+        )}
+
+        {currentTab === 'realPrice' && (
           <RealPricePanel
             detail={detail}
             isRealPriceEnabled={isRealPriceEnabled}
           />
+        )}
+
+        {/* 모바일 지도 탭: 탭 아래 남은 영역을 지도로 채웁니다. */}
+        {currentTab === 'map' && (
+          <div className={styles.mobileMap}>
+            <NaverMap />
+          </div>
         )}
       </div>
     </div>

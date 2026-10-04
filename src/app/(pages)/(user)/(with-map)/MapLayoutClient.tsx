@@ -41,8 +41,9 @@ export default function MapLayoutClient({ children }: MapLayoutClientProps) {
     };
   }, [setIsMobileLayout, setViewType]);
 
-  // 상세 페이지 경로(/detail/...)이거나 데스크톱(1024px 이상)인 경우에는 지도 분할 뷰를 사용합니다.
-  const showDesktopLayout = !isLocalMobile || isDetailRoute;
+  // 데스크톱(1024px 이상)인 경우에만 지도 분할 뷰를 사용합니다.
+  // (모바일 상세 페이지는 DetailPageClient 내부의 상세정보/지도 토글로 지도를 직접 렌더링합니다.)
+  const showDesktopLayout = !isLocalMobile;
 
   return (
     <div
